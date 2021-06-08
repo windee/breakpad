@@ -34,15 +34,14 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <limits>
 #include <string>
 #include <vector>
 
-#include "common/path_helper.h"
-#include "common/scoped_ptr.h"
-#include "common/using_std_string.h"
+#include "processor/path_helper.h"
+#include "processor/scoped_ptr.h"
+#include "processor/using_std_string.h"
 #include "google_breakpad/processor/basic_source_line_resolver.h"
 #include "google_breakpad/processor/minidump.h"
 #include "google_breakpad/processor/minidump_processor.h"
@@ -50,6 +49,10 @@
 #include "processor/logging.h"
 #include "processor/simple_symbol_supplier.h"
 #include "processor/stackwalk_common.h"
+#ifdef _WIN32
+#include "processor/getopt.h"
+#endif
+
 
 
 namespace {
