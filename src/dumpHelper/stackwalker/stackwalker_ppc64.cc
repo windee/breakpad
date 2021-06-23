@@ -31,7 +31,7 @@
 //
 // See stackwalker_ppc64.h for documentation.
 
-#include "stackwalker_ppc64.h"
+#include "stackwalker/stackwalker_ppc64.h"
 #include "common/scoped_ptr.h"
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"

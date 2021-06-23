@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc.
+// Copyright (c) 2006, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,49 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef DUMP_HELPER_COMMON_PATH_HELPER_H
-#define DUMP_HELPER_COMMON_PATH_HELPER_H
+#ifndef CLIENT_WINDOWS_SENDER_CRASH_REPORT_SENDER_H__
+#define CLIENT_WINDOWS_SENDER_CRASH_REPORT_SENDER_H__
 
+// CrashReportSender is a "static" class which provides an API to upload
+// crash reports via HTTP(S).  A crash report is formatted as a multipart POST
+// request, which contains a set of caller-supplied string key/value pairs,
+// and a minidump file to upload.
+//
+// To use this library in your project, you will need to link against
+// wininet.lib.
+
+#pragma warning( push )
+// Disable exception handler warnings.
+#pragma warning( disable : 4530 ) 
+
+#include <map>
 #include <string>
-#include <vector>
 
 namespace dump_helper {
 
-	using std::string;
-	using std::vector;
+using std::string;
+using std::wstring;
+using std::map;
 
-	class PathHelper {
-	public:
-		static string BaseName(const string& path);
-		static string DirName(const string& path);
-		static string ToLower(const string& name);
-		static string FileName(const string& path);
-		static vector<string> DumpFiles(const string& dir);
-	};
+typedef enum {
+  RESULT_FAILED = 0,  // Failed to communicate with the server; try later.
+  RESULT_REJECTED,    // Successfully sent the crash report, but the
+                      // server rejected it; don't resend this report.
+  RESULT_SUCCEEDED,   // The server accepted the crash report.
+  RESULT_THROTTLED    // No attempt was made to send the crash report, because
+                      // we exceeded the maximum reports per day.
+} ReportResult;
+
+
+
+ReportResult SendCrashReport(const wstring &url,
+                               const map<string, string> &parameters,
+                               const map<string, string> &files,
+                               wstring *report_code);
+
+
 }  // namespace dump_helper
 
-#endif  // DUMP_HELPER_COMMON_PATH_HELPER_H
+#pragma warning( pop )
+
+#endif  // CLIENT_WINDOWS_SENDER_CRASH_REPORT_SENDER_H__

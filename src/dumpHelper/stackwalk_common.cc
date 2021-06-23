@@ -59,19 +59,6 @@ namespace dump_helper {
 namespace {
 
 using std::vector;
-
-// Separator character for machine readable output.
-static const char kOutputSeparator = '|';
-
-// PrintRegister prints a register's name and value to stdout.  It will
-// print four registers on a line.  For the first register in a set,
-// pass 0 for |start_col|.  For registers in a set, pass the most recent
-// return value of PrintRegister.
-// The caller is responsible for printing the final newline after a set
-// of registers is completely printed, regardless of the number of calls
-// to PrintRegister.
-static const int kMaxWidth = 80;  // optimize for an 80-column terminal
-
 // PrintStack prints the call stack in |stack| to stdout, in a reasonably
 // useful form.  Module, function, and source file names are displayed if
 // they are available.  The code offset to the base code address of the

@@ -41,8 +41,6 @@
 
 #include <stddef.h>
 
-#include "breakpad_types.h"
-
 /* For (MDException).exception_code.  These values come from sys/iso/signal_iso.h
  */
 typedef enum {

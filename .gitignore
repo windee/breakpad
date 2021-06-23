@@ -35,41 +35,15 @@
 *.dwo
 *.o
 lib*.a
-/breakpad.pc
-/breakpad-client.pc
-# /src/processor/minidump_dump
-/src/processor/minidump_stackwalk
-# /src/tools/mac/dump_syms/dump_syms
-# /src/tools/mac/dump_syms/dump_syms_mac
 
-# Ignore unit test artifacts.
-# *_unittest
-# *.log
-# *.trs
-
-# Ignore autotools generated artifacts.
-.deps
-.dirstamp
-autom4te.cache/
-/config.cache
-config.h
-/config.log
-/config.status
-/Makefile
-stamp-h1
 
 # Ignore GYP generated Visual Studio artifacts.
-*.filters
 *.sdf
-*.sln
 *.suo
-*.vcproj
-*.vcxproj
+*.vcxproj.user
+.vs/
+/src/Release
 
-# Ignore GYP generated Makefiles
-src/Makefile
-*.Makefile
-*.target.mk
 
 # Ignore compiled Python files.
 *.pyc

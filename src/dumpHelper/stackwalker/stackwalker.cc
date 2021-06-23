@@ -100,10 +100,10 @@ void InsertSpecialAttentionModule(
     }
   }
   if (!found) {
-    BPLOG(INFO) << ((symbolizer_result == StackFrameSymbolizer::kError) ?
-                       "Couldn't load symbols for: " :
-                       "Detected corrupt symbols for: ")
-                << module->debug_file() << "|" << module->debug_identifier();
+    //BPLOG(INFO) << ((symbolizer_result == StackFrameSymbolizer::kError) ?
+    //                   "Couldn't load symbols for: " :
+    //                   "Detected corrupt symbols for: ")
+    //            << module->debug_file() << "|" << module->debug_identifier();
     modules->push_back(module);
   }
 }

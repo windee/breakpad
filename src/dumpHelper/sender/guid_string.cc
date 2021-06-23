@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Google Inc.
+// Copyright (c) 2006, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,38 +26,51 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// simple_serializer.h: SimpleSerializer is a template for calculating size and
-// writing to specific memory location for objects of primitive types, C-style
-// string, string, breakpad types/structs etc.
-// All specializations of SimpleSerializer template are defined in the
-// "simple_serializer-inl.h" file.
-//
-// Author: Siyang Xie (lambxsy@google.com)
 
-#ifndef PROCESSOR_SIMPLE_SERIALIZER_H__
-#define PROCESSOR_SIMPLE_SERIALIZER_H__
+// guid_string.cc: Convert GUIDs to strings.
+//
+// See guid_string.h for documentation.
 
-#include "dump_helper/common/breakpad_types.h"
+#include <wchar.h>
+
+#include "string_utils-inl.h"
+
+#include "guid_string.h"
 
 namespace dump_helper {
 
-typedef uint64_t MemAddr;
+// static
+wstring GUIDString::GUIDToWString(GUID *guid) {
+  wchar_t guid_string[37];
+  swprintf(
+      guid_string, sizeof(guid_string) / sizeof(guid_string[0]),
+      L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+      guid->Data1, guid->Data2, guid->Data3,
+      guid->Data4[0], guid->Data4[1], guid->Data4[2],
+      guid->Data4[3], guid->Data4[4], guid->Data4[5],
+      guid->Data4[6], guid->Data4[7]);
 
-// Default implementation of SimpleSerializer template.
-// Specializations are defined in "simple_serializer-inl.h".
-template<class Type> class SimpleSerializer {
- public:
-  // Calculate and return the size of the 'item'.
-  static size_t SizeOf(const Type &item) { return sizeof(item); }
-  // Write 'item' to memory location 'dest', and return to the "end" address of
-  // data written, i.e., the address after the final byte written.
-  static char *Write(const Type &item, char *dest) {
-    new (dest) Type(item);
-    return dest + SizeOf(item);
-  }
-};
+  // remove when VC++7.1 is no longer supported
+  guid_string[sizeof(guid_string) / sizeof(guid_string[0]) - 1] = L'\0';
+
+  return wstring(guid_string);
+}
+
+// static
+wstring GUIDString::GUIDToSymbolServerWString(GUID *guid) {
+  wchar_t guid_string[33];
+  swprintf(
+      guid_string, sizeof(guid_string) / sizeof(guid_string[0]),
+      L"%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
+      guid->Data1, guid->Data2, guid->Data3,
+      guid->Data4[0], guid->Data4[1], guid->Data4[2],
+      guid->Data4[3], guid->Data4[4], guid->Data4[5],
+      guid->Data4[6], guid->Data4[7]);
+
+  // remove when VC++7.1 is no longer supported
+  guid_string[sizeof(guid_string) / sizeof(guid_string[0]) - 1] = L'\0';
+
+  return wstring(guid_string);
+}
 
 }  // namespace dump_helper
-
-#endif  // PROCESSOR_SIMPLE_SERIALIZER_H__

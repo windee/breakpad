@@ -108,7 +108,7 @@ const CodeModule* BasicCodeModules::GetModuleForAddress(
   linked_ptr<const CodeModule> module;
   if (!map_.RetrieveRange(address, &module, NULL /* base */, NULL /* delta */,
                           NULL /* size */)) {
-    BPLOG(INFO) << "No module at " << HexString(address);
+    //BPLOG(INFO) << "No module at " << HexString(address);
     return NULL;
   }
 

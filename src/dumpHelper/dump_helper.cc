@@ -52,6 +52,15 @@
 #include "stackwalk_common.h"
 
 
+#ifdef _WIN32
+#include "common/getopt.h"
+#include "sender/crash_sender.h"
+#else
+
+#endif // _WIN32
+
+
+
 
 namespace {
 
@@ -150,8 +159,11 @@ int main(int argc, const char* argv[]) {
 
 	std::wstring report_code;
 
-//	dump_helper::SendCrashReport(server_url, params, files, &report_code);
+#ifdef _WIN32
+	dump_helper::SendCrashReport(server_url, params, files, &report_code);
+#else
 
+#endif // _WIN32
 
   return 1;
 }

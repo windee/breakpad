@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc.
+// Copyright (c) 2006, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef DUMP_HELPER_COMMON_PATH_HELPER_H
-#define DUMP_HELPER_COMMON_PATH_HELPER_H
+// Disable exception handler warnings.
+#pragma warning( disable : 4530 )
 
-#include <string>
-#include <vector>
+#include "crash_sender.h"
+#include "http_upload.h"
 
 namespace dump_helper {
 
-	using std::string;
-	using std::vector;
+ReportResult SendCrashReport(
+    const wstring &url, const map<string, string> &parameters,
+    const map<string, string> &files, wstring *report_code) {
 
-	class PathHelper {
-	public:
-		static string BaseName(const string& path);
-		static string DirName(const string& path);
-		static string ToLower(const string& name);
-		static string FileName(const string& path);
-		static vector<string> DumpFiles(const string& dir);
-	};
+  int http_response = 0;
+  bool result = HTTPUpload::SendMultipartPostRequest(
+    url, parameters, files, NULL, report_code,
+    &http_response);
+
+  if (result) {
+    return RESULT_SUCCEEDED;
+  } else if (http_response >= 400 && http_response < 500) {
+    return RESULT_REJECTED;
+  } else {
+    return RESULT_FAILED;
+  }
+}
 }  // namespace dump_helper
-
-#endif  // DUMP_HELPER_COMMON_PATH_HELPER_H

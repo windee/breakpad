@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc.
+// Copyright (c) 2006, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef DUMP_HELPER_COMMON_PATH_HELPER_H
-#define DUMP_HELPER_COMMON_PATH_HELPER_H
+// guid_string.cc: Convert GUIDs to strings.
+
+#ifndef COMMON_WINDOWS_GUID_STRING_H_
+#define COMMON_WINDOWS_GUID_STRING_H_
+
+#include <guiddef.h>
 
 #include <string>
-#include <vector>
 
 namespace dump_helper {
 
-	using std::string;
-	using std::vector;
+using std::wstring;
 
-	class PathHelper {
-	public:
-		static string BaseName(const string& path);
-		static string DirName(const string& path);
-		static string ToLower(const string& name);
-		static string FileName(const string& path);
-		static vector<string> DumpFiles(const string& dir);
-	};
+class GUIDString {
+ public:
+  // Converts guid to a string in the format recommended by RFC 4122 and
+  // returns the string.
+  static wstring GUIDToWString(GUID *guid);
+
+  // Converts guid to a string formatted as uppercase hexadecimal, with
+  // no separators, and returns the string.  This is the format used for
+  // symbol server identifiers, although identifiers have an age tacked
+  // on to the string.
+  static wstring GUIDToSymbolServerWString(GUID *guid);
+};
+
 }  // namespace dump_helper
 
-#endif  // DUMP_HELPER_COMMON_PATH_HELPER_H
+#endif  // COMMON_WINDOWS_GUID_STRING_H_

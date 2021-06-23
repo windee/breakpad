@@ -85,13 +85,11 @@
 		DF53AF7D2680B6D60087A86B /* postfix_evaluator-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "postfix_evaluator-inl.h"; sourceTree = "<group>"; };
 		DF53AF7E2680B6D60087A86B /* postfix_evaluator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = postfix_evaluator.h; sourceTree = "<group>"; };
 		DF53AF7F2680B6D60087A86B /* tokenize.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tokenize.cc; sourceTree = "<group>"; };
-		DF53AF802680B6D60087A86B /* map_serializers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = map_serializers.h; sourceTree = "<group>"; };
 		DF53AF812680B6D60087A86B /* convert_old_arm64_context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = convert_old_arm64_context.h; sourceTree = "<group>"; };
 		DF53AF822680B6D60087A86B /* disassembler_x86.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = disassembler_x86.cc; sourceTree = "<group>"; };
 		DF53AF832680B6D60087A86B /* dump_context.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dump_context.cc; sourceTree = "<group>"; };
 		DF53AF842680B6D60087A86B /* exploitability_linux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = exploitability_linux.h; sourceTree = "<group>"; };
 		DF53AF852680B6D60087A86B /* basic_code_module.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = basic_code_module.h; sourceTree = "<group>"; };
-		DF53AF862680B6D60087A86B /* map_serializers-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "map_serializers-inl.h"; sourceTree = "<group>"; };
 		DF53AF872680B6D60087A86B /* basic_source_line_resolver_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = basic_source_line_resolver_types.h; sourceTree = "<group>"; };
 		DF53AF882680B6D60087A86B /* range_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = range_map.h; sourceTree = "<group>"; };
 		DF53AF892680B6D60087A86B /* cfi_frame_info-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "cfi_frame_info-inl.h"; sourceTree = "<group>"; };
@@ -240,10 +238,8 @@
 		DF53B0202680B6D70087A86B /* contained_range_map-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "contained_range_map-inl.h"; sourceTree = "<group>"; };
 		DF53B0212680B6D70087A86B /* basic_code_modules.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = basic_code_modules.cc; sourceTree = "<group>"; };
 		DF53B0222680B6D70087A86B /* proc_maps_linux.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = proc_maps_linux.cc; sourceTree = "<group>"; };
-		DF53B0232680B6D70087A86B /* simple_serializer-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "simple_serializer-inl.h"; sourceTree = "<group>"; };
 		DF53B0242680B6D70087A86B /* call_stack.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = call_stack.cc; sourceTree = "<group>"; };
 		DF53B0252680B6D70087A86B /* static_map_iterator-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "static_map_iterator-inl.h"; sourceTree = "<group>"; };
-		DF53B0262680B6D70087A86B /* simple_serializer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simple_serializer.h; sourceTree = "<group>"; };
 		DF53B0272680B6D70087A86B /* stackwalk_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stackwalk_common.h; sourceTree = "<group>"; };
 		DF53B0282680B6D70087A86B /* windows_frame_info.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = windows_frame_info.h; sourceTree = "<group>"; };
 		DF53B02A2680B6D70087A86B /* disassembler_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = disassembler_x86.h; sourceTree = "<group>"; };
@@ -318,15 +314,11 @@
 				DF53B0072680B6D70087A86B /* exploitability_win.h */,
 				DF53AF732680B6D60087A86B /* fast_source_line_resolver_types.h */,
 				DF53AFB92680B6D70087A86B /* linked_ptr.h */,
-				DF53AF862680B6D60087A86B /* map_serializers-inl.h */,
-				DF53AF802680B6D60087A86B /* map_serializers.h */,
 				DF53AFC52680B6D70087A86B /* module_factory.h */,
 				DF53AF7D2680B6D60087A86B /* postfix_evaluator-inl.h */,
 				DF53AF7E2680B6D60087A86B /* postfix_evaluator.h */,
 				DF53B0022680B6D70087A86B /* range_map-inl.h */,
 				DF53AF882680B6D60087A86B /* range_map.h */,
-				DF53B0232680B6D70087A86B /* simple_serializer-inl.h */,
-				DF53B0262680B6D70087A86B /* simple_serializer.h */,
 				DF53AFC62680B6D70087A86B /* simple_symbol_supplier.h */,
 				DF53AF762680B6D60087A86B /* source_line_resolver_base_types.h */,
 				DF53B0272680B6D70087A86B /* stackwalk_common.h */,

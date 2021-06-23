@@ -41,7 +41,7 @@
 #define PROCESSOR_STACKWALKER_ARM64_H__
 
 #include "common/minidump/breakpad_types.h"
-#include "common/minidump//minidump_format.h"
+#include "common/minidump/minidump_format.h"
 #include "common/processor/stackwalker.h"
 
 namespace dump_helper {

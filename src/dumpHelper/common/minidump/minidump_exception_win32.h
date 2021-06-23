@@ -42,7 +42,6 @@
 #include <stddef.h>
 
 
-
 /* For (MDException).exception_code.  These values come from WinBase.h
  * and WinNT.h (names beginning with EXCEPTION_ are in WinBase.h,
  * they are STATUS_ in WinNT.h). */

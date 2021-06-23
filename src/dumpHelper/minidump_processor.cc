@@ -43,7 +43,7 @@
 #include "common/processor/exploitability.h"
 #include "common/processor/stack_frame_symbolizer.h"
 #include "common/logging.h"
-#include "stackwalker_x86.h"
+#include "stackwalker/stackwalker_x86.h"
 #include "symbolic_constants_win.h"
 
 namespace dump_helper {
@@ -220,7 +220,7 @@ ProcessResult MinidumpProcessor::Process(
     }
 
     thread_string += " id " + HexString(thread_id);
-    BPLOG(INFO) << "Looking at thread " << thread_string;
+    //BPLOG(INFO) << "Looking at thread " << thread_string;
 
     // If this thread is the thread that produced the minidump, don't process
     // it.  Because of the problems associated with a thread producing a

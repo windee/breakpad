@@ -32,6 +32,13 @@
 // See minidump.h for documentation.
 //
 // Author: Mark Mentovai
+#ifdef _WIN32
+#include  <windows.h>
+#include <winternl.h>
+#include <io.h>
+#else  // _WIN32
+#include <unistd.h>
+#endif  // _WIN32
 
 #include "common/processor/minidump.h"
 
@@ -40,13 +47,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef _WIN32
-#include <io.h>
-#else  // _WIN32
-#include <unistd.h>
-#endif  // _WIN32
-
 #include <algorithm>
 #include <fstream>
 #include <limits>
@@ -471,7 +471,7 @@ bool MinidumpContext::Read(uint32_t expected_size) {
   // For some reason, the AMD64 Context doesn't have context_flags
   // at the beginning of the structure, so special case it here.
   if (expected_size == sizeof(MDRawContextAMD64)) {
-    BPLOG(INFO) << "MinidumpContext: looks like AMD64 context";
+    //BPLOG(INFO) << "MinidumpContext: looks like AMD64 context";
 
     scoped_ptr<MDRawContextAMD64> context_amd64(new MDRawContextAMD64());
     if (!minidump_->ReadBytes(context_amd64.get(),
@@ -671,7 +671,7 @@ bool MinidumpContext::Read(uint32_t expected_size) {
     // in the else case have 32 bits |context_flags|, so special case it here.
     uint64_t context_flags;
 
-    BPLOG(INFO) << "MinidumpContext: looks like ARM64 context";
+    //BPLOG(INFO) << "MinidumpContext: looks like ARM64 context";
 
     if (!minidump_->ReadBytes(&context_flags, sizeof(context_flags))) {
       BPLOG(ERROR) << "MinidumpContext could not read context flags";
@@ -1376,10 +1376,10 @@ bool MinidumpMemoryRegion::GetMemoryAtAddressInternal(uint64_t address,
       sizeof(T) > numeric_limits<uint64_t>::max() - address ||
       address + sizeof(T) > descriptor_->start_of_memory_range +
                             descriptor_->memory.data_size) {
-    BPLOG(INFO) << "MinidumpMemoryRegion request out of range: " <<
-                    HexString(address) << "+" << sizeof(T) << "/" <<
-                    HexString(descriptor_->start_of_memory_range) << "+" <<
-                    HexString(descriptor_->memory.data_size);
+    //BPLOG(INFO) << "MinidumpMemoryRegion request out of range: " <<
+    //                HexString(address) << "+" << sizeof(T) << "/" <<
+    //                HexString(descriptor_->start_of_memory_range) << "+" <<
+    //                HexString(descriptor_->memory.data_size);
     return false;
   }
 

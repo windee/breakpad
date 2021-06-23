@@ -38,7 +38,7 @@
 #include "common/processor/memory_region.h"
 #include "common/processor/stack_frame_cpu.h"
 #include "common/logging.h"
-#include "stackwalker_sparc.h"
+#include "stackwalker/stackwalker_sparc.h"
 
 namespace dump_helper {
 

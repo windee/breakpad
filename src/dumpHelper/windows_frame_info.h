@@ -45,7 +45,6 @@
 #include <vector>
 
 #include "common/using_std_string.h"
-#include "common/minidump/breakpad_types.h"
 #include "common/logging.h"
 #include "tokenize.h"
 
