@@ -35,11 +35,11 @@
 #include <fstream>
 #include <vector>
 
-#include "string_utils-inl.h"
+#include "sender/string_utils-inl.h"
 
-#include "http_upload.h"
+#include "sender/http_upload.h"
 
-#include "../common/path_helper.h"
+#include "common/path_helper.h"
 
 namespace {
   using std::string;

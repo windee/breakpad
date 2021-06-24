@@ -30,8 +30,8 @@
 // Disable exception handler warnings.
 #pragma warning( disable : 4530 )
 
-#include "crash_sender.h"
-#include "http_upload.h"
+#include "sender/sender_win.h"
+#include "sender/http_upload.h"
 
 namespace dump_helper {
 

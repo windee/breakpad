@@ -54,9 +54,9 @@
 
 #ifdef _WIN32
 #include "common/getopt.h"
-#include "sender/crash_sender.h"
+#include "sender/sender_win.h"
 #else
-
+#include "sender/sender_mac.h"
 #endif // _WIN32
 
 
@@ -82,7 +82,7 @@ struct Options {
 };
 
 
-const std::wstring server_url = L"https://kim-api1.kwaitalk.com/clientlog/log/crash";
+const std::string server_url = "https://kim-api1.kwaitalk.com/clientlog/log/crash";
 
 bool GenerateDumpInfo(const string& minidump_file, Minidump_Info* dmpInfo) {
   scoped_ptr<SimpleSymbolSupplier> symbol_supplier;
@@ -142,7 +142,7 @@ int main(int argc, const char* argv[]) {
 
 	for (int i = 0; i < options.dump_files.size(); ++i) {
 		Minidump_Info info;
-		if (GenerateDumpInfo(options.crash_directory + "\\" + options.dump_files[i], &info)) {
+		if (GenerateDumpInfo(options.crash_directory + "/" + options.dump_files[i], &info)) {
 			vecInfo.push_back(info);
 		}
 	}
@@ -162,6 +162,7 @@ int main(int argc, const char* argv[]) {
 #ifdef _WIN32
 	dump_helper::SendCrashReport(server_url, params, files, &report_code);
 #else
+    dump_helper::SendCrashReport(server_url, params, vecInfo[0].dump_path);
 
 #endif // _WIN32
 

@@ -33,9 +33,9 @@
 
 #include <wchar.h>
 
-#include "string_utils-inl.h"
+#include "sender/string_utils-inl.h"
 
-#include "guid_string.h"
+#include "sender/guid_string.h"
 
 namespace dump_helper {
 

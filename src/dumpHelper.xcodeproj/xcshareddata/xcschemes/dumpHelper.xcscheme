@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/lichuanle/Downloads/1620632820774e38d934d-a11f-4c3e-972f-2daa55ef826f.dmp"
+            argument = "&quot;/Users/lichuanle/Downloads&quot; &quot;kwaiUserId=360383664071&quot; &quot;type=render&quot; &quot;appName=kim&quot;"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
