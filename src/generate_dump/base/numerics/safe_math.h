@@ -6,7 +6,6 @@
 #define MINI_CHROMIUM_BASE_NUMERICS_SAFE_MATH_H_
 
 #include "base/numerics/checked_math.h"
-#include "base/numerics/clamped_math.h"
 #include "base/numerics/safe_conversions.h"
 
 #endif  // MINI_CHROMIUM_BASE_NUMERICS_SAFE_MATH_H_
