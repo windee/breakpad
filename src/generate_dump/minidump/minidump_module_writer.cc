@@ -19,7 +19,6 @@
 #include <limits>
 #include <utility>
 
-#include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
 #include "minidump/minidump_string_writer.h"
 #include "minidump/minidump_writer_util.h"
@@ -49,7 +48,6 @@ MinidumpModuleCodeViewRecordPDBLinkWriter<
 template <typename CodeViewRecordType>
 size_t
 MinidumpModuleCodeViewRecordPDBLinkWriter<CodeViewRecordType>::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   // NUL-terminate.
   return offsetof(decltype(codeview_record_), pdb_name) +
@@ -59,7 +57,6 @@ MinidumpModuleCodeViewRecordPDBLinkWriter<CodeViewRecordType>::SizeOfObject() {
 template <typename CodeViewRecordType>
 bool MinidumpModuleCodeViewRecordPDBLinkWriter<CodeViewRecordType>::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = &codeview_record_;
@@ -85,7 +82,6 @@ MinidumpModuleCodeViewRecordPDB20Writer::
 void MinidumpModuleCodeViewRecordPDB20Writer::SetTimestampAndAge(
     time_t timestamp,
     uint32_t age) {
-  DCHECK_EQ(state(), kStateMutable);
 
   internal::MinidumpWriterUtil::AssignTimeT(&codeview_record()->timestamp,
                                             timestamp);
@@ -101,7 +97,6 @@ MinidumpModuleCodeViewRecordPDB70Writer::
 
 void MinidumpModuleCodeViewRecordPDB70Writer::InitializeFromSnapshot(
     const ModuleSnapshot* module_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
 
   SetPDBName(module_snapshot->DebugFileName());
 
@@ -119,19 +114,16 @@ MinidumpModuleCodeViewRecordBuildIDWriter::
     ~MinidumpModuleCodeViewRecordBuildIDWriter() {}
 
 size_t MinidumpModuleCodeViewRecordBuildIDWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
   return offsetof(CodeViewRecordBuildID, build_id) + build_id_.size();
 }
 
 void MinidumpModuleCodeViewRecordBuildIDWriter::SetBuildID(
     const std::vector<uint8_t>& build_id) {
-  DCHECK_EQ(state(), kStateMutable);
   build_id_ = build_id;
 }
 
 bool MinidumpModuleCodeViewRecordBuildIDWriter::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   CodeViewRecordBuildID cv;
   cv.signature = CodeViewRecordBuildID::kSignature;
@@ -158,23 +150,7 @@ MinidumpModuleMiscDebugRecordWriter::MinidumpModuleMiscDebugRecordWriter()
 
 MinidumpModuleMiscDebugRecordWriter::~MinidumpModuleMiscDebugRecordWriter() {}
 
-void MinidumpModuleMiscDebugRecordWriter::SetData(const std::string& data,
-                                                  bool utf16) {
-  DCHECK_EQ(state(), kStateMutable);
-
-  if (!utf16) {
-    data_utf16_.clear();
-    image_debug_misc_.Unicode = 0;
-    data_ = data;
-  } else {
-    data_.clear();
-    image_debug_misc_.Unicode = 1;
-    data_utf16_ = internal::MinidumpWriterUtil::ConvertUTF8ToUTF16(data);
-  }
-}
-
 bool MinidumpModuleMiscDebugRecordWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -182,12 +158,10 @@ bool MinidumpModuleMiscDebugRecordWriter::Freeze() {
 
   // NUL-terminate.
   if (!image_debug_misc_.Unicode) {
-    DCHECK(data_utf16_.empty());
     image_debug_misc_.Length = base::checked_cast<uint32_t>(
         offsetof(decltype(image_debug_misc_), Data) +
         (data_.size() + 1) * sizeof(data_[0]));
   } else {
-    DCHECK(data_.empty());
     image_debug_misc_.Length = base::checked_cast<uint32_t>(
         offsetof(decltype(image_debug_misc_), Data) +
         (data_utf16_.size() + 1) * sizeof(data_utf16_[0]));
@@ -197,14 +171,12 @@ bool MinidumpModuleMiscDebugRecordWriter::Freeze() {
 }
 
 size_t MinidumpModuleMiscDebugRecordWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return image_debug_misc_.Length;
 }
 
 bool MinidumpModuleMiscDebugRecordWriter::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   const size_t base_length = offsetof(decltype(image_debug_misc_), Data);
 
@@ -214,10 +186,8 @@ bool MinidumpModuleMiscDebugRecordWriter::WriteObject(
   std::vector<WritableIoVec> iovecs(1, iov);
 
   if (!image_debug_misc_.Unicode) {
-    DCHECK(data_utf16_.empty());
     iov.iov_base = &data_[0];
   } else {
-    DCHECK(data_.empty());
     iov.iov_base = &data_utf16_[0];
   }
   iov.iov_len = image_debug_misc_.Length - base_length;
@@ -240,10 +210,6 @@ MinidumpModuleWriter::~MinidumpModuleWriter() {}
 
 void MinidumpModuleWriter::InitializeFromSnapshot(
     const ModuleSnapshot* module_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(!name_);
-  DCHECK(!codeview_record_);
-  DCHECK(!misc_debug_record_);
 
   SetName(module_snapshot->Name());
 
@@ -293,14 +259,11 @@ void MinidumpModuleWriter::InitializeFromSnapshot(
 }
 
 const MINIDUMP_MODULE* MinidumpModuleWriter::MinidumpModule() const {
-  DCHECK_EQ(state(), kStateWritable);
 
   return &module_;
 }
 
 void MinidumpModuleWriter::SetName(const std::string& name) {
-  DCHECK_EQ(state(), kStateMutable);
-
   if (!name_) {
     name_.reset(new internal::MinidumpUTF16StringWriter());
   }
@@ -309,20 +272,17 @@ void MinidumpModuleWriter::SetName(const std::string& name) {
 
 void MinidumpModuleWriter::SetCodeViewRecord(
     std::unique_ptr<MinidumpModuleCodeViewRecordWriter> codeview_record) {
-  DCHECK_EQ(state(), kStateMutable);
 
   codeview_record_ = std::move(codeview_record);
 }
 
 void MinidumpModuleWriter::SetMiscDebugRecord(
     std::unique_ptr<MinidumpModuleMiscDebugRecordWriter> misc_debug_record) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_debug_record_ = std::move(misc_debug_record);
 }
 
 void MinidumpModuleWriter::SetTimestamp(time_t timestamp) {
-  DCHECK_EQ(state(), kStateMutable);
 
   internal::MinidumpWriterUtil::AssignTimeT(&module_.TimeDateStamp, timestamp);
 }
@@ -331,7 +291,6 @@ void MinidumpModuleWriter::SetFileVersion(uint16_t version_0,
                                           uint16_t version_1,
                                           uint16_t version_2,
                                           uint16_t version_3) {
-  DCHECK_EQ(state(), kStateMutable);
 
   module_.VersionInfo.dwFileVersionMS =
       (implicit_cast<uint32_t>(version_0) << 16) | version_1;
@@ -343,7 +302,6 @@ void MinidumpModuleWriter::SetProductVersion(uint16_t version_0,
                                              uint16_t version_1,
                                              uint16_t version_2,
                                              uint16_t version_3) {
-  DCHECK_EQ(state(), kStateMutable);
 
   module_.VersionInfo.dwProductVersionMS =
       (implicit_cast<uint32_t>(version_0) << 16) | version_1;
@@ -353,16 +311,12 @@ void MinidumpModuleWriter::SetProductVersion(uint16_t version_0,
 
 void MinidumpModuleWriter::SetFileFlagsAndMask(uint32_t file_flags,
                                                uint32_t file_flags_mask) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(file_flags & ~file_flags_mask, 0u);
 
   module_.VersionInfo.dwFileFlags = file_flags;
   module_.VersionInfo.dwFileFlagsMask = file_flags_mask;
 }
 
 bool MinidumpModuleWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
-  CHECK(name_);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -382,7 +336,6 @@ bool MinidumpModuleWriter::Freeze() {
 }
 
 size_t MinidumpModuleWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   // This object doesn’t directly write anything itself. Its MINIDUMP_MODULE is
   // written by its parent as part of a MINIDUMP_MODULE_LIST, and its children
@@ -391,8 +344,6 @@ size_t MinidumpModuleWriter::SizeOfObject() {
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpModuleWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK(name_);
 
   std::vector<MinidumpWritable*> children;
   children.push_back(name_.get());
@@ -407,7 +358,6 @@ std::vector<internal::MinidumpWritable*> MinidumpModuleWriter::Children() {
 }
 
 bool MinidumpModuleWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   // This object doesn’t directly write anything itself. Its MINIDUMP_MODULE is
   // written by its parent as part of a MINIDUMP_MODULE_LIST, and its children
@@ -422,8 +372,6 @@ MinidumpModuleListWriter::~MinidumpModuleListWriter() {}
 
 void MinidumpModuleListWriter::InitializeFromSnapshot(
     const std::vector<const ModuleSnapshot*>& module_snapshots) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(modules_.empty());
 
   for (const ModuleSnapshot* module_snapshot : module_snapshots) {
     auto module = std::make_unique<MinidumpModuleWriter>();
@@ -434,13 +382,11 @@ void MinidumpModuleListWriter::InitializeFromSnapshot(
 
 void MinidumpModuleListWriter::AddModule(
     std::unique_ptr<MinidumpModuleWriter> module) {
-  DCHECK_EQ(state(), kStateMutable);
 
   modules_.push_back(std::move(module));
 }
 
 bool MinidumpModuleListWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpStreamWriter::Freeze()) {
     return false;
@@ -448,7 +394,6 @@ bool MinidumpModuleListWriter::Freeze() {
 
   size_t module_count = modules_.size();
   if (!AssignIfInRange(&module_list_base_.NumberOfModules, module_count)) {
-    LOG(ERROR) << "module_count " << module_count << " out of range";
     return false;
   }
 
@@ -456,13 +401,11 @@ bool MinidumpModuleListWriter::Freeze() {
 }
 
 size_t MinidumpModuleListWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return sizeof(module_list_base_) + modules_.size() * sizeof(MINIDUMP_MODULE);
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpModuleListWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
 
   std::vector<MinidumpWritable*> children;
   for (const auto& module : modules_) {
@@ -473,7 +416,6 @@ std::vector<internal::MinidumpWritable*> MinidumpModuleListWriter::Children() {
 }
 
 bool MinidumpModuleListWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = &module_list_base_;

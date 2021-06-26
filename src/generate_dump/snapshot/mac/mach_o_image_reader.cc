@@ -21,10 +21,8 @@
 #include <limits>
 #include <utility>
 
-#include "base/logging.h"
 #include "base/stl_util.h"
 #include "base/strings/stringprintf.h"
-#include "client/crashpad_info.h"
 #include "snapshot/mac/mach_o_image_segment_reader.h"
 #include "snapshot/mac/mach_o_image_symbol_table_reader.h"
 #include "snapshot/mac/process_reader_mac.h"
@@ -56,7 +54,6 @@ MachOImageReader::MachOImageReader()
       id_dylib_command_(),
       process_reader_(nullptr),
       file_type_(0),
-      initialized_(),
       symbol_table_initialized_() {
 }
 
@@ -66,7 +63,6 @@ MachOImageReader::~MachOImageReader() {
 bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
                                   mach_vm_address_t address,
                                   const std::string& name) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   process_reader_ = process_reader;
   address_ = address;
@@ -77,15 +73,12 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
 
   process_types::mach_header mach_header;
   if (!mach_header.Read(process_reader, address)) {
-    LOG(WARNING) << "could not read mach_header" << module_info_;
     return false;
   }
 
   const bool is_64_bit = process_reader->Is64Bit();
   const uint32_t kExpectedMagic = is_64_bit ? MH_MAGIC_64 : MH_MAGIC;
   if (mach_header.magic != kExpectedMagic) {
-    LOG(WARNING) << base::StringPrintf("unexpected mach_header::magic 0x%08x",
-                                       mach_header.magic) << module_info_;
     return false;
   }
 
@@ -97,9 +90,6 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
       file_type_ = mach_header.filetype;
       break;
     default:
-      LOG(WARNING) << base::StringPrintf(
-                          "unexpected mach_header::filetype 0x%08x",
-                          mach_header.filetype) << module_info_;
       return false;
   }
 
@@ -205,15 +195,10 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
     // space allotted for load commands.
     if (load_command_address + load_command.ExpectedSize(process_reader) >
             kLoadCommandAddressLimit) {
-      LOG(WARNING) << base::StringPrintf(
-                          "load_command at 0x%llx exceeds sizeofcmds 0x%x",
-                          load_command_address,
-                          mach_header.sizeofcmds) << load_command_info;
       return false;
     }
 
     if (!load_command.Read(process_reader, load_command_address)) {
-      LOG(WARNING) << "could not read load_command" << load_command_info;
       return false;
     }
 
@@ -227,12 +212,6 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
     // doesn’t overflow the space allotted for load commands.
     if (load_command_address + load_command.cmdsize >
             kLoadCommandAddressLimit) {
-      LOG(WARNING)
-          << base::StringPrintf(
-                 "load_command at 0x%llx cmdsize 0x%x exceeds sizeofcmds 0x%x",
-                 load_command_address,
-                 load_command.cmdsize,
-                 mach_header.sizeofcmds) << load_command_info;
       return false;
     }
 
@@ -244,18 +223,11 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
       }
 
       if (load_command.cmdsize < kLoadCommandReaders[reader_index].size) {
-        LOG(WARNING) << base::StringPrintf(
-                            "load command cmdsize 0x%x insufficient for 0x%zx",
-                            load_command.cmdsize,
-                            kLoadCommandReaders[reader_index].size)
-                     << load_command_info;
         return false;
       }
 
       if (kLoadCommandReaders[reader_index].singleton) {
         if (singleton_indices[reader_index] != kInvalidSegmentIndex) {
-          LOG(WARNING) << "duplicate load command at "
-                       << singleton_indices[reader_index] << load_command_info;
           return false;
         }
 
@@ -286,11 +258,6 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
     CheckedMachAddressRange slid_segment_range(
         process_reader_->Is64Bit(), slid_segment_address, slid_segment_size);
     if (!slid_segment_range.IsValid()) {
-      LOG(WARNING) << base::StringPrintf(
-                          "invalid slid segment range 0x%llx + 0x%llx, "
-                          "segment ",
-                          slid_segment_address,
-                          slid_segment_size) << segment->Name() << module_info_;
       return false;
     }
   }
@@ -299,22 +266,18 @@ bool MachOImageReader::Initialize(ProcessReaderMac* process_reader,
     // The __TEXT segment is required. Even a module with no executable code
     // will have a __TEXT segment encompassing the Mach-O header and load
     // commands. Without a __TEXT segment, |size_| will not have been computed.
-    LOG(WARNING) << "no " SEG_TEXT " segment" << module_info_;
     return false;
   }
 
   if (mach_header.filetype == MH_DYLIB && !id_dylib_command_) {
     // This doesn’t render a module unusable, it’s just weird and worth noting.
-    LOG(INFO) << "no LC_ID_DYLIB" << module_info_;
   }
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
 const MachOImageSegmentReader* MachOImageReader::GetSegmentByName(
     const std::string& segment_name) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   const auto& iterator = segment_map_.find(segment_name);
   if (iterator == segment_map_.end()) {
@@ -328,7 +291,6 @@ const process_types::section* MachOImageReader::GetSectionByName(
     const std::string& segment_name,
     const std::string& section_name,
     mach_vm_address_t* address) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   const MachOImageSegmentReader* segment = GetSegmentByName(segment_name);
   if (!segment) {
@@ -342,11 +304,9 @@ const process_types::section* MachOImageReader::GetSectionAtIndex(
     size_t index,
     const MachOImageSegmentReader** containing_segment,
     mach_vm_address_t* address) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   static_assert(NO_SECT == 0, "NO_SECT must be zero");
   if (index == NO_SECT) {
-    LOG(WARNING) << "section index " << index << " out of range";
     return nullptr;
   }
 
@@ -369,14 +329,12 @@ const process_types::section* MachOImageReader::GetSectionAtIndex(
     local_index -= nsects;
   }
 
-  LOG(WARNING) << "section index " << index << " out of range";
   return nullptr;
 }
 
 bool MachOImageReader::LookUpExternalDefinedSymbol(
     const std::string& name,
     mach_vm_address_t* value) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   if (symbol_table_initialized_.is_uninitialized()) {
     InitializeSymbolTable();
@@ -438,14 +396,6 @@ bool MachOImageReader::LookUpExternalDefinedSymbol(
     std::string section_name_full =
         MachOImageSegmentReader::SegmentAndSectionNameString(section->segname,
                                                              section->sectname);
-    LOG(WARNING) << base::StringPrintf(
-                        "symbol %s (0x%llx) outside of section %s (0x%llx + "
-                        "0x%llx)",
-                        name.c_str(),
-                        slid_value,
-                        section_name_full.c_str(),
-                        section_address,
-                        section->size) << module_info_;
     return false;
   }
 
@@ -454,8 +404,6 @@ bool MachOImageReader::LookUpExternalDefinedSymbol(
 }
 
 uint32_t MachOImageReader::DylibVersion() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
-  DCHECK_EQ(FileType(), implicit_cast<uint32_t>(MH_DYLIB));
 
   if (id_dylib_command_) {
     return id_dylib_command_->dylib_current_version;
@@ -466,60 +414,7 @@ uint32_t MachOImageReader::DylibVersion() const {
 }
 
 void MachOImageReader::UUID(crashpad::UUID* uuid) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   memcpy(uuid, &uuid_, sizeof(uuid_));
-}
-
-bool MachOImageReader::GetCrashpadInfo(
-    process_types::CrashpadInfo* crashpad_info) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
-
-  mach_vm_address_t crashpad_info_address;
-  const process_types::section* crashpad_info_section =
-      GetSectionByName(SEG_DATA, "crashpad_info", &crashpad_info_address);
-  if (!crashpad_info_section) {
-    return false;
-  }
-
-  if (crashpad_info_section->size <
-      crashpad_info->MinimumSize(process_reader_)) {
-    LOG(WARNING) << "small crashpad info section size "
-                 << crashpad_info_section->size << module_info_;
-    return false;
-  }
-
-  // This Read() will zero out anything beyond the structure’s declared size.
-  if (!crashpad_info->Read(process_reader_, crashpad_info_address)) {
-    LOG(WARNING) << "could not read crashpad info" << module_info_;
-    return false;
-  }
-
-  if (crashpad_info->signature != CrashpadInfo::kSignature ||
-      crashpad_info->version != 1) {
-    LOG(WARNING) << base::StringPrintf(
-        "unexpected crashpad info signature 0x%x, version %u%s",
-        crashpad_info->signature,
-        crashpad_info->version,
-        module_info_.c_str());
-    return false;
-  }
-
-  // Don’t require strict equality, to leave wiggle room for sloppy linkers.
-  if (crashpad_info->size > crashpad_info_section->size) {
-    LOG(WARNING) << "crashpad info struct size " << crashpad_info->size
-                 << " large for section size " << crashpad_info_section->size
-                 << module_info_;
-    return false;
-  }
-
-  if (crashpad_info->size > crashpad_info->ExpectedSize(process_reader_)) {
-    // This isn’t strictly a problem, because unknown fields will simply be
-    // ignored, but it may be of diagnostic interest.
-    LOG(INFO) << "large crashpad info size " << crashpad_info->size
-              << module_info_;
-  }
-
-  return true;
 }
 
 template <typename T>
@@ -528,12 +423,9 @@ bool MachOImageReader::ReadLoadCommand(mach_vm_address_t load_command_address,
                                        uint32_t expected_load_command_id,
                                        T* load_command) {
   if (!load_command->Read(process_reader_, load_command_address)) {
-    LOG(WARNING) << "could not read load command" << load_command_info;
     return false;
   }
 
-  DCHECK_GE(load_command->cmdsize, load_command->Size());
-  DCHECK_EQ(load_command->cmd, expected_load_command_id);
   return true;
 }
 
@@ -566,10 +458,6 @@ bool MachOImageReader::ReadSegmentCommand(
   const auto insert_result =
       segment_map_.insert(std::make_pair(segment_name, segment_index));
   if (!insert_result.second) {
-    LOG(WARNING) << base::StringPrintf("duplicate %s segment at %zu and %zu",
-                                       segment_name.c_str(),
-                                       insert_result.first->second,
-                                       segment_index) << load_command_info;
     return false;
   }
 
@@ -577,7 +465,6 @@ bool MachOImageReader::ReadSegmentCommand(
     mach_vm_size_t vmsize = segment->vmsize();
 
     if (vmsize == 0) {
-      LOG(WARNING) << "zero-sized " SEG_TEXT " segment" << load_command_info;
       return false;
     }
 
@@ -616,13 +503,9 @@ bool MachOImageReader::ReadIdDylibCommand(
     mach_vm_address_t load_command_address,
     const std::string& load_command_info) {
   if (file_type_ != MH_DYLIB) {
-    LOG(WARNING) << base::StringPrintf(
-                        "LC_ID_DYLIB inappropriate in non-dylib file type 0x%x",
-                        file_type_) << load_command_info;
     return false;
   }
 
-  DCHECK(!id_dylib_command_);
   id_dylib_command_.reset(new process_types::dylib_command());
   return ReadLoadCommand(load_command_address,
                          load_command_info,
@@ -634,10 +517,6 @@ bool MachOImageReader::ReadDylinkerCommand(
     mach_vm_address_t load_command_address,
     const std::string& load_command_info) {
   if (file_type_ != MH_EXECUTE && file_type_ != MH_DYLINKER) {
-    LOG(WARNING) << base::StringPrintf(
-                        "LC_LOAD_DYLINKER/LC_ID_DYLINKER inappropriate in file "
-                        "type 0x%x",
-                        file_type_) << load_command_info;
     return false;
   }
 
@@ -655,7 +534,6 @@ bool MachOImageReader::ReadDylinkerCommand(
           load_command_address + dylinker_command.name,
           dylinker_command.cmdsize - dylinker_command.name,
           &dylinker_name_)) {
-    LOG(WARNING) << "could not read dylinker_command name" << load_command_info;
     return false;
   }
 
@@ -692,12 +570,10 @@ bool MachOImageReader::ReadSourceVersionCommand(
 bool MachOImageReader::ReadUnexpectedCommand(
     mach_vm_address_t load_command_address,
     const std::string& load_command_info) {
-  LOG(WARNING) << "unexpected load command" << load_command_info;
   return false;
 }
 
 void MachOImageReader::InitializeSymbolTable() const {
-  DCHECK(symbol_table_initialized_.is_uninitialized());
   symbol_table_initialized_.set_invalid();
 
   if (!symtab_command_) {
@@ -714,7 +590,6 @@ void MachOImageReader::InitializeSymbolTable() const {
   const MachOImageSegmentReader* linkedit_segment =
       GetSegmentByName(SEG_LINKEDIT);
   if (!linkedit_segment) {
-    LOG(WARNING) << "no " SEG_LINKEDIT " segment";
     return;
   }
 

@@ -14,7 +14,6 @@
 
 #include "util/numeric/checked_address_range.h"
 
-#include "base/check_op.h"
 #include "base/format_macros.h"
 #include "base/strings/stringprintf.h"
 
@@ -93,7 +92,6 @@ void CheckedAddressRangeGeneric<ValueType, SizeType>::SetRange(bool is_64_bit,
 template <class ValueType, class SizeType>
 bool CheckedAddressRangeGeneric<ValueType, SizeType>::ContainsValue(
     ValueType value) const {
-  DCHECK(range_ok_);
 
   if (is_64_bit_) {
     return range_64_.ContainsValue(value);
@@ -109,9 +107,6 @@ bool CheckedAddressRangeGeneric<ValueType, SizeType>::ContainsValue(
 template <class ValueType, class SizeType>
 bool CheckedAddressRangeGeneric<ValueType, SizeType>::ContainsRange(
     const CheckedAddressRangeGeneric& that) const {
-  DCHECK_EQ(is_64_bit_, that.is_64_bit_);
-  DCHECK(range_ok_);
-  DCHECK(that.range_ok_);
 
   return is_64_bit_ ? range_64_.ContainsRange(that.range_64_)
                     : range_32_.ContainsRange(that.range_32_);

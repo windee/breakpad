@@ -14,7 +14,6 @@
 
 #include "minidump/minidump_memory_info_writer.h"
 
-#include "base/check_op.h"
 #include "snapshot/memory_map_region_snapshot.h"
 #include "util/file/file_writer.h"
 
@@ -29,15 +28,11 @@ MinidumpMemoryInfoListWriter::~MinidumpMemoryInfoListWriter() {
 
 void MinidumpMemoryInfoListWriter::InitializeFromSnapshot(
     const std::vector<const MemoryMapRegionSnapshot*>& memory_map) {
-  DCHECK_EQ(state(), kStateMutable);
-
-  DCHECK(items_.empty());
   for (const auto& region : memory_map)
     items_.push_back(region->AsMinidumpMemoryInfo());
 }
 
 bool MinidumpMemoryInfoListWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpStreamWriter::Freeze())
     return false;
@@ -50,19 +45,16 @@ bool MinidumpMemoryInfoListWriter::Freeze() {
 }
 
 size_t MinidumpMemoryInfoListWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
   return sizeof(memory_info_list_base_) + sizeof(items_[0]) * items_.size();
 }
 
 std::vector<internal::MinidumpWritable*>
 MinidumpMemoryInfoListWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
   return std::vector<internal::MinidumpWritable*>();
 }
 
 bool MinidumpMemoryInfoListWriter::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = &memory_info_list_base_;

@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "base/compiler_specific.h"
-#include "base/logging.h"
 #include "snapshot/cpu_context.h"
 #include "util/file/file_writer.h"
 #include "util/stdlib/aligned_allocator.h"
@@ -102,8 +101,6 @@ MinidumpContextWriter::CreateFromSnapshot(const CPUContext* context_snapshot) {
     }
 
     default: {
-      LOG(ERROR) << "unknown context architecture "
-                 << context_snapshot->architecture;
       break;
     }
   }
@@ -112,8 +109,6 @@ MinidumpContextWriter::CreateFromSnapshot(const CPUContext* context_snapshot) {
 }
 
 size_t MinidumpContextWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
-
   return ContextSize();
 }
 
@@ -128,9 +123,6 @@ MinidumpContextX86Writer::~MinidumpContextX86Writer() {
 
 void MinidumpContextX86Writer::InitializeFromSnapshot(
     const CPUContextX86* context_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(context_.context_flags, kMinidumpContextX86);
-
   context_.context_flags = kMinidumpContextX86All;
 
   context_.dr0 = context_snapshot->dr0;
@@ -168,13 +160,11 @@ void MinidumpContextX86Writer::InitializeFromSnapshot(
 }
 
 bool MinidumpContextX86Writer::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   return file_writer->Write(&context_, sizeof(context_));
 }
 
 size_t MinidumpContextX86Writer::ContextSize() const {
-  DCHECK_GE(state(), kStateFrozen);
 
   return sizeof(context_);
 }
@@ -209,8 +199,6 @@ void MinidumpContextAMD64Writer::operator delete(void* pointer) {
 
 void MinidumpContextAMD64Writer::InitializeFromSnapshot(
     const CPUContextX86_64* context_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(context_.context_flags, kMinidumpContextAMD64);
 
   context_.context_flags = kMinidumpContextAMD64All;
 
@@ -249,20 +237,17 @@ void MinidumpContextAMD64Writer::InitializeFromSnapshot(
 }
 
 size_t MinidumpContextAMD64Writer::Alignment() {
-  DCHECK_GE(state(), kStateFrozen);
 
   // Match the alignment of MinidumpContextAMD64.
   return 16;
 }
 
 bool MinidumpContextAMD64Writer::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   return file_writer->Write(&context_, sizeof(context_));
 }
 
 size_t MinidumpContextAMD64Writer::ContextSize() const {
-  DCHECK_GE(state(), kStateFrozen);
 
   return sizeof(context_);
 }
@@ -276,8 +261,6 @@ MinidumpContextARMWriter::~MinidumpContextARMWriter() = default;
 
 void MinidumpContextARMWriter::InitializeFromSnapshot(
     const CPUContextARM* context_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(context_.context_flags, kMinidumpContextARM);
 
   context_.context_flags = kMinidumpContextARMAll;
 
@@ -300,12 +283,10 @@ void MinidumpContextARMWriter::InitializeFromSnapshot(
 }
 
 bool MinidumpContextARMWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
   return file_writer->Write(&context_, sizeof(context_));
 }
 
 size_t MinidumpContextARMWriter::ContextSize() const {
-  DCHECK_GE(state(), kStateFrozen);
   return sizeof(context_);
 }
 
@@ -318,8 +299,6 @@ MinidumpContextARM64Writer::~MinidumpContextARM64Writer() = default;
 
 void MinidumpContextARM64Writer::InitializeFromSnapshot(
     const CPUContextARM64* context_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(context_.context_flags, kMinidumpContextARM64);
 
   context_.context_flags = kMinidumpContextARM64Full;
 
@@ -347,12 +326,10 @@ void MinidumpContextARM64Writer::InitializeFromSnapshot(
 }
 
 bool MinidumpContextARM64Writer::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
   return file_writer->Write(&context_, sizeof(context_));
 }
 
 size_t MinidumpContextARM64Writer::ContextSize() const {
-  DCHECK_GE(state(), kStateFrozen);
   return sizeof(context_);
 }
 
@@ -365,8 +342,6 @@ MinidumpContextMIPSWriter::~MinidumpContextMIPSWriter() = default;
 
 void MinidumpContextMIPSWriter::InitializeFromSnapshot(
     const CPUContextMIPS* context_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(context_.context_flags, kMinidumpContextMIPS);
 
   context_.context_flags = kMinidumpContextMIPSAll;
 
@@ -394,12 +369,10 @@ void MinidumpContextMIPSWriter::InitializeFromSnapshot(
 }
 
 bool MinidumpContextMIPSWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
   return file_writer->Write(&context_, sizeof(context_));
 }
 
 size_t MinidumpContextMIPSWriter::ContextSize() const {
-  DCHECK_GE(state(), kStateFrozen);
   return sizeof(context_);
 }
 
@@ -412,8 +385,6 @@ MinidumpContextMIPS64Writer::~MinidumpContextMIPS64Writer() = default;
 
 void MinidumpContextMIPS64Writer::InitializeFromSnapshot(
     const CPUContextMIPS64* context_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(context_.context_flags, kMinidumpContextMIPS64);
 
   context_.context_flags = kMinidumpContextMIPS64All;
 
@@ -444,12 +415,10 @@ void MinidumpContextMIPS64Writer::InitializeFromSnapshot(
 
 bool MinidumpContextMIPS64Writer::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
   return file_writer->Write(&context_, sizeof(context_));
 }
 
 size_t MinidumpContextMIPS64Writer::ContextSize() const {
-  DCHECK_GE(state(), kStateFrozen);
   return sizeof(context_);
 }
 

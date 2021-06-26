@@ -17,7 +17,6 @@
 #include <stddef.h>
 #include <time.h>
 
-#include "base/logging.h"
 #include "base/stl_util.h"
 #include "build/build_config.h"
 
@@ -33,8 +32,6 @@ void TimeZone(const timeval& snapshot_time,
   tzset();
 
   tm local;
-  PCHECK(localtime_r(&snapshot_time.tv_sec, &local)) << "localtime_r";
-
   *standard_name = tzname[0];
 
   bool found_transition = false;
@@ -76,11 +73,9 @@ void TimeZone(const timeval& snapshot_time,
       probe_tm.tm_year = local.tm_year;
       probe_tm.tm_isdst = -1;
       if (mktime(&probe_tm) == -1) {
-        PLOG(WARNING) << "mktime";
         continue;
       }
       if (probe_tm.tm_isdst < 0 || local.tm_isdst < 0) {
-        LOG(WARNING) << "dst status not available";
         continue;
       }
       if (probe_tm.tm_isdst != local.tm_isdst) {

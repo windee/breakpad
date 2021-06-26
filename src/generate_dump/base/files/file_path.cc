@@ -6,7 +6,6 @@
 
 #include <ctype.h>
 
-#include "base/logging.h"
 #include "base/stl_util.h"
 
 namespace base {
@@ -221,8 +220,6 @@ FilePath FilePath::Append(const StringType& component) const {
     appended = &without_nuls;
   }
 
-  DCHECK(!IsPathAbsolute(*appended));
-
   if (path_.compare(kCurrentDirectory) == 0) {
     // Append normally doesn't do any normalization, but as a special case,
     // when appending to kCurrentDirectory, just return a new path for the
@@ -287,6 +284,3 @@ void FilePath::StripTrailingSeparatorsInternal() {
 
 }  // namespace base
 
-void PrintTo(const base::FilePath& path, std::ostream* out) {
-  *out << path.value().c_str();
-}

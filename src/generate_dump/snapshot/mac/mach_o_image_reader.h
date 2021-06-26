@@ -26,7 +26,6 @@
 
 #include "base/macros.h"
 #include "snapshot/mac/process_types.h"
-#include "util/misc/initialization_state_dcheck.h"
 #include "util/misc/uuid.h"
 
 namespace crashpad {
@@ -40,8 +39,6 @@ class ProcessReaderMac;
 //! This class is capable of reading both 32-bit (`mach_header`/`MH_MAGIC`) and
 //! 64-bit (`mach_header_64`/`MH_MAGIC_64`) images based on the bitness of the
 //! remote process.
-//!
-//! \sa MachOImageAnnotationsReader
 class MachOImageReader {
  public:
   MachOImageReader();
@@ -267,14 +264,6 @@ class MachOImageReader {
   //! be empty.
   std::string DylinkerName() const { return dylinker_name_; }
 
-  //! \brief Obtains the module’s CrashpadInfo structure.
-  //!
-  //! \return `true` on success, `false` on failure. If the module does not have
-  //!     a `__DATA,crashpad_info` section, this will return `false` without
-  //!     logging any messages. Other failures will result in messages being
-  //!     logged.
-  bool GetCrashpadInfo(process_types::CrashpadInfo* crashpad_info) const;
-
  private:
   // A generic helper routine for the other Read*Command() methods.
   template <typename T>
@@ -339,7 +328,6 @@ class MachOImageReader {
   std::unique_ptr<process_types::dylib_command> id_dylib_command_;
   ProcessReaderMac* process_reader_;  // weak
   uint32_t file_type_;
-  InitializationStateDcheck initialized_;
 
   // symbol_table_initialized_ protects symbol_table_: symbol_table_ can only
   // be used when symbol_table_initialized_ is valid, although

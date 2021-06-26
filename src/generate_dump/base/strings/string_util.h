@@ -6,7 +6,8 @@
 #define MINI_CHROMIUM_BASE_STRINGS_STRING_UTIL_H_
 
 #include "base/compiler_specific.h"
-#include "base/logging.h"
+#include <stddef.h>
+#include <stdarg.h>
 
 namespace base {
 
@@ -27,7 +28,6 @@ size_t wcslcpy(wchar_t* dst, const wchar_t* src, size_t dst_size);
 template <class string_type>
 inline typename string_type::value_type* WriteInto(string_type* str,
                                                    size_t length_with_null) {
-  DCHECK_NE(0u, length_with_null);
   str->reserve(length_with_null);
   str->resize(length_with_null - 1);
 

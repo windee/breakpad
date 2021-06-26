@@ -21,7 +21,6 @@
 #include <iterator>
 #include <set>
 
-#include "base/mac/mach_logging.h"
 #include "base/mac/scoped_mach_port.h"
 #include "util/posix/process_info.h"
 
@@ -54,7 +53,6 @@ bool TaskForPIDGroupCheck(const ProcessInfo& process_info) {
                       groups_self.end(),
                       std::inserter(difference, difference.begin()));
   if (!difference.empty()) {
-    LOG(ERROR) << "permission denied (gid)";
     return false;
   }
 
@@ -126,7 +124,6 @@ bool TaskForPIDCheck(task_t task) {
   if (process_info.RealUserID() != uid ||
       process_info.EffectiveUserID() != uid ||
       process_info.SavedUserID() != uid) {
-    LOG(ERROR) << "permission denied (uid)";
     return false;
   }
 
@@ -137,7 +134,6 @@ bool TaskForPIDCheck(task_t task) {
   // allowing other processes access to this data based solely on a check of the
   // current credentials could violate confidentiality.
   if (process_info.DidChangePrivileges()) {
-    LOG(ERROR) << "permission denied (P_SUGID)";
     return false;
   }
 
@@ -150,7 +146,6 @@ task_t TaskForPID(pid_t pid) {
   task_t task;
   kern_return_t kr = task_for_pid(mach_task_self(), pid, &task);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(ERROR, kr) << "task_for_pid";
     return TASK_NULL;
   }
 

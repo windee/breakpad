@@ -21,7 +21,6 @@
 #include <memory>
 #include <utility>
 
-#include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "util/mac/checked_mach_address_range.h"
 #include "util/process/process_memory_mac.h"
@@ -50,7 +49,6 @@ class MachOImageSymbolTableReaderInitializer {
     linkedit_range_.SetRange(process_reader_->Is64Bit(),
                              linkedit_segment->Address(),
                              linkedit_segment->Size());
-    DCHECK(linkedit_range_.IsValid());
   }
 
   ~MachOImageSymbolTableReaderInitializer() {}
@@ -79,11 +77,6 @@ class MachOImageSymbolTableReaderInitializer {
       if (dysymtab_command->iextdefsym >= symtab_command->nsyms ||
           dysymtab_command->iextdefsym + dysymtab_command->nextdefsym >
               symtab_command->nsyms) {
-        LOG(WARNING) << base::StringPrintf(
-                            "dysymtab extdefsym %u + %u > symtab nsyms %u",
-                            dysymtab_command->iextdefsym,
-                            dysymtab_command->nextdefsym,
-                            symtab_command->nsyms) << module_info_;
         return false;
       }
 
@@ -105,7 +98,6 @@ class MachOImageSymbolTableReaderInitializer {
         new process_types::nlist[symtab_command->nsyms]);
     if (!process_types::nlist::ReadArrayInto(
             process_reader_, symtab_address, symbol_count, &symbols[0])) {
-      LOG(WARNING) << "could not read symbol table" << module_info_;
       return false;
     }
 
@@ -121,10 +113,6 @@ class MachOImageSymbolTableReaderInitializer {
         uint8_t symbol_type = symbol.n_type & N_TYPE;
         if (symbol_type == N_ABS || symbol_type == N_SECT) {
           if (symbol.n_strx >= strtab_size) {
-            LOG(WARNING) << base::StringPrintf(
-                                "string at 0x%x out of bounds (0x%llx)",
-                                symbol.n_strx,
-                                strtab_size) << symbol_info;
             return false;
           }
 
@@ -132,28 +120,20 @@ class MachOImageSymbolTableReaderInitializer {
             string_table = process_reader_->Memory()->ReadMapped(
                 strtab_address, strtab_size);
             if (!string_table) {
-              LOG(WARNING) << "could not read string table" << module_info_;
               return false;
             }
           }
 
           std::string name;
           if (!string_table->ReadCString(symbol.n_strx, &name)) {
-            LOG(WARNING) << "could not read string" << symbol_info;
             return false;
           }
 
           if (symbol_type == N_ABS && symbol.n_sect != NO_SECT) {
-            LOG(WARNING) << base::StringPrintf("N_ABS symbol %s in section %u",
-                                               name.c_str(),
-                                               symbol.n_sect) << symbol_info;
             return false;
           }
 
           if (symbol_type == N_SECT && symbol.n_sect == NO_SECT) {
-            LOG(WARNING) << base::StringPrintf(
-                                "N_SECT symbol %s in section NO_SECT",
-                                name.c_str()) << symbol_info;
             return false;
           }
 
@@ -162,7 +142,6 @@ class MachOImageSymbolTableReaderInitializer {
           this_symbol_info.section = symbol.n_sect;
           if (!external_defined_symbols->insert(
                   std::make_pair(name, this_symbol_info)).second) {
-            LOG(WARNING) << "duplicate symbol " << name << symbol_info;
             return false;
           }
         } else {
@@ -180,8 +159,6 @@ class MachOImageSymbolTableReaderInitializer {
         valid_symbol = false;
       }
       if (!valid_symbol && dysymtab_command) {
-        LOG(WARNING) << "non-external symbol with type " << symbol.n_type
-                     << " in extdefsym" << symbol_info;
         return false;
       }
     }
@@ -220,22 +197,10 @@ class MachOImageSymbolTableReaderInitializer {
                            const char* tag) const {
     CheckedMachAddressRange subrange(process_reader_->Is64Bit(), address, size);
     if (!subrange.IsValid()) {
-      LOG(WARNING) << base::StringPrintf("invalid %s range (0x%llx + 0x%llx)",
-                                         tag,
-                                         address,
-                                         size) << module_info_;
       return false;
     }
 
     if (!linkedit_range_.ContainsRange(subrange)) {
-      LOG(WARNING) << base::StringPrintf(
-                          "%s at 0x%llx + 0x%llx outside of " SEG_LINKEDIT
-                          " segment at 0x%llx + 0x%llx",
-                          tag,
-                          address,
-                          size,
-                          linkedit_range_.Base(),
-                          linkedit_range_.Size()) << module_info_;
       return false;
     }
 
@@ -253,7 +218,7 @@ class MachOImageSymbolTableReaderInitializer {
 }  // namespace internal
 
 MachOImageSymbolTableReader::MachOImageSymbolTableReader()
-    : external_defined_symbols_(), initialized_() {
+    : external_defined_symbols_() {
 }
 
 MachOImageSymbolTableReader::~MachOImageSymbolTableReader() {
@@ -265,7 +230,6 @@ bool MachOImageSymbolTableReader::Initialize(
     const process_types::dysymtab_command* dysymtab_command,
     const MachOImageSegmentReader* linkedit_segment,
     const std::string& module_info) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   internal::MachOImageSymbolTableReaderInitializer initializer(process_reader,
                                                                linkedit_segment,
@@ -275,14 +239,12 @@ bool MachOImageSymbolTableReader::Initialize(
     return false;
   }
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
 const MachOImageSymbolTableReader::SymbolInformation*
 MachOImageSymbolTableReader::LookUpExternalDefinedSymbol(
     const std::string& name) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   const auto& iterator = external_defined_symbols_.find(name);
   if (iterator == external_defined_symbols_.end()) {

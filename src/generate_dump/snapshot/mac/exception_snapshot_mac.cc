@@ -14,13 +14,9 @@
 
 #include "snapshot/mac/exception_snapshot_mac.h"
 
-#include "base/logging.h"
-#include "base/strings/stringprintf.h"
 #include "snapshot/mac/cpu_context_mac.h"
 #include "snapshot/mac/process_reader_mac.h"
-#include "util/mach/exception_behaviors.h"
 #include "util/mach/exception_types.h"
-#include "util/mach/symbolic_constants_mach.h"
 #include "util/numeric/safe_assignment.h"
 
 namespace crashpad {
@@ -34,8 +30,7 @@ ExceptionSnapshotMac::ExceptionSnapshotMac()
       thread_id_(0),
       exception_address_(0),
       exception_(0),
-      exception_code_0_(0),
-      initialized_() {
+      exception_code_0_(0) {
 }
 
 ExceptionSnapshotMac::~ExceptionSnapshotMac() {
@@ -50,7 +45,6 @@ bool ExceptionSnapshotMac::Initialize(ProcessReaderMac* process_reader,
                                       thread_state_flavor_t flavor,
                                       ConstThreadState state,
                                       mach_msg_type_number_t state_count) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   codes_.push_back(exception);
   for (mach_msg_type_number_t code_index = 0;
@@ -65,13 +59,6 @@ bool ExceptionSnapshotMac::Initialize(ProcessReaderMac* process_reader,
   if (exception_ == EXC_CRASH) {
     exception_ = ExcCrashRecoverOriginalException(
         exception_code_0, &exception_code_0, nullptr);
-
-    if (!ExcCrashCouldContainException(exception_)) {
-      LOG(WARNING) << base::StringPrintf(
-          "exception %s invalid in EXC_CRASH",
-          ExceptionToString(exception_, kUseFullName | kUnknownIsNumeric)
-              .c_str());
-    }
   }
 
   // The operations that follow put exception_code_0 (a mach_exception_code_t,
@@ -84,34 +71,6 @@ bool ExceptionSnapshotMac::Initialize(ProcessReaderMac* process_reader,
   // a 64-bit value. The best treatment for this inconsistency depends on the
   // exception type.
   if (exception_ == EXC_RESOURCE || exception_ == EXC_GUARD) {
-    // All 64 bits of code[0] are significant for these exceptions. See
-    // <mach/exc_resource.h> for EXC_RESOURCE and 10.10
-    // xnu-2782.1.97/bsd/kern/kern_guarded.c fd_guard_ast() for EXC_GUARD.
-    // code[0] is structured similarly for these two exceptions.
-    //
-    // EXC_RESOURCE: see <kern/exc_resource.h>. The resource type and “flavor”
-    // together define the resource and are in the highest bits. The resource
-    // limit is in the lowest bits.
-    //
-    // EXC_GUARD: see 10.10 xnu-2782.1.97/osfmk/ipc/mach_port.c
-    // mach_port_guard_exception() and xnu-2782.1.97/bsd/kern/kern_guarded.c
-    // fd_guard_ast(). The guard type (GUARD_TYPE_MACH_PORT or GUARD_TYPE_FD)
-    // and “flavor” (from the mach_port_guard_exception_codes or
-    // guard_exception_codes enums) are in the highest bits. The violating Mach
-    // port name or file descriptor number is in the lowest bits.
-
-    // If MACH_EXCEPTION_CODES is not set in |behavior|, code[0] will only carry
-    // 32 significant bits, and the interesting high bits will have been
-    // truncated.
-    if (!ExceptionBehaviorHasMachExceptionCodes(behavior)) {
-      LOG(WARNING) << base::StringPrintf(
-          "behavior %s invalid for exception %s",
-          ExceptionBehaviorToString(
-              behavior, kUseFullName | kUnknownIsNumeric | kUseOr).c_str(),
-          ExceptionToString(exception_, kUseFullName | kUnknownIsNumeric)
-              .c_str());
-    }
-
     // Include the more-significant information from the high bits of code[0] in
     // the value to be returned by ExceptionInfo(). The full value of codes[0]
     // including the less-significant lower bits is still available via Codes().
@@ -120,8 +79,6 @@ bool ExceptionSnapshotMac::Initialize(ProcessReaderMac* process_reader,
     // For other exceptions, code[0]’s values never exceed 32 bits.
     if (!base::IsValueInRangeForNumericType<decltype(exception_code_0_)>(
             unsigned_exception_code_0)) {
-      LOG(WARNING) << base::StringPrintf("exception_code_0 0x%llx out of range",
-                                         unsigned_exception_code_0);
     }
     exception_code_0_ = unsigned_exception_code_0;
   }
@@ -136,7 +93,6 @@ bool ExceptionSnapshotMac::Initialize(ProcessReaderMac* process_reader,
   }
 
   if (!thread) {
-    LOG(ERROR) << "exception_thread not found in task";
     return false;
   }
 
@@ -202,60 +158,39 @@ bool ExceptionSnapshotMac::Initialize(ProcessReaderMac* process_reader,
 #endif
 
   if (code_1_is_exception_address) {
-    if (process_reader->Is64Bit() &&
-        !ExceptionBehaviorHasMachExceptionCodes(behavior)) {
-      // If code[1] is an address from a 64-bit process, the exception must have
-      // been received with MACH_EXCEPTION_CODES or the address will have been
-      // truncated.
-      LOG(WARNING) << base::StringPrintf(
-          "behavior %s invalid for exception %s code %d in 64-bit process",
-          ExceptionBehaviorToString(
-              behavior, kUseFullName | kUnknownIsNumeric | kUseOr).c_str(),
-          ExceptionToString(exception_, kUseFullName | kUnknownIsNumeric)
-              .c_str(),
-          exception_code_0_);
-    }
     exception_address_ = code[1];
   } else {
     exception_address_ = context_.InstructionPointer();
   }
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
 const CPUContext* ExceptionSnapshotMac::Context() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return &context_;
 }
 
 uint64_t ExceptionSnapshotMac::ThreadID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return thread_id_;
 }
 
 uint32_t ExceptionSnapshotMac::Exception() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return exception_;
 }
 
 uint32_t ExceptionSnapshotMac::ExceptionInfo() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return exception_code_0_;
 }
 
 uint64_t ExceptionSnapshotMac::ExceptionAddress() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return exception_address_;
 }
 
 const std::vector<uint64_t>& ExceptionSnapshotMac::Codes() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return codes_;
 }
 
 std::vector<const MemorySnapshot*> ExceptionSnapshotMac::ExtraMemory() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return std::vector<const MemorySnapshot*>();
 }
 

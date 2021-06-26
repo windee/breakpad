@@ -14,7 +14,6 @@
 
 #include "util/file/file_seeker.h"
 
-#include "base/logging.h"
 
 namespace crashpad {
 
@@ -28,7 +27,6 @@ bool FileSeekerInterface::SeekSet(FileOffset offset) {
     // Seek() will have logged its own error.
     return false;
   } else if (rv != offset) {
-    LOG(ERROR) << "SeekSet(): expected " << offset << ", observed " << rv;
     return false;
   }
   return true;

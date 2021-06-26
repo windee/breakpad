@@ -17,7 +17,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "base/notreached.h"
 #include "base/stl_util.h"
 #include "util/misc/arraysize.h"
 #include "util/misc/implicit_cast.h"
@@ -170,7 +169,6 @@ uint64_t CPUContext::InstructionPointer() const {
     case kCPUArchitectureARM64:
       return arm64->pc;
     default:
-      NOTREACHED();
       return ~0ull;
   }
 }
@@ -186,7 +184,6 @@ uint64_t CPUContext::StackPointer() const {
     case kCPUArchitectureARM64:
       return arm64->sp;
     default:
-      NOTREACHED();
       return ~0ull;
   }
 }
@@ -202,7 +199,6 @@ bool CPUContext::Is64Bit() const {
     case kCPUArchitectureMIPSEL:
       return false;
     default:
-      NOTREACHED();
       return false;
   }
 }

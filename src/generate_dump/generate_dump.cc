@@ -19,20 +19,16 @@
 
 #include <memory>
 #include <string>
-
-#include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "build/build_config.h"
 #include "minidump/minidump_file_writer.h"
 #include "util/file/file_writer.h"
 #include "util/process/process_id.h"
-#include "util/stdlib/string_number_conversion.h"
 
 
 #include <unistd.h>
 
 #include "util/posix/drop_privileges.h"
-
 
 #include <mach/mach.h>
 #include "base/mac/scoped_mach_port.h"
@@ -60,10 +56,8 @@ int GenerateDumpMain(int pid, std::string path, bool pend = true) {
 
   if (pid == getpid()) {
     if (pend) {
-      LOG(ERROR) << "cannot suspend myself";
       return EXIT_FAILURE;
     }
-    LOG(WARNING) << "operating on myself";
   }
 
 
@@ -97,7 +91,6 @@ int GenerateDumpMain(int pid, std::string path, bool pend = true) {
     if (!minidump.WriteEverything(&file_writer)) {
       file_writer.Close();
       if (unlink(path.c_str()) != 0) {
-        PLOG(ERROR) << "unlink";
       }
       return EXIT_FAILURE;
     }

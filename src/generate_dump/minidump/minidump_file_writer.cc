@@ -15,9 +15,6 @@
 #include "minidump/minidump_file_writer.h"
 
 #include <utility>
-
-#include "base/logging.h"
-#include "minidump/minidump_crashpad_info_writer.h"
 #include "minidump/minidump_exception_writer.h"
 #include "minidump/minidump_handle_writer.h"
 #include "minidump/minidump_memory_info_writer.h"
@@ -56,11 +53,6 @@ MinidumpFileWriter::~MinidumpFileWriter() {
 
 void MinidumpFileWriter::InitializeFromSnapshot(
     const ProcessSnapshot* process_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(header_.Signature, 0u);
-  DCHECK_EQ(header_.TimeDateStamp, 0u);
-  DCHECK_EQ(static_cast<MINIDUMP_TYPE>(header_.Flags), MiniDumpNormal);
-  DCHECK(streams_.empty());
 
   // This time is truncated to an integer number of seconds, not rounded, for
   // compatibility with the truncation of process_snapshot->ProcessStartTime()
@@ -75,12 +67,10 @@ void MinidumpFileWriter::InitializeFromSnapshot(
   auto system_info = std::make_unique<MinidumpSystemInfoWriter>();
   system_info->InitializeFromSnapshot(system_snapshot);
   bool add_stream_result = AddStream(std::move(system_info));
-  DCHECK(add_stream_result);
 
   auto misc_info = std::make_unique<MinidumpMiscInfoWriter>();
   misc_info->InitializeFromSnapshot(process_snapshot);
   add_stream_result = AddStream(std::move(misc_info));
-  DCHECK(add_stream_result);
 
   auto memory_list = std::make_unique<MinidumpMemoryListWriter>();
   auto thread_list = std::make_unique<MinidumpThreadListWriter>();
@@ -89,20 +79,17 @@ void MinidumpFileWriter::InitializeFromSnapshot(
   thread_list->InitializeFromSnapshot(process_snapshot->Threads(),
                                       &thread_id_map);
   add_stream_result = AddStream(std::move(thread_list));
-  DCHECK(add_stream_result);
 
   const ExceptionSnapshot* exception_snapshot = process_snapshot->Exception();
   if (exception_snapshot) {
     auto exception = std::make_unique<MinidumpExceptionWriter>();
     exception->InitializeFromSnapshot(exception_snapshot, thread_id_map);
     add_stream_result = AddStream(std::move(exception));
-    DCHECK(add_stream_result);
   }
 
   auto module_list = std::make_unique<MinidumpModuleListWriter>();
   module_list->InitializeFromSnapshot(process_snapshot->Modules());
   add_stream_result = AddStream(std::move(module_list));
-  DCHECK(add_stream_result);
 
   auto unloaded_modules = process_snapshot->UnloadedModules();
   if (!unloaded_modules.empty()) {
@@ -110,17 +97,6 @@ void MinidumpFileWriter::InitializeFromSnapshot(
         std::make_unique<MinidumpUnloadedModuleListWriter>();
     unloaded_module_list->InitializeFromSnapshot(unloaded_modules);
     add_stream_result = AddStream(std::move(unloaded_module_list));
-    DCHECK(add_stream_result);
-  }
-
-  auto crashpad_info = std::make_unique<MinidumpCrashpadInfoWriter>();
-  crashpad_info->InitializeFromSnapshot(process_snapshot);
-
-  // Since the MinidumpCrashpadInfo stream is an extension, it’s safe to not add
-  // it to the minidump file if it wouldn’t carry any useful information.
-  if (crashpad_info->IsUseful()) {
-    add_stream_result = AddStream(std::move(crashpad_info));
-    DCHECK(add_stream_result);
   }
 
   std::vector<const MemoryMapRegionSnapshot*> memory_map_snapshot =
@@ -129,7 +105,6 @@ void MinidumpFileWriter::InitializeFromSnapshot(
     auto memory_info_list = std::make_unique<MinidumpMemoryInfoListWriter>();
     memory_info_list->InitializeFromSnapshot(memory_map_snapshot);
     add_stream_result = AddStream(std::move(memory_info_list));
-    DCHECK(add_stream_result);
   }
 
   std::vector<HandleSnapshot> handles_snapshot = process_snapshot->Handles();
@@ -137,7 +112,6 @@ void MinidumpFileWriter::InitializeFromSnapshot(
     auto handle_data_writer = std::make_unique<MinidumpHandleDataWriter>();
     handle_data_writer->InitializeFromSnapshot(handles_snapshot);
     add_stream_result = AddStream(std::move(handle_data_writer));
-    DCHECK(add_stream_result);
   }
 
   memory_list->AddFromSnapshot(process_snapshot->ExtraMemory());
@@ -154,8 +128,6 @@ void MinidumpFileWriter::InitializeFromSnapshot(
   for (const auto& module : process_snapshot->Modules()) {
     for (const UserMinidumpStream* stream : module->CustomMinidumpStreams()) {
       if (stream->stream_type() == kMinidumpStreamTypeMemoryList) {
-        LOG(WARNING) << "discarding duplicate stream of type "
-                     << stream->stream_type();
         continue;
       }
       auto user_stream = std::make_unique<MinidumpUserStreamWriter>();
@@ -171,37 +143,31 @@ void MinidumpFileWriter::InitializeFromSnapshot(
   // example, exists as a children of threads, and appears alongside them in the
   // file, despite also being mentioned by the memory list stream.
   add_stream_result = AddStream(std::move(memory_list));
-  DCHECK(add_stream_result);
 }
 
 void MinidumpFileWriter::SetTimestamp(time_t timestamp) {
-  DCHECK_EQ(state(), kStateMutable);
 
   internal::MinidumpWriterUtil::AssignTimeT(&header_.TimeDateStamp, timestamp);
 }
 
 bool MinidumpFileWriter::AddStream(
     std::unique_ptr<internal::MinidumpStreamWriter> stream) {
-  DCHECK_EQ(state(), kStateMutable);
 
   MinidumpStreamType stream_type = stream->StreamType();
 
   auto rv = stream_types_.insert(stream_type);
   if (!rv.second) {
-    LOG(WARNING) << "discarding duplicate stream of type " << stream_type;
     return false;
   }
 
   streams_.push_back(std::move(stream));
 
-  DCHECK_EQ(streams_.size(), stream_types_.size());
   return true;
 }
 
 bool MinidumpFileWriter::AddUserExtensionStream(
     std::unique_ptr<MinidumpUserExtensionStreamDataSource>
         user_extension_stream_data) {
-  DCHECK_EQ(state(), kStateMutable);
 
   auto user_stream = std::make_unique<MinidumpUserStreamWriter>();
   user_stream->InitializeFromUserExtensionStream(
@@ -216,7 +182,6 @@ bool MinidumpFileWriter::WriteEverything(FileWriterInterface* file_writer) {
 
 bool MinidumpFileWriter::WriteMinidump(FileWriterInterface* file_writer,
                                        bool allow_seek) {
-  DCHECK_EQ(state(), kStateMutable);
 
   FileOffset start_offset = -1;
   if (allow_seek) {
@@ -259,17 +224,14 @@ bool MinidumpFileWriter::WriteMinidump(FileWriterInterface* file_writer,
 }
 
 bool MinidumpFileWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
   }
 
   size_t stream_count = streams_.size();
-  CHECK_EQ(stream_count, stream_types_.size());
 
   if (!AssignIfInRange(&header_.NumberOfStreams, stream_count)) {
-    LOG(ERROR) << "stream_count " << stream_count << " out of range";
     return false;
   }
 
@@ -277,15 +239,11 @@ bool MinidumpFileWriter::Freeze() {
 }
 
 size_t MinidumpFileWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK_EQ(streams_.size(), stream_types_.size());
 
   return sizeof(header_) + streams_.size() * sizeof(MINIDUMP_DIRECTORY);
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpFileWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK_EQ(streams_.size(), stream_types_.size());
 
   std::vector<MinidumpWritable*> children;
   for (const auto& stream : streams_) {
@@ -296,13 +254,9 @@ std::vector<internal::MinidumpWritable*> MinidumpFileWriter::Children() {
 }
 
 bool MinidumpFileWriter::WillWriteAtOffsetImpl(FileOffset offset) {
-  DCHECK_EQ(state(), kStateFrozen);
-  DCHECK_EQ(offset, 0);
-  DCHECK_EQ(streams_.size(), stream_types_.size());
 
   auto directory_offset = streams_.empty() ? 0 : offset + sizeof(header_);
   if (!AssignIfInRange(&header_.StreamDirectoryRva, directory_offset)) {
-    LOG(ERROR) << "offset " << directory_offset << " out of range";
     return false;
   }
 
@@ -310,8 +264,6 @@ bool MinidumpFileWriter::WillWriteAtOffsetImpl(FileOffset offset) {
 }
 
 bool MinidumpFileWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
-  DCHECK_EQ(streams_.size(), stream_types_.size());
 
   WritableIoVec iov;
   iov.iov_base = &header_;

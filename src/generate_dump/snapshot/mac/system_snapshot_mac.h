@@ -21,7 +21,6 @@
 
 #include "base/macros.h"
 #include "snapshot/system_snapshot.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 namespace crashpad {
 
@@ -90,7 +89,6 @@ class SystemSnapshotMac final : public SystemSnapshot {
   int os_version_minor_;
   int os_version_bugfix_;
   bool os_server_;
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemSnapshotMac);
 };

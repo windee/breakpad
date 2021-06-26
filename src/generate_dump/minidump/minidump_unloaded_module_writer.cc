@@ -32,8 +32,6 @@ MinidumpUnloadedModuleWriter::~MinidumpUnloadedModuleWriter() {
 
 void MinidumpUnloadedModuleWriter::InitializeFromSnapshot(
     const UnloadedModuleSnapshot& unloaded_module_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(!name_);
 
   SetName(unloaded_module_snapshot.Name());
 
@@ -46,13 +44,11 @@ void MinidumpUnloadedModuleWriter::InitializeFromSnapshot(
 
 const MINIDUMP_UNLOADED_MODULE*
 MinidumpUnloadedModuleWriter::MinidumpUnloadedModule() const {
-  DCHECK_EQ(state(), kStateWritable);
 
   return &unloaded_module_;
 }
 
 void MinidumpUnloadedModuleWriter::SetName(const std::string& name) {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!name_) {
     name_.reset(new internal::MinidumpUTF16StringWriter());
@@ -61,15 +57,12 @@ void MinidumpUnloadedModuleWriter::SetName(const std::string& name) {
 }
 
 void MinidumpUnloadedModuleWriter::SetTimestamp(time_t timestamp) {
-  DCHECK_EQ(state(), kStateMutable);
 
   internal::MinidumpWriterUtil::AssignTimeT(&unloaded_module_.TimeDateStamp,
                                             timestamp);
 }
 
 bool MinidumpUnloadedModuleWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
-  CHECK(name_);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -81,7 +74,6 @@ bool MinidumpUnloadedModuleWriter::Freeze() {
 }
 
 size_t MinidumpUnloadedModuleWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   // This object doesn’t directly write anything itself. Its
   // MINIDUMP_UNLOADED_MODULE is written by its parent as part of a
@@ -92,8 +84,6 @@ size_t MinidumpUnloadedModuleWriter::SizeOfObject() {
 
 std::vector<internal::MinidumpWritable*>
 MinidumpUnloadedModuleWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK(name_);
 
   std::vector<MinidumpWritable*> children(1, name_.get());
   return children;
@@ -101,7 +91,6 @@ MinidumpUnloadedModuleWriter::Children() {
 
 bool MinidumpUnloadedModuleWriter::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   // This object doesn’t directly write anything itself. Its
   // MINIDUMP_UNLOADED_MODULE is written by its parent as part of a
@@ -120,8 +109,6 @@ MinidumpUnloadedModuleListWriter::~MinidumpUnloadedModuleListWriter() {
 
 void MinidumpUnloadedModuleListWriter::InitializeFromSnapshot(
     const std::vector<UnloadedModuleSnapshot>& unloaded_module_snapshots) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(unloaded_modules_.empty());
 
   for (const UnloadedModuleSnapshot& unloaded_module_snapshot :
        unloaded_module_snapshots) {
@@ -133,13 +120,11 @@ void MinidumpUnloadedModuleListWriter::InitializeFromSnapshot(
 
 void MinidumpUnloadedModuleListWriter::AddUnloadedModule(
     std::unique_ptr<MinidumpUnloadedModuleWriter> unloaded_module) {
-  DCHECK_EQ(state(), kStateMutable);
 
   unloaded_modules_.push_back(std::move(unloaded_module));
 }
 
 bool MinidumpUnloadedModuleListWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpStreamWriter::Freeze()) {
     return false;
@@ -152,8 +137,6 @@ bool MinidumpUnloadedModuleListWriter::Freeze() {
   size_t unloaded_module_count = unloaded_modules_.size();
   if (!AssignIfInRange(&unloaded_module_list_base_.NumberOfEntries,
                        unloaded_module_count)) {
-    LOG(ERROR) << "unloaded_module_count " << unloaded_module_count
-               << " out of range";
     return false;
   }
 
@@ -161,7 +144,6 @@ bool MinidumpUnloadedModuleListWriter::Freeze() {
 }
 
 size_t MinidumpUnloadedModuleListWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return sizeof(unloaded_module_list_base_) +
          unloaded_modules_.size() * sizeof(MINIDUMP_UNLOADED_MODULE);
@@ -169,7 +151,6 @@ size_t MinidumpUnloadedModuleListWriter::SizeOfObject() {
 
 std::vector<internal::MinidumpWritable*>
 MinidumpUnloadedModuleListWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
 
   std::vector<MinidumpWritable*> children;
   for (const auto& unloaded_module : unloaded_modules_) {
@@ -181,7 +162,6 @@ MinidumpUnloadedModuleListWriter::Children() {
 
 bool MinidumpUnloadedModuleListWriter::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = &unloaded_module_list_base_;

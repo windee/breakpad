@@ -23,11 +23,8 @@
 #include <vector>
 
 #include "base/macros.h"
-#include "client/crashpad_info.h"
-#include "snapshot/crashpad_info_client_options.h"
 #include "snapshot/mac/process_reader_mac.h"
 #include "snapshot/module_snapshot.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 namespace crashpad {
 
@@ -55,11 +52,6 @@ class ModuleSnapshotMac final : public ModuleSnapshot {
   bool Initialize(ProcessReaderMac* process_reader,
                   const ProcessReaderMac::Module& process_reader_module);
 
-  //! \brief Returns options from the module’s CrashpadInfo structure.
-  //!
-  //! \param[out] options Options set in the module’s CrashpadInfo structure.
-  void GetCrashpadOptions(CrashpadInfoClientOptions* options);
-
   // ModuleSnapshot:
 
   std::string Name() const override;
@@ -78,9 +70,6 @@ class ModuleSnapshotMac final : public ModuleSnapshot {
   void UUIDAndAge(crashpad::UUID* uuid, uint32_t* age) const override;
   std::string DebugFileName() const override;
   std::vector<uint8_t> BuildID() const override;
-  std::vector<std::string> AnnotationsVector() const override;
-  std::map<std::string, std::string> AnnotationsSimpleMap() const override;
-  std::vector<AnnotationSnapshot> AnnotationObjects() const override;
   std::set<CheckedRange<uint64_t>> ExtraMemoryRanges() const override;
   std::vector<const UserMinidumpStream*> CustomMinidumpStreams() const override;
 
@@ -89,7 +78,6 @@ class ModuleSnapshotMac final : public ModuleSnapshot {
   time_t timestamp_;
   const MachOImageReader* mach_o_image_reader_;  // weak
   ProcessReaderMac* process_reader_;  // weak
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(ModuleSnapshotMac);
 };

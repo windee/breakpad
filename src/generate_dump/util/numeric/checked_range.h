@@ -18,7 +18,6 @@
 #include <limits>
 #include <tuple>
 
-#include "base/check.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/numerics/safe_math.h"
 #include "util/misc/implicit_cast.h"
@@ -79,7 +78,6 @@ class CheckedRange {
   //!
   //! This method must only be called if IsValid() would return `true`.
   bool ContainsValue(ValueType value) const {
-    DCHECK(IsValid());
 
     return value >= base() && value < end();
   }
@@ -98,8 +96,6 @@ class CheckedRange {
   //! This method must only be called if IsValid() would return `true` for both
   //! CheckedRange objects involved.
   bool ContainsRange(const CheckedRange<ValueType, SizeType>& that) const {
-    DCHECK(IsValid());
-    DCHECK(that.IsValid());
 
     return that.base() >= base() && that.end() <= end();
   }
@@ -117,8 +113,6 @@ class CheckedRange {
   //! This method must only be called if IsValid() would return `true` for both
   //! CheckedRange objects involved.
   bool OverlapsRange(const CheckedRange<ValueType, SizeType>& that) const {
-    DCHECK(IsValid());
-    DCHECK(that.IsValid());
 
     if (size() == 0 || that.size() == 0)
       return false;

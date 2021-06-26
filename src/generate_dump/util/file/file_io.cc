@@ -14,8 +14,6 @@
 
 #include "util/file/file_io.h"
 
-#include "base/check_op.h"
-#include "base/logging.h"
 #include "base/macros.h"
 #include "base/numerics/safe_conversions.h"
 
@@ -34,7 +32,6 @@ class FileIOReadExactly final : public internal::ReadExactlyInternal {
   FileOperationResult Read(void* buffer, size_t size, bool can_log) override {
     FileOperationResult rv = ReadFile(file_, buffer, size);
     if (rv < 0) {
-      PLOG_IF(ERROR, can_log) << internal::kNativeReadFunctionName;
       return -1;
     }
     return rv;
@@ -76,7 +73,6 @@ bool ReadExactlyInternal::ReadExactly(void* buffer, size_t size, bool can_log) {
       return false;
     }
 
-    DCHECK_LE(static_cast<size_t>(bytes_read), remaining);
 
     if (bytes_read == 0) {
       break;
@@ -88,8 +84,6 @@ bool ReadExactlyInternal::ReadExactly(void* buffer, size_t size, bool can_log) {
   }
 
   if (total_bytes != size) {
-    LOG_IF(ERROR, can_log) << "ReadExactly: expected " << size << ", observed "
-                           << total_bytes;
     return false;
   }
 
@@ -106,7 +100,6 @@ bool WriteAllInternal::WriteAll(const void* buffer, size_t size) {
       return false;
     }
 
-    DCHECK_NE(bytes_written, 0);
 
     buffer_int += bytes_written;
     size -= bytes_written;
@@ -134,7 +127,6 @@ bool WriteFile(FileHandle file, const void* buffer, size_t size) {
 
 bool LoggingWriteFile(FileHandle file, const void* buffer, size_t size) {
   if (!WriteFile(file, buffer, size)) {
-    PLOG(ERROR) << internal::kNativeWriteFunctionName;
     return false;
   }
 
@@ -142,20 +134,20 @@ bool LoggingWriteFile(FileHandle file, const void* buffer, size_t size) {
 }
 
 void CheckedReadFileExactly(FileHandle file, void* buffer, size_t size) {
-  CHECK(LoggingReadFileExactly(file, buffer, size));
+  LoggingReadFileExactly(file, buffer, size);
 }
 
 void CheckedWriteFile(FileHandle file, const void* buffer, size_t size) {
-  CHECK(LoggingWriteFile(file, buffer, size));
+  LoggingWriteFile(file, buffer, size);
 }
 
 void CheckedReadFileAtEOF(FileHandle file) {
   char c;
   FileOperationResult rv = ReadFile(file, &c, 1);
   if (rv < 0) {
-    PCHECK(rv == 0) << internal::kNativeReadFunctionName;
+
   } else {
-    CHECK_EQ(rv, 0) << internal::kNativeReadFunctionName;
+
   }
 }
 
@@ -164,11 +156,9 @@ bool LoggingReadToEOF(FileHandle file, std::string* contents) {
   FileOperationResult rv;
   std::string local_contents;
   while ((rv = ReadFile(file, buffer, sizeof(buffer))) > 0) {
-    DCHECK_LE(static_cast<size_t>(rv), sizeof(buffer));
     local_contents.append(buffer, rv);
   }
   if (rv < 0) {
-    PLOG(ERROR) << internal::kNativeReadFunctionName;
     return false;
   }
   contents->swap(local_contents);
@@ -185,7 +175,7 @@ bool LoggingReadEntireFile(const base::FilePath& path, std::string* contents) {
 }
 
 void CheckedCloseFile(FileHandle file) {
-  CHECK(LoggingCloseFile(file));
+  LoggingCloseFile(file);
 }
 
 }  // namespace crashpad

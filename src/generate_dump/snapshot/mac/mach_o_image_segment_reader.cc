@@ -20,7 +20,6 @@
 
 #include <utility>
 
-#include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "build/build_config.h"
 #include "snapshot/mac/process_reader_mac.h"
@@ -77,9 +76,7 @@ MachOImageSegmentReader::MachOImageSegmentReader()
     : segment_command_(),
       sections_(),
       section_map_(),
-      slide_(0),
-      initialized_(),
-      initialized_slide_() {
+      slide_(0) {
 }
 
 MachOImageSegmentReader::~MachOImageSegmentReader() {
@@ -90,29 +87,15 @@ bool MachOImageSegmentReader::Initialize(ProcessReaderMac* process_reader,
                                          const std::string& load_command_info,
                                          const std::string& module_name,
                                          uint32_t file_type) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   if (!segment_command_.Read(process_reader, load_command_address)) {
-    LOG(WARNING) << "could not read segment_command" << load_command_info;
     return false;
   }
-
-  const uint32_t kExpectedSegmentCommand =
-      process_reader->Is64Bit() ? LC_SEGMENT_64 : LC_SEGMENT;
-  DCHECK_EQ(segment_command_.cmd, kExpectedSegmentCommand);
-  DCHECK_GE(segment_command_.cmdsize, segment_command_.Size());
   const size_t kSectionStructSize =
       process_types::section::ExpectedSize(process_reader);
   const size_t kRequiredSize =
       segment_command_.Size() + segment_command_.nsects * kSectionStructSize;
   if (segment_command_.cmdsize < kRequiredSize) {
-    LOG(WARNING) << base::StringPrintf(
-                        "segment command cmdsize 0x%x insufficient for %u "
-                        "section%s (0x%zx)",
-                        segment_command_.cmdsize,
-                        segment_command_.nsects,
-                        segment_command_.nsects == 1 ? "" : "s",
-                        kRequiredSize) << load_command_info;
     return false;
   }
 
@@ -126,9 +109,6 @@ bool MachOImageSegmentReader::Initialize(ProcessReaderMac* process_reader,
                                         segment_command_.vmaddr,
                                         segment_command_.vmsize);
   if (!segment_range.IsValid()) {
-    LOG(WARNING) << base::StringPrintf("invalid segment range 0x%llx + 0x%llx",
-                                       segment_command_.vmaddr,
-                                       segment_command_.vmsize) << segment_info;
     return false;
   }
 
@@ -139,7 +119,6 @@ bool MachOImageSegmentReader::Initialize(ProcessReaderMac* process_reader,
           load_command_address + segment_command_.Size(),
           segment_command_.nsects,
           &sections_[0])) {
-    LOG(WARNING) << "could not read sections" << segment_info;
     return false;
   }
 
@@ -170,67 +149,44 @@ bool MachOImageSegmentReader::Initialize(ProcessReaderMac* process_reader,
           section_segment_name == "__LD" &&
           section_name == "__compact_unwind" &&
           (section.flags & S_ATTR_DEBUG))) {
-      LOG(WARNING) << "section.segname incorrect in segment " << segment_name
-                   << section_info;
       return false;
     }
 
     CheckedMachAddressRange section_range(
         process_reader->Is64Bit(), section.addr, section.size);
     if (!section_range.IsValid()) {
-      LOG(WARNING) << base::StringPrintf(
-                          "invalid section range 0x%llx + 0x%llx",
-                          section.addr,
-                          section.size) << section_info;
       return false;
     }
 
     if (!segment_range.ContainsRange(section_range)) {
-      LOG(WARNING) << base::StringPrintf(
-                          "section at 0x%llx + 0x%llx outside of segment at "
-                          "0x%llx + 0x%llx",
-                          section.addr,
-                          section.size,
-                          segment_command_.vmaddr,
-                          segment_command_.vmsize) << section_info;
       return false;
     }
 
     const auto insert_result =
         section_map_.insert(std::make_pair(section_name, section_index));
     if (!insert_result.second) {
-      LOG(WARNING) << base::StringPrintf("duplicate section name at %zu",
-                                         insert_result.first->second)
-                   << section_info;
       return false;
     }
   }
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
 std::string MachOImageSegmentReader::Name() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return NameInternal();
 }
 
 mach_vm_address_t MachOImageSegmentReader::Address() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_slide_);
   return vmaddr() + (SegmentSlides() ? slide_ : 0);
 }
 
 mach_vm_size_t MachOImageSegmentReader::Size() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_slide_);
   return vmsize() + (SegmentSlides() ? 0 : slide_);
 }
 
 const process_types::section* MachOImageSegmentReader::GetSectionByName(
     const std::string& section_name,
     mach_vm_address_t* address) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   const auto& iterator = section_map_.find(section_name);
   if (iterator == section_map_.end()) {
@@ -243,13 +199,10 @@ const process_types::section* MachOImageSegmentReader::GetSectionByName(
 const process_types::section* MachOImageSegmentReader::GetSectionAtIndex(
     size_t index,
     mach_vm_address_t* address) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
-  CHECK_LT(index, sections_.size());
 
   const process_types::section* section = &sections_[index];
 
   if (address) {
-    INITIALIZATION_STATE_DCHECK_VALID(initialized_slide_);
     *address = section->addr + (SegmentSlides() ? slide_ : 0);
   }
 
@@ -257,7 +210,6 @@ const process_types::section* MachOImageSegmentReader::GetSectionAtIndex(
 }
 
 bool MachOImageSegmentReader::SegmentSlides() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   // These are the same rules that the kernel uses to identify __PAGEZERO. See
   // 10.9.4 xnu-2422.110.17/bsd/kern/mach_loader.c load_segment().
@@ -301,10 +253,7 @@ std::string MachOImageSegmentReader::NameInternal() const {
 }
 
 void MachOImageSegmentReader::SetSlide(mach_vm_size_t slide) {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_slide_);
   slide_ = slide;
-  INITIALIZATION_STATE_SET_VALID(initialized_slide_);
 }
 
 }  // namespace crashpad

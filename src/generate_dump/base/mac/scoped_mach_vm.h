@@ -9,7 +9,6 @@
 
 #include <algorithm>
 
-#include "base/logging.h"
 #include "base/macros.h"
 
 // Use ScopedMachVM to supervise ownership of pages in the current process
@@ -49,8 +48,6 @@ class ScopedMachVM {
   explicit ScopedMachVM(vm_address_t address = 0, vm_size_t size = 0)
       : address_(address),
         size_(size) {
-    DCHECK(address % PAGE_SIZE == 0);
-    DCHECK(size % PAGE_SIZE == 0);
   }
 
   ~ScopedMachVM() {

@@ -25,7 +25,6 @@
 
 #include "base/macros.h"
 #include "snapshot/mac/process_types.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 namespace crashpad {
 
@@ -289,8 +288,6 @@ class MachOImageSegmentReader {
   // increased by this value.
   mach_vm_size_t slide_;
 
-  InitializationStateDcheck initialized_;
-  InitializationStateDcheck initialized_slide_;
 
   DISALLOW_COPY_AND_ASSIGN(MachOImageSegmentReader);
 };

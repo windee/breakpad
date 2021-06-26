@@ -16,7 +16,6 @@
 
 #include <utility>
 
-#include "base/logging.h"
 #include "minidump/minidump_writer_util.h"
 #include "util/file/file_writer.h"
 #include "util/numeric/safe_assignment.h"
@@ -35,7 +34,6 @@ MinidumpStringWriter<Traits>::~MinidumpStringWriter() {
 
 template <typename Traits>
 bool MinidumpStringWriter<Traits>::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -43,7 +41,6 @@ bool MinidumpStringWriter<Traits>::Freeze() {
 
   size_t string_bytes = string_.size() * sizeof(string_[0]);
   if (!AssignIfInRange(&string_base_->Length, string_bytes)) {
-    LOG(ERROR) << "string_bytes " << string_bytes << " out of range";
     return false;
   }
 
@@ -52,7 +49,6 @@ bool MinidumpStringWriter<Traits>::Freeze() {
 
 template <typename Traits>
 size_t MinidumpStringWriter<Traits>::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   // Include the NUL terminator.
   return sizeof(*string_base_) + (string_.size() + 1) * sizeof(string_[0]);
@@ -61,7 +57,6 @@ size_t MinidumpStringWriter<Traits>::SizeOfObject() {
 template <typename Traits>
 bool MinidumpStringWriter<Traits>::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   // The string’s length is stored in string_base_, and its data is stored in
   // string_. Write them both.
@@ -87,7 +82,6 @@ MinidumpUTF16StringWriter::~MinidumpUTF16StringWriter() {
 }
 
 void MinidumpUTF16StringWriter::SetUTF8(const std::string& string_utf8) {
-  DCHECK_EQ(state(), kStateMutable);
 
   set_string(MinidumpWriterUtil::ConvertUTF8ToUTF16(string_utf8));
 }
@@ -108,8 +102,6 @@ MinidumpStringListWriter<
 template <typename MinidumpStringWriterType>
 void MinidumpStringListWriter<MinidumpStringWriterType>::InitializeFromVector(
     const std::vector<std::string>& vector) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(IsEmpty());
 
   for (const std::string& string : vector) {
     AddStringUTF8(string);

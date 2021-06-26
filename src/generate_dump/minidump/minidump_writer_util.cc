@@ -14,7 +14,6 @@
 
 #include "minidump/minidump_writer_util.h"
 
-#include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/strings/utf_string_conversions.h"
 #include "util/stdlib/strlcpy.h"
@@ -25,7 +24,6 @@ namespace internal {
 // static
 void MinidumpWriterUtil::AssignTimeT(uint32_t* destination, time_t source) {
   if (!base::IsValueInRangeForNumericType<uint32_t>(source)) {
-    LOG(WARNING) << "timestamp " << source << " out of range";
   }
 
   *destination = static_cast<uint32_t>(source);
@@ -35,8 +33,6 @@ void MinidumpWriterUtil::AssignTimeT(uint32_t* destination, time_t source) {
 base::string16 MinidumpWriterUtil::ConvertUTF8ToUTF16(const std::string& utf8) {
   base::string16 utf16;
   if (!base::UTF8ToUTF16(utf8.data(), utf8.length(), &utf16)) {
-    LOG(WARNING) << "string " << utf8
-                 << " cannot be converted to UTF-16 losslessly";
   }
   return utf16;
 }
@@ -47,10 +43,6 @@ void MinidumpWriterUtil::AssignUTF8ToUTF16(base::char16* destination,
                                            const std::string& source) {
   base::string16 source_utf16 = ConvertUTF8ToUTF16(source);
   if (source_utf16.size() > destination_size - 1) {
-    LOG(WARNING) << "string " << source << " UTF-16 length "
-                 << source_utf16.size()
-                 << " will be truncated to UTF-16 length "
-                 << destination_size - 1;
   }
 
   source_utf16.resize(destination_size - 1);

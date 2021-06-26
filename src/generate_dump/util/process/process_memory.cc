@@ -18,8 +18,6 @@
 
 #include <algorithm>
 
-#include "base/check_op.h"
-#include "base/logging.h"
 #include "util/numeric/safe_assignment.h"
 
 namespace crashpad {
@@ -27,7 +25,6 @@ namespace crashpad {
 bool ProcessMemory::Read(VMAddress address, VMSize size, void* buffer) const {
   size_t local_size;
   if (!AssignIfInRange(&local_size, size)) {
-    LOG(ERROR) << "size " << size << " out of bounds for size_t";
     return false;
   }
 
@@ -38,10 +35,8 @@ bool ProcessMemory::Read(VMAddress address, VMSize size, void* buffer) const {
       return false;
     }
     if (bytes_read == 0) {
-      LOG(ERROR) << "short read";
       return false;
     }
-    DCHECK_LE(static_cast<size_t>(bytes_read), local_size);
     local_size -= bytes_read;
     address += bytes_read;
     buffer_c += bytes_read;
@@ -55,7 +50,6 @@ bool ProcessMemory::ReadCStringInternal(VMAddress address,
                                         std::string* string) const {
   size_t local_size;
   if (!AssignIfInRange(&local_size, size)) {
-    LOG(ERROR) << "size " << size << " out of bounds for size_t";
     return false;
   }
 
@@ -89,7 +83,6 @@ bool ProcessMemory::ReadCStringInternal(VMAddress address,
     local_size -= bytes_read;
   } while (!has_size || local_size > 0);
 
-  LOG(ERROR) << "unterminated string";
   return false;
 }
 

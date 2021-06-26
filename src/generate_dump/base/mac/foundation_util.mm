@@ -19,7 +19,6 @@ namespace mac {
 #define CF_TO_NS_CAST_DEFN(TypeCF, TypeNS) \
 \
 TypeNS* CFToNSCast(TypeCF##Ref cf_val) { \
-  DCHECK(!cf_val || TypeCF##GetTypeID() == CFGetTypeID(cf_val)); \
   TypeNS* ns_val = \
       const_cast<TypeNS*>(reinterpret_cast<const TypeNS*>(cf_val)); \
   return ns_val; \
@@ -27,7 +26,6 @@ TypeNS* CFToNSCast(TypeCF##Ref cf_val) { \
 \
 TypeCF##Ref NSToCFCast(TypeNS* ns_val) { \
   TypeCF##Ref cf_val = reinterpret_cast<TypeCF##Ref>(ns_val); \
-  DCHECK(!cf_val || TypeCF##GetTypeID() == CFGetTypeID(cf_val)); \
   return cf_val; \
 }
 
@@ -35,7 +33,6 @@ TypeCF##Ref NSToCFCast(TypeNS* ns_val) { \
 CF_TO_NS_CAST_DEFN(CF##name, NS##name) \
 \
 NSMutable##name* CFToNSCast(CFMutable##name##Ref cf_val) { \
-  DCHECK(!cf_val || CF##name##GetTypeID() == CFGetTypeID(cf_val)); \
   NSMutable##name* ns_val = reinterpret_cast<NSMutable##name*>(cf_val); \
   return ns_val; \
 } \
@@ -43,7 +40,6 @@ NSMutable##name* CFToNSCast(CFMutable##name##Ref cf_val) { \
 CFMutable##name##Ref NSToCFCast(NSMutable##name* ns_val) { \
   CFMutable##name##Ref cf_val = \
       reinterpret_cast<CFMutable##name##Ref>(ns_val); \
-  DCHECK(!cf_val || CF##name##GetTypeID() == CFGetTypeID(cf_val)); \
   return cf_val; \
 }
 
@@ -83,7 +79,6 @@ CFCast<TypeCF##Ref>(const CFTypeRef& cf_val) { \
 template<> TypeCF##Ref \
 CFCastStrict<TypeCF##Ref>(const CFTypeRef& cf_val) { \
   TypeCF##Ref rv = CFCast<TypeCF##Ref>(cf_val); \
-  DCHECK(cf_val == NULL || rv); \
   return rv; \
 }
 

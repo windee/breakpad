@@ -33,7 +33,6 @@ class MinidumpUserStreamWriter::SnapshotContentsWriter final
       : snapshot_(snapshot), writer_(nullptr) {}
 
   bool WriteContents(FileWriterInterface* writer) override {
-    DCHECK(!writer_);
 
     writer_ = writer;
     if (!snapshot_)
@@ -64,7 +63,6 @@ class MinidumpUserStreamWriter::ExtensionStreamContentsWriter final
       : data_source_(std::move(data_source)), writer_(nullptr) {}
 
   bool WriteContents(FileWriterInterface* writer) override {
-    DCHECK(!writer_);
 
     writer_ = writer;
     return data_source_->ReadStreamData(this);
@@ -90,8 +88,6 @@ MinidumpUserStreamWriter::~MinidumpUserStreamWriter() {
 
 void MinidumpUserStreamWriter::InitializeFromSnapshot(
     const UserMinidumpStream* stream) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(!contents_writer_.get());
 
   stream_type_ = static_cast<MinidumpStreamType>(stream->stream_type());
   contents_writer_ = std::make_unique<SnapshotContentsWriter>(stream->memory());
@@ -99,8 +95,6 @@ void MinidumpUserStreamWriter::InitializeFromSnapshot(
 
 void MinidumpUserStreamWriter::InitializeFromUserExtensionStream(
     std::unique_ptr<MinidumpUserExtensionStreamDataSource> data_source) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(!contents_writer_.get());
 
   stream_type_ = data_source->stream_type();
   contents_writer_ =
@@ -108,25 +102,20 @@ void MinidumpUserStreamWriter::InitializeFromUserExtensionStream(
 }
 
 bool MinidumpUserStreamWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_NE(stream_type_, 0u);
   return MinidumpStreamWriter::Freeze();
 }
 
 size_t MinidumpUserStreamWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return contents_writer_->GetSize();
 }
 
 std::vector<internal::MinidumpWritable*>
 MinidumpUserStreamWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
   return std::vector<internal::MinidumpWritable*>();
 }
 
 bool MinidumpUserStreamWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   return contents_writer_->WriteContents(file_writer);
 }

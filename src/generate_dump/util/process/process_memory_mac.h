@@ -24,7 +24,6 @@
 #include "base/mac/scoped_mach_vm.h"
 #include "base/macros.h"
 #include "util/misc/address_types.h"
-#include "util/misc/initialization_state_dcheck.h"
 #include "util/process/process_memory.h"
 
 namespace crashpad {
@@ -125,7 +124,6 @@ class ProcessMemoryMac : public ProcessMemory {
   ssize_t ReadUpTo(VMAddress address, size_t size, void* buffer) const override;
 
   task_t task_;  // weak
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(ProcessMemoryMac);
 };

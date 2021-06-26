@@ -26,7 +26,6 @@
 #include "base/macros.h"
 #include "build/build_config.h"
 #include "util/misc/initialization_state.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 #if defined(OS_APPLE)
 #include <mach/mach.h>
@@ -188,7 +187,6 @@ class ProcessInfo {
   bool is_64_bit_;
   mutable InitializationState start_time_initialized_;
 #endif
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(ProcessInfo);
 };

@@ -19,7 +19,6 @@
 #include <utility>
 
 #include "base/auto_reset.h"
-#include "base/logging.h"
 #include "util/file/file_writer.h"
 #include "util/numeric/safe_assignment.h"
 
@@ -38,15 +37,11 @@ SnapshotMinidumpMemoryWriter::~SnapshotMinidumpMemoryWriter() {}
 
 bool SnapshotMinidumpMemoryWriter::MemorySnapshotDelegateRead(void* data,
                                                               size_t size) {
-  DCHECK_EQ(state(), kStateWritable);
-  DCHECK_EQ(size, UnderlyingSnapshot()->Size());
   return file_writer_->Write(data, size);
 }
 
 bool SnapshotMinidumpMemoryWriter::WriteObject(
     FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
-  DCHECK(!file_writer_);
 
   base::AutoReset<FileWriterInterface*> file_writer_reset(&file_writer_,
                                                           file_writer);
@@ -67,21 +62,18 @@ bool SnapshotMinidumpMemoryWriter::WriteObject(
 
 const MINIDUMP_MEMORY_DESCRIPTOR*
 SnapshotMinidumpMemoryWriter::MinidumpMemoryDescriptor() const {
-  DCHECK_EQ(state(), kStateWritable);
 
   return &memory_descriptor_;
 }
 
 void SnapshotMinidumpMemoryWriter::RegisterMemoryDescriptor(
     MINIDUMP_MEMORY_DESCRIPTOR* memory_descriptor) {
-  DCHECK_LE(state(), kStateFrozen);
 
   registered_memory_descriptors_.push_back(memory_descriptor);
   RegisterLocationDescriptor(&memory_descriptor->Memory);
 }
 
 bool SnapshotMinidumpMemoryWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -93,28 +85,23 @@ bool SnapshotMinidumpMemoryWriter::Freeze() {
 }
 
 size_t SnapshotMinidumpMemoryWriter::Alignment() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return 16;
 }
 
 size_t SnapshotMinidumpMemoryWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return UnderlyingSnapshot()->Size();
 }
 
 bool SnapshotMinidumpMemoryWriter::WillWriteAtOffsetImpl(FileOffset offset) {
-  DCHECK_EQ(state(), kStateFrozen);
 
   // There will always be at least one registered descriptor, the one for this
   // object’s own memory_descriptor_ field.
-  DCHECK_GE(registered_memory_descriptors_.size(), 1u);
 
   uint64_t base_address = UnderlyingSnapshot()->Address();
   decltype(registered_memory_descriptors_[0]->StartOfMemoryRange) local_address;
   if (!AssignIfInRange(&local_address, base_address)) {
-    LOG(ERROR) << "base_address " << base_address << " out of range";
     return false;
   }
 
@@ -148,7 +135,6 @@ MinidumpMemoryListWriter::~MinidumpMemoryListWriter() {
 
 void MinidumpMemoryListWriter::AddFromSnapshot(
     const std::vector<const MemorySnapshot*>& memory_snapshots) {
-  DCHECK_EQ(state(), kStateMutable);
 
   for (const MemorySnapshot* memory_snapshot : memory_snapshots) {
     std::unique_ptr<SnapshotMinidumpMemoryWriter> memory(
@@ -159,14 +145,12 @@ void MinidumpMemoryListWriter::AddFromSnapshot(
 
 void MinidumpMemoryListWriter::AddMemory(
     std::unique_ptr<SnapshotMinidumpMemoryWriter> memory_writer) {
-  DCHECK_EQ(state(), kStateMutable);
 
   children_.push_back(std::move(memory_writer));
 }
 
 void MinidumpMemoryListWriter::AddNonOwnedMemory(
     SnapshotMinidumpMemoryWriter* memory_writer) {
-  DCHECK_EQ(state(), kStateMutable);
 
   non_owned_memory_writers_.push_back(memory_writer);
 }
@@ -220,7 +204,6 @@ void MinidumpMemoryListWriter::CoalesceOwnedMemory() {
 }
 
 bool MinidumpMemoryListWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   CoalesceOwnedMemory();
 
@@ -235,12 +218,9 @@ bool MinidumpMemoryListWriter::Freeze() {
   }
 
   size_t memory_region_count = all_memory_writers_.size();
-  CHECK_LE(children_.size(), memory_region_count);
 
   if (!AssignIfInRange(&memory_list_base_.NumberOfMemoryRanges,
                        memory_region_count)) {
-    LOG(ERROR) << "memory_region_count " << memory_region_count
-               << " out of range";
     return false;
   }
 
@@ -248,16 +228,12 @@ bool MinidumpMemoryListWriter::Freeze() {
 }
 
 size_t MinidumpMemoryListWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK_LE(children_.size(), all_memory_writers_.size());
 
   return sizeof(memory_list_base_) +
          all_memory_writers_.size() * sizeof(MINIDUMP_MEMORY_DESCRIPTOR);
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpMemoryListWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK_LE(children_.size(), all_memory_writers_.size());
 
   std::vector<MinidumpWritable*> children;
   for (const auto& child : children_) {
@@ -268,8 +244,6 @@ std::vector<internal::MinidumpWritable*> MinidumpMemoryListWriter::Children() {
 }
 
 bool MinidumpMemoryListWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
-
   WritableIoVec iov;
   iov.iov_base = &memory_list_base_;
   iov.iov_len = sizeof(memory_list_base_);

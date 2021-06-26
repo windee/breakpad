@@ -8,7 +8,6 @@
 
 #include <vector>
 
-#include "base/logging.h"
 #include "base/scoped_clear_last_error.h"
 #include "base/stl_util.h"
 #include "base/strings/string_util.h"
@@ -53,7 +52,6 @@ static void StringAppendVT(StringType* dst,
       if (errno != 0 && errno != EOVERFLOW)
 #endif
       {
-        DLOG(WARNING) << "Unable to printf the requested string due to error.";
         return;
       }
 #if !defined(OS_WIN)
@@ -69,7 +67,6 @@ static void StringAppendVT(StringType* dst,
       // That should be plenty, don't try anything larger.  This protects
       // against huge allocations when using vsnprintfT implementations that
       // return -1 for reasons other than overflow without setting errno.
-      DLOG(WARNING) << "Unable to printf the requested string due to size.";
       return;
     }
 

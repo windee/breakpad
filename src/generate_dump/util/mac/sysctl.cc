@@ -18,28 +18,20 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 
-#include "base/check_op.h"
-#include "base/logging.h"
 
 namespace crashpad {
 
 std::string ReadStringSysctlByName(const char* name, bool may_log_enoent) {
   size_t buf_len;
   if (sysctlbyname(name, nullptr, &buf_len, nullptr, 0) != 0) {
-    PLOG_IF(WARNING, may_log_enoent || errno != ENOENT)
-        << "sysctlbyname (size) " << name;
     return std::string();
   }
 
-  DCHECK_GE(buf_len, 1u);
 
   std::string value(buf_len - 1, '\0');
   if (sysctlbyname(name, &value[0], &buf_len, nullptr, 0) != 0) {
-    PLOG(WARNING) << "sysctlbyname " << name;
     return std::string();
   }
-
-  DCHECK_EQ(value[buf_len - 1], '\0');
 
   return value;
 }

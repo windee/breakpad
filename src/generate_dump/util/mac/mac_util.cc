@@ -21,12 +21,9 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 
-#include "base/check_op.h"
-#include "base/logging.h"
 #include "base/mac/foundation_util.h"
 #include "base/mac/scoped_cftyperef.h"
 #include "base/mac/scoped_ioobject.h"
-#include "base/notreached.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/stringprintf.h"
@@ -136,17 +133,14 @@ bool StringToVersionNumbers(const std::string& version,
   size_t first_dot = version.find_first_of('.');
   if (first_dot == 0 || first_dot == std::string::npos ||
       first_dot == version.length() - 1) {
-    LOG(ERROR) << "version has unexpected format";
     return false;
   }
   if (!base::StringToInt(base::StringPiece(&version[0], first_dot), major)) {
-    LOG(ERROR) << "version has unexpected format";
     return false;
   }
 
   size_t second_dot = version.find_first_of('.', first_dot + 1);
   if (second_dot == version.length() - 1) {
-    LOG(ERROR) << "version has unexpected format";
     return false;
   } else if (second_dot == std::string::npos) {
     second_dot = version.length();
@@ -155,7 +149,6 @@ bool StringToVersionNumbers(const std::string& version,
   if (!base::StringToInt(base::StringPiece(&version[first_dot + 1],
                                            second_dot - first_dot - 1),
                          minor)) {
-    LOG(ERROR) << "version has unexpected format";
     return false;
   }
 
@@ -165,7 +158,6 @@ bool StringToVersionNumbers(const std::string& version,
                  base::StringPiece(&version[second_dot + 1],
                                    version.length() - second_dot - 1),
                  bugfix)) {
-    LOG(ERROR) << "version has unexpected format";
     return false;
   }
 
@@ -202,12 +194,6 @@ int MacOSVersionNumber() {
       int bugfix;
       if (StringToVersionNumbers(
               macos_version_number_string, &major, &minor, &bugfix)) {
-        DCHECK_GE(major, 10);
-        DCHECK_LE(major, 99);
-        DCHECK_GE(minor, 0);
-        DCHECK_LE(minor, 99);
-        DCHECK_GE(bugfix, 0);
-        DCHECK_LE(bugfix, 99);
         return major * 1'00'00 + minor * 1'00 + bugfix;
       }
     }
@@ -215,7 +201,6 @@ int MacOSVersionNumber() {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_13_4
     // On macOS 10.13.4 and later, the sysctlbyname above should have been
     // successful.
-    NOTREACHED();
     return -1;
 #else  // DT >= 10.13.4
     // The Darwin major version is always 4 greater than the macOS minor version
@@ -251,7 +236,6 @@ bool MacOSVersionComponents(int* major,
   } else {
     dictionary.reset(TryCFCopySystemVersionDictionary());
     if (!dictionary) {
-      LOG(ERROR) << "_CFCopySystemVersionDictionary failed";
       return false;
     }
     *server = false;
@@ -263,26 +247,18 @@ bool MacOSVersionComponents(int* major,
       TryCFDictionaryGetValue(dictionary, _kCFSystemVersionProductVersionKey));
   std::string version;
   if (!version_cf) {
-    LOG(ERROR) << "version_cf not found";
     success = false;
   } else {
     version = base::SysCFStringRefToUTF8(version_cf);
     if (!StringToVersionNumbers(version, major, minor, bugfix)) {
       success = false;
     } else {
-      DCHECK_GE(*major, 10);
-      DCHECK_LE(*major, 99);
-      DCHECK_GE(*minor, 0);
-      DCHECK_LE(*minor, 99);
-      DCHECK_GE(*bugfix, 0);
-      DCHECK_LE(*bugfix, 99);
     }
   }
 
   CFStringRef build_cf = base::mac::CFCast<CFStringRef>(
       TryCFDictionaryGetValue(dictionary, _kCFSystemVersionBuildVersionKey));
   if (!build_cf) {
-    LOG(ERROR) << "build_cf not found";
     success = false;
   } else {
     build->assign(base::SysCFStringRefToUTF8(build_cf));
@@ -292,7 +268,6 @@ bool MacOSVersionComponents(int* major,
       TryCFDictionaryGetValue(dictionary, _kCFSystemVersionProductNameKey));
   std::string product;
   if (!product_cf) {
-    LOG(ERROR) << "product_cf not found";
     success = false;
   } else {
     product = base::SysCFStringRefToUTF8(product_cf);

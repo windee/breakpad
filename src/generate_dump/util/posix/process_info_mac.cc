@@ -16,25 +16,21 @@
 
 #include <string.h>
 
-#include "base/logging.h"
-#include "base/mac/mach_logging.h"
 #include "base/stl_util.h"
 
 namespace crashpad {
 
-ProcessInfo::ProcessInfo() : kern_proc_info_(), initialized_() {
+ProcessInfo::ProcessInfo() : kern_proc_info_(){
 }
 
 ProcessInfo::~ProcessInfo() {
 }
 
 bool ProcessInfo::InitializeWithPid(pid_t pid) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
   size_t len = sizeof(kern_proc_info_);
   if (sysctl(mib, base::size(mib), &kern_proc_info_, &len, nullptr, 0) != 0) {
-    PLOG(ERROR) << "sysctl for pid " << pid;
     return false;
   }
 
@@ -45,13 +41,10 @@ bool ProcessInfo::InitializeWithPid(pid_t pid) {
   // has changed from the 0 value it was given when initialized by the
   // constructor.
   if (kern_proc_info_.kp_proc.p_pid == 0) {
-    LOG(WARNING) << "pid " << pid << " not found";
     return false;
   }
 
-  DCHECK_EQ(kern_proc_info_.kp_proc.p_pid, pid);
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
@@ -59,7 +52,6 @@ bool ProcessInfo::InitializeWithTask(task_t task) {
   pid_t pid;
   kern_return_t kr = pid_for_task(task, &pid);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(ERROR, kr) << "pid_for_task";
     return false;
   }
 
@@ -67,59 +59,46 @@ bool ProcessInfo::InitializeWithTask(task_t task) {
 }
 
 pid_t ProcessInfo::ProcessID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_proc.p_pid;
 }
 
 pid_t ProcessInfo::ParentProcessID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_ppid;
 }
 
 uid_t ProcessInfo::RealUserID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_pcred.p_ruid;
 }
 
 uid_t ProcessInfo::EffectiveUserID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_ucred.cr_uid;
 }
 
 uid_t ProcessInfo::SavedUserID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_pcred.p_svuid;
 }
 
 gid_t ProcessInfo::RealGroupID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_pcred.p_rgid;
 }
 
 gid_t ProcessInfo::EffectiveGroupID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_ucred.cr_gid;
 }
 
 gid_t ProcessInfo::SavedGroupID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_eproc.e_pcred.p_svgid;
 }
 
 std::set<gid_t> ProcessInfo::SupplementaryGroups() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   const short ngroups = kern_proc_info_.kp_eproc.e_ucred.cr_ngroups;
-  DCHECK_GE(ngroups, 0);
-  DCHECK_LE(static_cast<size_t>(ngroups),
-            base::size(kern_proc_info_.kp_eproc.e_ucred.cr_groups));
 
   const gid_t* groups = kern_proc_info_.kp_eproc.e_ucred.cr_groups;
   return std::set<gid_t>(&groups[0], &groups[ngroups]);
 }
 
-std::set<gid_t> ProcessInfo::AllGroups() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
+std::set<gid_t> ProcessInfo::AllGroups() const {;
 
   std::set<gid_t> all_groups = SupplementaryGroups();
   all_groups.insert(RealGroupID());
@@ -129,23 +108,19 @@ std::set<gid_t> ProcessInfo::AllGroups() const {
 }
 
 bool ProcessInfo::DidChangePrivileges() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_proc.p_flag & P_SUGID;
 }
 
 bool ProcessInfo::Is64Bit() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kern_proc_info_.kp_proc.p_flag & P_LP64;
 }
 
 bool ProcessInfo::StartTime(timeval* start_time) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   *start_time = kern_proc_info_.kp_proc.p_starttime;
   return true;
 }
 
 bool ProcessInfo::Arguments(std::vector<std::string>* argv) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   // The format of KERN_PROCARGS2 is explained in 10.9.2 adv_cmds-153/ps/print.c
   // getproclline(). It is an int (argc) followed by the executable’s string
@@ -171,7 +146,6 @@ bool ProcessInfo::Arguments(std::vector<std::string>* argv) const {
     int rv =
         sysctl(mib, base::size(mib), nullptr, &args_size_estimate, nullptr, 0);
     if (rv != 0) {
-      PLOG(ERROR) << "sysctl (size) for pid " << pid;
       return false;
     }
 
@@ -186,19 +160,16 @@ bool ProcessInfo::Arguments(std::vector<std::string>* argv) const {
     args.resize(args_size);
     rv = sysctl(mib, base::size(mib), &args[0], &args_size, nullptr, 0);
     if (rv != 0) {
-      PLOG(ERROR) << "sysctl (data) for pid " << pid;
       return false;
     }
   } while (args_size == args_size_estimate + 1 && tries--);
 
   if (args_size == args_size_estimate + 1) {
-    LOG(ERROR) << "unexpected args_size";
     return false;
   }
 
   // KERN_PROCARGS2 needs to at least contain argc.
   if (args_size < sizeof(int)) {
-    LOG(ERROR) << "tiny args_size";
     return false;
   }
   args.resize(args_size);
@@ -211,14 +182,12 @@ bool ProcessInfo::Arguments(std::vector<std::string>* argv) const {
   size_t start_pos = sizeof(argc);
   size_t nul_pos = args.find('\0', start_pos);
   if (nul_pos == std::string::npos) {
-    LOG(ERROR) << "unterminated executable path";
     return false;
   }
 
   // Find the beginning of the string area.
   start_pos = args.find_first_not_of('\0', nul_pos);
   if (start_pos == std::string::npos) {
-    LOG(ERROR) << "no string area";
     return false;
   }
 
@@ -231,7 +200,6 @@ bool ProcessInfo::Arguments(std::vector<std::string>* argv) const {
 
   if (argc >= 0) {
     // Not every argument was recovered.
-    LOG(ERROR) << "did not recover all arguments";
     return false;
   }
 

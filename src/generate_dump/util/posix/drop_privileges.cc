@@ -16,7 +16,6 @@
 
 #include <ostream>
 
-#include "base/check_op.h"
 #include "build/build_config.h"
 
 namespace crashpad {
@@ -54,12 +53,10 @@ void DropPrivileges() {
   // root. When running a setuid non-root or setgid program, they do not alter
   // the saved ID, and do not effect a permanent privilege drop.
   gid_t egid = getegid();
-  PCHECK(setgid(gid) == 0) << "setgid";
-  PCHECK(setregid(gid, gid) == 0) << "setregid";
 
   uid_t euid = geteuid();
-  PCHECK(setuid(uid) == 0) << "setuid";
-  PCHECK(setreuid(uid, uid) == 0) << "setreuid";
+  setuid(uid);
+  setreuid(uid, uid);
 
   if (uid != 0) {
     // Because the setXid()+setreXid() interface to change IDs is fragile,
@@ -67,10 +64,10 @@ void DropPrivileges() {
     // real user ID (and now the effective user ID as well) is not root, because
     // root always has permission to change identity.
     if (euid != uid) {
-      CHECK_EQ(seteuid(euid), -1);
+      seteuid(euid);
     }
     if (egid != gid) {
-      CHECK_EQ(setegid(egid), -1);
+      setegid(egid);
     }
   }
 #elif defined(OS_LINUX) || defined(OS_CHROMEOS) || defined(OS_ANDROID)

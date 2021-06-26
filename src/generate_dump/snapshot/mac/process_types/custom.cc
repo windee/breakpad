@@ -22,11 +22,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "base/check_op.h"
-#include "base/logging.h"
 #include "base/numerics/safe_math.h"
 #include "base/stl_util.h"
-#include "base/strings/stringprintf.h"
 #include "snapshot/mac/process_types/internal.h"
 #include "util/mac/mac_util.h"
 #include "util/process/process_memory_mac.h"
@@ -44,7 +41,6 @@ bool ReadIntoAndZero(const ProcessMemoryMac* process_memory,
                      mach_vm_address_t address,
                      mach_vm_size_t size,
                      T* specific) {
-  DCHECK_LE(size, sizeof(*specific));
 
   if (!process_memory->Read(address, size, specific)) {
     return false;
@@ -69,8 +65,6 @@ bool FieldAddressIfInRange(mach_vm_address_t address,
   checked_field_address += offset;
   typename T::Pointer local_field_address;
   if (!checked_field_address.AssignIfValid(&local_field_address)) {
-    LOG(ERROR) << base::StringPrintf(
-        "address 0x%llx + offset 0x%zx out of range", address, offset);
     return false;
   }
 
@@ -114,7 +108,6 @@ bool ReadIntoSized(ProcessReaderMac* process_reader,
   }
 
   if (size < T::MinimumSize()) {
-    LOG(ERROR) << "small size " << size;
     return false;
   }
 
@@ -167,13 +160,10 @@ size_t dyld_all_image_infos<Traits>::ExpectedSizeForVersion(
       return offsetof(dyld_all_image_infos<Traits>, end_v14);
     }
 
-    DCHECK_GE(macos_version_number, 10'13'00);
-    DCHECK_LT(macos_version_number, 10'15'00);
     return offsetof(dyld_all_image_infos<Traits>, platform);
   }
 
   size_t size = kSizeForVersion[version];
-  DCHECK_NE(size, std::numeric_limits<size_t>::max());
 
   return size;
 }

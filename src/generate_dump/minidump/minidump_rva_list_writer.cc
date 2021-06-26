@@ -16,7 +16,6 @@
 
 #include <utility>
 
-#include "base/logging.h"
 #include "util/file/file_writer.h"
 #include "util/numeric/safe_assignment.h"
 
@@ -34,14 +33,11 @@ MinidumpRVAListWriter::~MinidumpRVAListWriter() {
 }
 
 void MinidumpRVAListWriter::AddChild(std::unique_ptr<MinidumpWritable> child) {
-  DCHECK_EQ(state(), kStateMutable);
 
   children_.push_back(std::move(child));
 }
 
 bool MinidumpRVAListWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(child_rvas_.empty());
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -49,7 +45,6 @@ bool MinidumpRVAListWriter::Freeze() {
 
   size_t child_count = children_.size();
   if (!AssignIfInRange(&rva_list_base_->count, child_count)) {
-    LOG(ERROR) << "child_count " << child_count << " out of range";
     return false;
   }
 
@@ -62,13 +57,11 @@ bool MinidumpRVAListWriter::Freeze() {
 }
 
 size_t MinidumpRVAListWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return sizeof(*rva_list_base_) + children_.size() * sizeof(RVA);
 }
 
 std::vector<MinidumpWritable*> MinidumpRVAListWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
 
   std::vector<MinidumpWritable*> children;
   for (const auto& child : children_) {
@@ -79,8 +72,6 @@ std::vector<MinidumpWritable*> MinidumpRVAListWriter::Children() {
 }
 
 bool MinidumpRVAListWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
-  DCHECK_EQ(children_.size(), child_rvas_.size());
 
   WritableIoVec iov;
   iov.iov_base = rva_list_base_.get();

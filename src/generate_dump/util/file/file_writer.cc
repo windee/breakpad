@@ -20,7 +20,6 @@
 
 #include <algorithm>
 
-#include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
 #include "build/build_config.h"
 #include "util/misc/implicit_cast.h"
@@ -50,15 +49,12 @@ WeakFileHandleFileWriter::~WeakFileHandleFileWriter() {
 }
 
 bool WeakFileHandleFileWriter::Write(const void* data, size_t size) {
-  DCHECK_NE(file_handle_, kInvalidFileHandle);
   return LoggingWriteFile(file_handle_, data, size);
 }
 
 bool WeakFileHandleFileWriter::WriteIoVec(std::vector<WritableIoVec>* iovecs) {
-  DCHECK_NE(file_handle_, kInvalidFileHandle);
 
   if (iovecs->empty()) {
-    LOG(ERROR) << "WriteIoVec(): no iovecs";
     return false;
   }
 
@@ -95,15 +91,12 @@ bool WeakFileHandleFileWriter::WriteIoVec(std::vector<WritableIoVec>* iovecs) {
     ssize_t written =
         HANDLE_EINTR(writev(file_handle_, iov, writev_iovec_count));
     if (written < 0) {
-      PLOG(ERROR) << "writev";
       return false;
     } else if (written == 0) {
-      LOG(ERROR) << "writev: returned 0";
       return false;
     }
 
     size -= written;
-    DCHECK_GE(size, 0);
 
     if (size == 0) {
       remaining_iovecs = 0;
@@ -125,7 +118,6 @@ bool WeakFileHandleFileWriter::WriteIoVec(std::vector<WritableIoVec>* iovecs) {
     }
   }
 
-  DCHECK_EQ(remaining_iovecs, 0u);
 
 #else  // !OS_POSIX
 
@@ -146,7 +138,6 @@ bool WeakFileHandleFileWriter::WriteIoVec(std::vector<WritableIoVec>* iovecs) {
 }
 
 FileOffset WeakFileHandleFileWriter::Seek(FileOffset offset, int whence) {
-  DCHECK_NE(file_handle_, kInvalidFileHandle);
   return LoggingSeekFile(file_handle_, offset, whence);
 }
 
@@ -161,7 +152,6 @@ FileWriter::~FileWriter() {
 bool FileWriter::Open(const base::FilePath& path,
                       FileWriteMode write_mode,
                       FilePermissions permissions) {
-  CHECK(!file_.is_valid());
   file_.reset(LoggingOpenFileForWrite(path, write_mode, permissions));
   if (!file_.is_valid()) {
     return false;
@@ -189,24 +179,20 @@ int FileWriter::fd() {
 #endif
 
 void FileWriter::Close() {
-  CHECK(file_.is_valid());
 
   weak_file_handle_file_writer_.set_file_handle(kInvalidFileHandle);
   file_.reset();
 }
 
 bool FileWriter::Write(const void* data, size_t size) {
-  DCHECK(file_.is_valid());
   return weak_file_handle_file_writer_.Write(data, size);
 }
 
 bool FileWriter::WriteIoVec(std::vector<WritableIoVec>* iovecs) {
-  DCHECK(file_.is_valid());
   return weak_file_handle_file_writer_.WriteIoVec(iovecs);
 }
 
 FileOffset FileWriter::Seek(FileOffset offset, int whence) {
-  DCHECK(file_.is_valid());
   return weak_file_handle_file_writer_.Seek(offset, whence);
 }
 

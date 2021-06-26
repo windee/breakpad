@@ -16,7 +16,6 @@
 
 #include <stdint.h>
 
-#include "base/logging.h"
 #include "base/stl_util.h"
 #include "util/file/file_writer.h"
 #include "util/numeric/safe_assignment.h"
@@ -34,13 +33,11 @@ MinidumpWritable::~MinidumpWritable() {
 }
 
 bool MinidumpWritable::WriteEverything(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state_, kStateMutable);
 
   if (!Freeze()) {
     return false;
   }
 
-  DCHECK_EQ(state_, kStateFrozen);
 
   FileOffset offset = 0;
   std::vector<MinidumpWritable*> write_sequence;
@@ -54,8 +51,6 @@ bool MinidumpWritable::WriteEverything(FileWriterInterface* file_writer) {
     return false;
   }
 
-  DCHECK_EQ(state_, kStateWritable);
-  DCHECK_EQ(write_sequence.front(), this);
 
   for (MinidumpWritable* writable : write_sequence) {
     if (!writable->WritePaddingAndObject(file_writer)) {
@@ -63,20 +58,17 @@ bool MinidumpWritable::WriteEverything(FileWriterInterface* file_writer) {
     }
   }
 
-  DCHECK_EQ(state_, kStateWritten);
 
   return true;
 }
 
 void MinidumpWritable::RegisterRVA(RVA* rva) {
-  DCHECK_LE(state_, kStateFrozen);
 
   registered_rvas_.push_back(rva);
 }
 
 void MinidumpWritable::RegisterLocationDescriptor(
     MINIDUMP_LOCATION_DESCRIPTOR* location_descriptor) {
-  DCHECK_LE(state_, kStateFrozen);
 
   registered_location_descriptors_.push_back(location_descriptor);
 }
@@ -89,7 +81,6 @@ MinidumpWritable::MinidumpWritable()
 }
 
 bool MinidumpWritable::Freeze() {
-  DCHECK_EQ(state_, kStateMutable);
   state_ = kStateFrozen;
 
   std::vector<MinidumpWritable*> children = Children();
@@ -103,13 +94,11 @@ bool MinidumpWritable::Freeze() {
 }
 
 size_t MinidumpWritable::Alignment() {
-  DCHECK_GE(state_, kStateFrozen);
 
   return 4;
 }
 
 std::vector<MinidumpWritable*> MinidumpWritable::Children() {
-  DCHECK_GE(state_, kStateFrozen);
 
   return std::vector<MinidumpWritable*>();
 }
@@ -123,12 +112,10 @@ size_t MinidumpWritable::WillWriteAtOffset(
     FileOffset* offset,
     std::vector<MinidumpWritable*>* write_sequence) {
   FileOffset local_offset = *offset;
-  CHECK_GE(local_offset, 0);
 
   size_t leading_pad_bytes_this_phase;
   size_t size;
   if (phase == WritePhase()) {
-    DCHECK_EQ(state_, kStateFrozen);
 
     // Add this object to the sequence of MinidumpWritable objects to be
     // written.
@@ -141,7 +128,6 @@ size_t MinidumpWritable::WillWriteAtOffset(
       // Once the alignment is corrected, this object knows exactly what file
       // offset it will be written at.
       size_t alignment = Alignment();
-      CHECK_LE(alignment, kMaximumAlignment);
 
       leading_pad_bytes_this_phase =
           (alignment - (local_offset % alignment)) % alignment;
@@ -167,7 +153,6 @@ size_t MinidumpWritable::WillWriteAtOffset(
         !registered_location_descriptors_.empty()) {
       RVA local_rva;
       if (!AssignIfInRange(&local_rva, local_offset)) {
-        LOG(ERROR) << "offset " << local_offset << " out of range";
         return kInvalidSize;
       }
 
@@ -178,7 +163,6 @@ size_t MinidumpWritable::WillWriteAtOffset(
       if (!registered_location_descriptors_.empty()) {
         decltype(registered_location_descriptors_[0]->DataSize) local_size;
         if (!AssignIfInRange(&local_size, size)) {
-          LOG(ERROR) << "size " << size << " out of range";
           return kInvalidSize;
         }
 
@@ -198,12 +182,6 @@ size_t MinidumpWritable::WillWriteAtOffset(
     // MINIDUMP_LOCATION_DESCRIPTOR fields within that tree will be populated.
     state_ = kStateWritable;
   } else {
-    if (phase == kPhaseEarly) {
-      DCHECK_EQ(state_, kStateFrozen);
-    } else {
-      DCHECK_EQ(state_, kStateWritable);
-    }
-
     size = 0;
     leading_pad_bytes_this_phase = 0;
   }
@@ -219,7 +197,6 @@ size_t MinidumpWritable::WillWriteAtOffset(
     auto unaligned_child_offset = local_offset + size;
     FileOffset child_offset;
     if (!AssignIfInRange(&child_offset, unaligned_child_offset)) {
-      LOG(ERROR) << "offset " << unaligned_child_offset << " out of range";
       return kInvalidSize;
     }
 
@@ -240,12 +217,10 @@ bool MinidumpWritable::WillWriteAtOffsetImpl(FileOffset offset) {
 }
 
 bool MinidumpWritable::WritePaddingAndObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state_, kStateWritable);
 
   // The number of elements in kZeroes must be at least one less than the
   // maximum Alignment() ever encountered.
   static constexpr uint8_t kZeroes[kMaximumAlignment - 1] = {};
-  DCHECK_LE(leading_pad_bytes_, base::size(kZeroes));
 
   if (leading_pad_bytes_) {
     if (!file_writer->Write(&kZeroes, leading_pad_bytes_)) {

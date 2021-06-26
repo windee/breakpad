@@ -14,7 +14,6 @@
 
 #include "minidump/minidump_byte_array_writer.h"
 
-#include "base/logging.h"
 #include "util/file/file_writer.h"
 #include "util/numeric/safe_assignment.h"
 
@@ -31,7 +30,6 @@ void MinidumpByteArrayWriter::set_data(const uint8_t* data, size_t size) {
 }
 
 bool MinidumpByteArrayWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -39,7 +37,6 @@ bool MinidumpByteArrayWriter::Freeze() {
 
   size_t size = data_.size();
   if (!AssignIfInRange(&minidump_array_->length, size)) {
-    LOG(ERROR) << "data size " << size << " is out of range";
     return false;
   }
 
@@ -47,13 +44,11 @@ bool MinidumpByteArrayWriter::Freeze() {
 }
 
 size_t MinidumpByteArrayWriter::SizeOfObject() {
-  DCHECK_EQ(state(), kStateFrozen);
 
   return sizeof(*minidump_array_) + data_.size();
 }
 
 bool MinidumpByteArrayWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = minidump_array_.get();

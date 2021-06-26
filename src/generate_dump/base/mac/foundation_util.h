@@ -5,7 +5,6 @@
 #ifndef MINI_CHROMIUM_BASE_MAC_FOUNDATION_UTIL_H_
 #define MINI_CHROMIUM_BASE_MAC_FOUNDATION_UTIL_H_
 
-#include "base/logging.h"
 #include "build/build_config.h"
 
 #if defined(OS_IOS)

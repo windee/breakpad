@@ -12,7 +12,6 @@
 #include <limits>
 
 #include "base/files/file_util.h"
-#include "base/logging.h"
 #include "build/build_config.h"
 
 #if defined(OS_FUCHSIA)
@@ -38,7 +37,6 @@ namespace {
 
 int GetUrandomFDInternal() {
   int fd = HANDLE_EINTR(open("/dev/urandom", O_RDONLY | O_NOCTTY | O_CLOEXEC));
-  PCHECK(fd >= 0) << "open /dev/urandom";
   return fd;
 }
 
@@ -60,18 +58,14 @@ uint64_t RandUint64() {
 }
 
 int RandInt(int min, int max) {
-  DCHECK_LE(min, max);
 
   uint64_t range = static_cast<uint64_t>(max) - min + 1;
   int result = min + static_cast<int>(base::RandGenerator(range));
-  DCHECK_GE(result, min);
-  DCHECK_LE(result, max);
 
   return result;
 }
 
 uint64_t RandGenerator(uint64_t range) {
-  DCHECK_GT(range, 0u);
 
   uint64_t max_acceptable_value =
       (std::numeric_limits<uint64_t>::max() / range) * range - 1;
@@ -98,8 +92,6 @@ double RandDouble() {
 
   double result = std::ldexp(mantissa, -1 * kMantissaBits);
 
-  DCHECK_GE(result, 0.0);
-  DCHECK_LT(result, 1.0);
 
   return result;
 }
@@ -113,8 +105,7 @@ void RandBytes(void* output, size_t output_length) {
   zx_cprng_draw(output, output_length);
 #elif defined(OS_POSIX)
   int fd = GetUrandomFD();
-  bool success = ReadFromFD(fd, static_cast<char*>(output), output_length);
-  CHECK(success);
+  ReadFromFD(fd, static_cast<char*>(output), output_length);
 #elif defined(OS_WIN)
   char* output_ptr = static_cast<char*>(output);
   while (output_length > 0) {

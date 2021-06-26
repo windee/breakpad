@@ -17,8 +17,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "base/logging.h"
-#include "base/notreached.h"
 
 namespace crashpad {
 
@@ -111,13 +109,10 @@ thread_state_flavor_t InitializeCPUContextX86Flavor(
       expected_state_count = 0;
       break;
     default:
-      LOG(WARNING) << "unhandled flavor " << flavor;
       return THREAD_STATE_NONE;
   }
 
   if (state_count < expected_state_count) {
-    LOG(WARNING) << "expected state_count " << expected_state_count
-                 << " for flavor " << flavor << ", observed " << state_count;
     return THREAD_STATE_NONE;
   }
 
@@ -126,8 +121,6 @@ thread_state_flavor_t InitializeCPUContextX86Flavor(
       const x86_thread_state_t* x86_thread_state =
           reinterpret_cast<const x86_thread_state_t*>(state);
       if (x86_thread_state->tsh.flavor != x86_THREAD_STATE32) {
-        LOG(WARNING) << "expected flavor x86_THREAD_STATE32, observed "
-                     << x86_thread_state->tsh.flavor;
         return THREAD_STATE_NONE;
       }
       return InitializeCPUContextX86Flavor(
@@ -141,8 +134,6 @@ thread_state_flavor_t InitializeCPUContextX86Flavor(
       const x86_float_state_t* x86_float_state =
           reinterpret_cast<const x86_float_state_t*>(state);
       if (x86_float_state->fsh.flavor != x86_FLOAT_STATE32) {
-        LOG(WARNING) << "expected flavor x86_FLOAT_STATE32, observed "
-                     << x86_float_state->fsh.flavor;
         return THREAD_STATE_NONE;
       }
       return InitializeCPUContextX86Flavor(
@@ -156,8 +147,6 @@ thread_state_flavor_t InitializeCPUContextX86Flavor(
       const x86_debug_state_t* x86_debug_state =
           reinterpret_cast<const x86_debug_state_t*>(state);
       if (x86_debug_state->dsh.flavor != x86_DEBUG_STATE32) {
-        LOG(WARNING) << "expected flavor x86_DEBUG_STATE32, observed "
-                     << x86_debug_state->dsh.flavor;
         return THREAD_STATE_NONE;
       }
       return InitializeCPUContextX86Flavor(
@@ -196,7 +185,6 @@ thread_state_flavor_t InitializeCPUContextX86Flavor(
     }
 
     default: {
-      NOTREACHED();
       return THREAD_STATE_NONE;
     }
   }
@@ -292,13 +280,10 @@ thread_state_flavor_t InitializeCPUContextX86_64Flavor(
       expected_state_count = 0;
       break;
     default:
-      LOG(WARNING) << "unhandled flavor " << flavor;
       return THREAD_STATE_NONE;
   }
 
   if (state_count < expected_state_count) {
-    LOG(WARNING) << "expected state_count " << expected_state_count
-                 << " for flavor " << flavor << ", observed " << state_count;
     return THREAD_STATE_NONE;
   }
 
@@ -307,8 +292,6 @@ thread_state_flavor_t InitializeCPUContextX86_64Flavor(
       const x86_thread_state_t* x86_thread_state =
           reinterpret_cast<const x86_thread_state_t*>(state);
       if (x86_thread_state->tsh.flavor != x86_THREAD_STATE64) {
-        LOG(WARNING) << "expected flavor x86_THREAD_STATE64, observed "
-                     << x86_thread_state->tsh.flavor;
         return THREAD_STATE_NONE;
       }
       return InitializeCPUContextX86_64Flavor(
@@ -322,8 +305,6 @@ thread_state_flavor_t InitializeCPUContextX86_64Flavor(
       const x86_float_state_t* x86_float_state =
           reinterpret_cast<const x86_float_state_t*>(state);
       if (x86_float_state->fsh.flavor != x86_FLOAT_STATE64) {
-        LOG(WARNING) << "expected flavor x86_FLOAT_STATE64, observed "
-                     << x86_float_state->fsh.flavor;
         return THREAD_STATE_NONE;
       }
       return InitializeCPUContextX86_64Flavor(
@@ -337,8 +318,6 @@ thread_state_flavor_t InitializeCPUContextX86_64Flavor(
       const x86_debug_state_t* x86_debug_state =
           reinterpret_cast<const x86_debug_state_t*>(state);
       if (x86_debug_state->dsh.flavor != x86_DEBUG_STATE64) {
-        LOG(WARNING) << "expected flavor x86_DEBUG_STATE64, observed "
-                     << x86_debug_state->dsh.flavor;
         return THREAD_STATE_NONE;
       }
       return InitializeCPUContextX86_64Flavor(
@@ -377,7 +356,6 @@ thread_state_flavor_t InitializeCPUContextX86_64Flavor(
     }
 
     default: {
-      NOTREACHED();
       return THREAD_STATE_NONE;
     }
   }

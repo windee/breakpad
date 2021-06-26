@@ -28,7 +28,6 @@
 
 #include "base/macros.h"
 #include "build/build_config.h"
-#include "util/misc/initialization_state_dcheck.h"
 #include "util/posix/process_info.h"
 #include "util/process/process_memory_mac.h"
 
@@ -251,7 +250,6 @@ class ProcessReaderMac {
   std::vector<std::unique_ptr<MachOImageReader>> module_readers_;
   ProcessMemoryMac process_memory_;
   task_t task_;  // weak
-  InitializationStateDcheck initialized_;
 
 #if defined(CRASHPAD_MAC_32_BIT_SUPPORT)
   // This shadows a method of process_info_, but it’s accessed so frequently

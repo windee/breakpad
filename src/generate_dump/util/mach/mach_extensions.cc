@@ -17,7 +17,6 @@
 #include <Availability.h>
 #include <pthread.h>
 
-#include "base/mac/mach_logging.h"
 #include "build/build_config.h"
 #include "util/mac/mac_util.h"
 
@@ -31,8 +30,7 @@ thread_t MachThreadSelf() {
 
 mach_port_t NewMachPort(mach_port_right_t right) {
   mach_port_t port = MACH_PORT_NULL;
-  kern_return_t kr = mach_port_allocate(mach_task_self(), right, &port);
-  MACH_LOG_IF(ERROR, kr != KERN_SUCCESS, kr) << "mach_port_allocate";
+  mach_port_allocate(mach_task_self(), right, &port);
   return port;
 }
 

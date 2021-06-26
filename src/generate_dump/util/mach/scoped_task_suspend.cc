@@ -14,26 +14,20 @@
 
 #include "util/mach/scoped_task_suspend.h"
 
-#include "base/check_op.h"
-#include "base/logging.h"
-#include "base/mac/mach_logging.h"
 
 namespace crashpad {
 
 ScopedTaskSuspend::ScopedTaskSuspend(task_t task) : task_(task) {
-  DCHECK_NE(task_, mach_task_self());
 
   kern_return_t kr = task_suspend(task_);
   if (kr != KERN_SUCCESS) {
     task_ = TASK_NULL;
-    MACH_LOG(ERROR, kr) << "task_suspend";
   }
 }
 
 ScopedTaskSuspend::~ScopedTaskSuspend() {
   if (task_ != TASK_NULL) {
-    kern_return_t kr = task_resume(task_);
-    MACH_LOG_IF(ERROR, kr != KERN_SUCCESS, kr) << "task_resume";
+    task_resume(task_);
   }
 }
 

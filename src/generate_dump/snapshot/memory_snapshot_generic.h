@@ -18,12 +18,10 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "base/logging.h"
 #include "base/macros.h"
 #include "base/numerics/safe_math.h"
 #include "snapshot/memory_snapshot.h"
 #include "util/misc/address_types.h"
-#include "util/misc/initialization_state_dcheck.h"
 #include "util/process/process_memory.h"
 
 namespace crashpad {
@@ -50,27 +48,22 @@ class MemorySnapshotGeneric final : public MemorySnapshot {
   void Initialize(const ProcessMemory* process_memory,
                   VMAddress address,
                   VMSize size) {
-    INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
     process_memory_ = process_memory;
     address_ = address;
     size_ = base::checked_cast<size_t>(size);
-    INITIALIZATION_STATE_SET_VALID(initialized_);
   }
 
   // MemorySnapshot:
 
   uint64_t Address() const override {
-    INITIALIZATION_STATE_DCHECK_VALID(initialized_);
     return address_;
   }
 
   size_t Size() const override {
-    INITIALIZATION_STATE_DCHECK_VALID(initialized_);
     return size_;
   }
 
   bool Read(Delegate* delegate) const override {
-    INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
     if (size_ == 0) {
       return delegate->MemorySnapshotDelegateRead(nullptr, size_);
@@ -88,7 +81,6 @@ class MemorySnapshotGeneric final : public MemorySnapshot {
     const MemorySnapshotGeneric* other_as_memory_snapshot_concrete =
         reinterpret_cast<const MemorySnapshotGeneric*>(other);
     if (process_memory_ != other_as_memory_snapshot_concrete->process_memory_) {
-      LOG(ERROR) << "different process_memory_ for snapshots";
       return nullptr;
     }
     CheckedRange<uint64_t, size_t> merged(0, 0);
@@ -109,7 +101,6 @@ class MemorySnapshotGeneric final : public MemorySnapshot {
   const ProcessMemory* process_memory_;  // weak
   VMAddress address_;
   size_t size_;
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(MemorySnapshotGeneric);
 };

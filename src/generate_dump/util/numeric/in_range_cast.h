@@ -15,7 +15,6 @@
 #ifndef CRASHPAD_UTIL_NUMERIC_IN_RANGE_CAST_H_
 #define CRASHPAD_UTIL_NUMERIC_IN_RANGE_CAST_H_
 
-#include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
 
 namespace crashpad {
@@ -35,7 +34,6 @@ Destination InRangeCast(Source source, Destination default_value) {
     return static_cast<Destination>(source);
   }
 
-  LOG(WARNING) << "value " << source << " out of range";
   return static_cast<Destination>(default_value);
 }
 

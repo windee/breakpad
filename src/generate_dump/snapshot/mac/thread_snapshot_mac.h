@@ -25,7 +25,6 @@
 #include "snapshot/memory_snapshot.h"
 #include "snapshot/memory_snapshot_generic.h"
 #include "snapshot/thread_snapshot.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 namespace crashpad {
 
@@ -80,7 +79,6 @@ class ThreadSnapshotMac final : public ThreadSnapshot {
   thread_t thread_;
   int suspend_count_;
   int priority_;
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(ThreadSnapshotMac);
 };

@@ -16,7 +16,6 @@
 
 #include <string>
 
-#include "base/logging.h"
 #include "minidump/minidump_extensions.h"
 #include "util/file/file_writer.h"
 #include "util/numeric/safe_assignment.h"
@@ -34,9 +33,7 @@ MinidumpHandleDataWriter::~MinidumpHandleDataWriter() {
 
 void MinidumpHandleDataWriter::InitializeFromSnapshot(
     const std::vector<HandleSnapshot>& handle_snapshots) {
-  DCHECK_EQ(state(), kStateMutable);
 
-  DCHECK(handle_descriptors_.empty());
   // Because we RegisterRVA() on the string writer below, we preallocate and
   // never resize the handle_descriptors_ vector.
   handle_descriptors_.resize(handle_snapshots.size());
@@ -70,7 +67,6 @@ void MinidumpHandleDataWriter::InitializeFromSnapshot(
 }
 
 bool MinidumpHandleDataWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpStreamWriter::Freeze())
     return false;
@@ -80,7 +76,6 @@ bool MinidumpHandleDataWriter::Freeze() {
   const size_t handle_count = handle_descriptors_.size();
   if (!AssignIfInRange(&handle_data_stream_base_.NumberOfDescriptors,
                        handle_count)) {
-    LOG(ERROR) << "handle_count " << handle_count << " out of range";
     return false;
   }
   handle_data_stream_base_.Reserved = 0;
@@ -89,14 +84,11 @@ bool MinidumpHandleDataWriter::Freeze() {
 }
 
 size_t MinidumpHandleDataWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
   return sizeof(handle_data_stream_base_) +
          sizeof(handle_descriptors_[0]) * handle_descriptors_.size();
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpHandleDataWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
-
   std::vector<MinidumpWritable*> children;
   for (const auto& pair : strings_)
     children.push_back(pair.second);
@@ -104,7 +96,6 @@ std::vector<internal::MinidumpWritable*> MinidumpHandleDataWriter::Children() {
 }
 
 bool MinidumpHandleDataWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = &handle_data_stream_base_;

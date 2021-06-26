@@ -16,7 +16,6 @@
 
 #include <utility>
 
-#include "base/logging.h"
 #include "minidump/minidump_context_writer.h"
 #include "minidump/minidump_memory_writer.h"
 #include "snapshot/memory_snapshot.h"
@@ -36,12 +35,8 @@ MinidumpThreadWriter::~MinidumpThreadWriter() {
 void MinidumpThreadWriter::InitializeFromSnapshot(
     const ThreadSnapshot* thread_snapshot,
     const MinidumpThreadIDMap* thread_id_map) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(!stack_);
-  DCHECK(!context_);
 
   auto thread_id_it = thread_id_map->find(thread_snapshot->ThreadID());
-  DCHECK(thread_id_it != thread_id_map->end());
   SetThreadID(thread_id_it->second);
 
   SetSuspendCount(thread_snapshot->SuspendCount());
@@ -61,28 +56,23 @@ void MinidumpThreadWriter::InitializeFromSnapshot(
 }
 
 const MINIDUMP_THREAD* MinidumpThreadWriter::MinidumpThread() const {
-  DCHECK_EQ(state(), kStateWritable);
 
   return &thread_;
 }
 
 void MinidumpThreadWriter::SetStack(
     std::unique_ptr<SnapshotMinidumpMemoryWriter> stack) {
-  DCHECK_EQ(state(), kStateMutable);
 
   stack_ = std::move(stack);
 }
 
 void MinidumpThreadWriter::SetContext(
     std::unique_ptr<MinidumpContextWriter> context) {
-  DCHECK_EQ(state(), kStateMutable);
 
   context_ = std::move(context);
 }
 
 bool MinidumpThreadWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
-  CHECK(context_);
 
   if (!MinidumpWritable::Freeze()) {
     return false;
@@ -98,7 +88,6 @@ bool MinidumpThreadWriter::Freeze() {
 }
 
 size_t MinidumpThreadWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   // This object doesn’t directly write anything itself. Its MINIDUMP_THREAD is
   // written by its parent as part of a MINIDUMP_THREAD_LIST, and its children
@@ -107,8 +96,6 @@ size_t MinidumpThreadWriter::SizeOfObject() {
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpThreadWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
-  DCHECK(context_);
 
   std::vector<MinidumpWritable*> children;
   if (stack_) {
@@ -120,7 +107,6 @@ std::vector<internal::MinidumpWritable*> MinidumpThreadWriter::Children() {
 }
 
 bool MinidumpThreadWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   // This object doesn’t directly write anything itself. Its MINIDUMP_THREAD is
   // written by its parent as part of a MINIDUMP_THREAD_LIST, and its children
@@ -141,8 +127,6 @@ MinidumpThreadListWriter::~MinidumpThreadListWriter() {
 void MinidumpThreadListWriter::InitializeFromSnapshot(
     const std::vector<const ThreadSnapshot*>& thread_snapshots,
     MinidumpThreadIDMap* thread_id_map) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(threads_.empty());
 
   BuildMinidumpThreadIDMap(thread_snapshots, thread_id_map);
 
@@ -160,15 +144,12 @@ void MinidumpThreadListWriter::InitializeFromSnapshot(
 
 void MinidumpThreadListWriter::SetMemoryListWriter(
     MinidumpMemoryListWriter* memory_list_writer) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK(threads_.empty());
 
   memory_list_writer_ = memory_list_writer;
 }
 
 void MinidumpThreadListWriter::AddThread(
     std::unique_ptr<MinidumpThreadWriter> thread) {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (memory_list_writer_) {
     SnapshotMinidumpMemoryWriter* stack = thread->Stack();
@@ -181,7 +162,6 @@ void MinidumpThreadListWriter::AddThread(
 }
 
 bool MinidumpThreadListWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpStreamWriter::Freeze()) {
     return false;
@@ -189,7 +169,6 @@ bool MinidumpThreadListWriter::Freeze() {
 
   size_t thread_count = threads_.size();
   if (!AssignIfInRange(&thread_list_base_.NumberOfThreads, thread_count)) {
-    LOG(ERROR) << "thread_count " << thread_count << " out of range";
     return false;
   }
 
@@ -197,13 +176,11 @@ bool MinidumpThreadListWriter::Freeze() {
 }
 
 size_t MinidumpThreadListWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return sizeof(thread_list_base_) + threads_.size() * sizeof(MINIDUMP_THREAD);
 }
 
 std::vector<internal::MinidumpWritable*> MinidumpThreadListWriter::Children() {
-  DCHECK_GE(state(), kStateFrozen);
 
   std::vector<MinidumpWritable*> children;
   for (const auto& thread : threads_) {
@@ -214,7 +191,6 @@ std::vector<internal::MinidumpWritable*> MinidumpThreadListWriter::Children() {
 }
 
 bool MinidumpThreadListWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   WritableIoVec iov;
   iov.iov_base = &thread_list_base_;

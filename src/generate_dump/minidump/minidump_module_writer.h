@@ -166,20 +166,6 @@ class MinidumpModuleMiscDebugRecordWriter final
   MinidumpModuleMiscDebugRecordWriter();
   ~MinidumpModuleMiscDebugRecordWriter() override;
 
-  //! \brief Sets IMAGE_DEBUG_MISC::DataType.
-  void SetDataType(uint32_t data_type) {
-    image_debug_misc_.DataType = data_type;
-  }
-
-  //! \brief Sets IMAGE_DEBUG_MISC::Data, IMAGE_DEBUG_MISC::Length, and
-  //!     IMAGE_DEBUG_MISC::Unicode.
-  //!
-  //! If \a utf16 is `true`, \a data will be treated as UTF-8 data and will be
-  //! converted to UTF-16, and IMAGE_DEBUG_MISC::Unicode will be set to `1`.
-  //! Otherwise, \a data will be used as-is and IMAGE_DEBUG_MISC::Unicode will
-  //! be set to `0`.
-  void SetData(const std::string& data, bool utf16);
-
  protected:
   // MinidumpWritable:
   bool Freeze() override;

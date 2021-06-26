@@ -25,8 +25,7 @@
 #include <vector>
 
 #include "base/macros.h"
-#include "client/crashpad_info.h"
-#include "snapshot/crashpad_info_client_options.h"
+
 #include "snapshot/exception_snapshot.h"
 #include "snapshot/mac/exception_snapshot_mac.h"
 #include "snapshot/mac/module_snapshot_mac.h"
@@ -40,7 +39,6 @@
 #include "snapshot/thread_snapshot.h"
 #include "snapshot/unloaded_module_snapshot.h"
 #include "util/mach/mach_extensions.h"
-#include "util/misc/initialization_state_dcheck.h"
 #include "util/misc/uuid.h"
 
 namespace crashpad {
@@ -94,24 +92,6 @@ class ProcessSnapshotMac final : public ProcessSnapshot {
   //! ClientID() will return an identifier consisting entirely of zeroes.
   void SetClientID(const UUID& client_id) { client_id_ = client_id; }
 
-  //! \brief Sets the value to be returned by AnnotationsSimpleMap().
-  //!
-  //! On macOS, all process annotations are under the control of the snapshot
-  //! producer, which may call this method to establish these annotations.
-  //! Contrast this with module annotations, which are under the control of the
-  //! process being snapshotted.
-  void SetAnnotationsSimpleMap(
-      const std::map<std::string, std::string>& annotations_simple_map) {
-    annotations_simple_map_ = annotations_simple_map;
-  }
-
-  //! \brief Returns options from CrashpadInfo structures found in modules in
-  //!     the process.
-  //!
-  //! \param[out] options Options set in CrashpadInfo structures in modules in
-  //!     the process.
-  void GetCrashpadOptions(CrashpadInfoClientOptions* options);
-
   // ProcessSnapshot:
 
   pid_t ProcessID() const override;
@@ -121,8 +101,6 @@ class ProcessSnapshotMac final : public ProcessSnapshot {
   void ProcessCPUTimes(timeval* user_time, timeval* system_time) const override;
   void ReportID(UUID* report_id) const override;
   void ClientID(UUID* client_id) const override;
-  const std::map<std::string, std::string>& AnnotationsSimpleMap()
-      const override;
   const SystemSnapshot* System() const override;
   std::vector<const ThreadSnapshot*> Threads() const override;
   std::vector<const ModuleSnapshot*> Modules() const override;
@@ -147,9 +125,7 @@ class ProcessSnapshotMac final : public ProcessSnapshot {
   ProcessReaderMac process_reader_;
   UUID report_id_;
   UUID client_id_;
-  std::map<std::string, std::string> annotations_simple_map_;
   timeval snapshot_time_;
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(ProcessSnapshotMac);
 };

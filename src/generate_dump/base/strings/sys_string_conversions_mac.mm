@@ -4,7 +4,6 @@
 
 #include "base/strings/sys_string_conversions.h"
 
-#include "base/logging.h"
 #include "base/mac/foundation_util.h"
 
 namespace base {
@@ -35,7 +34,6 @@ StringType CFStringToSTLStringWithEncodingT(CFStringRef cfstring,
     return StringType();
   }
 
-  DCHECK_EQ(out_size % sizeof(typename StringType::value_type), 0u);
   typename StringType::size_type elements =
       out_size * sizeof(UInt8) / sizeof(typename StringType::value_type);
   StringType out(elements, typename StringType::value_type());

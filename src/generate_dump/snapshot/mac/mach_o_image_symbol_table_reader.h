@@ -25,7 +25,6 @@
 #include "snapshot/mac/mach_o_image_segment_reader.h"
 #include "snapshot/mac/process_reader_mac.h"
 #include "snapshot/mac/process_types.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 namespace crashpad {
 
@@ -122,7 +121,6 @@ class MachOImageSymbolTableReader {
 
  private:
   SymbolInformationMap external_defined_symbols_;
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(MachOImageSymbolTableReader);
 };

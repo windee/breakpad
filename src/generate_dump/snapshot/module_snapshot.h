@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-#include "snapshot/annotation_snapshot.h"
 #include "snapshot/memory_snapshot.h"
 #include "util/misc/uuid.h"
 #include "util/numeric/checked_range.h"
@@ -173,59 +172,6 @@ class ModuleSnapshot {
   //!
   //! \sa UUIDAndAge()
   virtual std::vector<uint8_t> BuildID() const = 0;
-
-  //! \brief Returns string annotations recorded in the module.
-  //!
-  //! This method retrieves annotations recorded in a module. These annotations
-  //! are intended for diagnostic use, including crash analysis. A module may
-  //! contain multiple annotations, so they are returned in a vector.
-  //!
-  //! For macOS snapshots, these annotations are found by interpreting the
-  //! module’s `__DATA,__crash_info` section as `crashreporter_annotations_t`.
-  //! System libraries using the crash reporter client interface may reference
-  //! annotations in this structure. Additional annotations messages may be
-  //! found in other locations, which may be module-specific. The dynamic linker
-  //! (`dyld`) can provide an annotation at its `_error_string` symbol.
-  //!
-  //! The annotations returned by this method do not duplicate those returned by
-  //! AnnotationsSimpleMap() or AnnotationObjects().
-  virtual std::vector<std::string> AnnotationsVector() const = 0;
-
-  //! \brief Returns key-value string annotations recorded in the module.
-  //!
-  //! This method retrieves annotations recorded in a module. These annotations
-  //! are intended for diagnostic use, including crash analysis. “Simple
-  //! annotations” are structured as a sequence of key-value pairs, where all
-  //! keys and values are strings. These are referred to in Chrome as “crash
-  //! keys.”
-  //!
-  //! For macOS snapshots, these annotations are found by interpreting the
-  //! `__DATA,crashpad_info` section as `CrashpadInfo`. Clients can use the
-  //! Crashpad client interface to store annotations in this structure. Most
-  //! annotations under the client’s direct control will be retrievable by this
-  //! method. For clients such as Chrome, this includes the process type.
-  //!
-  //! The annotations returned by this method do not duplicate those returned by
-  //! AnnotationsVector() or AnnotationObjects(). Additional annotations related
-  //! to the process, system, or snapshot producer may be obtained by calling
-  //! ProcessSnapshot::AnnotationsSimpleMap().
-  virtual std::map<std::string, std::string> AnnotationsSimpleMap() const = 0;
-
-  //! \brief Returns the typed annotation objects recorded in the module.
-  //!
-  //! This method retrieves annotations recorded in a module. These annotations
-  //! are intended for diagnostic use, including crash analysis. Annotation
-  //! objects are strongly-typed name-value pairs. The names are not unique.
-  //!
-  //! For macOS snapshots, these annotations are found by interpreting the
-  //! `__DATA,crashpad_info` section as `CrashpadInfo`. Clients can use the
-  //! Crashpad client interface to store annotations in this structure. Most
-  //! annotations under the client’s direct control will be retrievable by this
-  //! method. For clients such as Chrome, this includes the process type.
-  //!
-  //! The annotations returned by this method do not duplicate those returned by
-  //! AnnotationsVector() or AnnotationsSimpleMap().
-  virtual std::vector<AnnotationSnapshot> AnnotationObjects() const = 0;
 
   //! \brief Returns a set of extra memory ranges specified in the module as
   //!     being desirable to include in the crash dump.

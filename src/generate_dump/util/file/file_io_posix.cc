@@ -25,8 +25,6 @@
 #include <limits>
 
 #include "base/files/file_path.h"
-#include "base/logging.h"
-#include "base/notreached.h"
 #include "base/posix/eintr_wrapper.h"
 #include "base/strings/stringprintf.h"
 #include "build/build_config.h"
@@ -64,7 +62,6 @@ FileOperationResult ReadOrWrite(int fd,
     return -1;
   }
 
-  DCHECK_LE(static_cast<size_t>(transacted_bytes), requested_bytes);
   return transacted_bytes;
 }
 
@@ -79,8 +76,6 @@ FileHandle OpenFileForOutput(int rdwr_or_wronly,
   int flags = O_NOCTTY | O_CLOEXEC;
 #endif
 
-  DCHECK(rdwr_or_wronly & (O_RDWR | O_WRONLY));
-  DCHECK_EQ(rdwr_or_wronly & ~(O_RDWR | O_WRONLY), 0);
   flags |= rdwr_or_wronly;
 
   switch (mode) {
@@ -141,7 +136,6 @@ FileHandle OpenFileForReadAndWrite(const base::FilePath& path,
 
 FileHandle LoggingOpenFileForRead(const base::FilePath& path) {
   FileHandle fd = OpenFileForRead(path);
-  PLOG_IF(ERROR, fd < 0) << "open " << path.value();
   return fd;
 }
 
@@ -149,7 +143,6 @@ FileHandle LoggingOpenFileForWrite(const base::FilePath& path,
                                    FileWriteMode mode,
                                    FilePermissions permissions) {
   FileHandle fd = OpenFileForWrite(path, mode, permissions);
-  PLOG_IF(ERROR, fd < 0) << "open " << path.value();
   return fd;
 }
 
@@ -204,7 +197,6 @@ FileHandle LoggingOpenFileForReadAndWrite(const base::FilePath& path,
                                           FileWriteMode mode,
                                           FilePermissions permissions) {
   FileHandle fd = OpenFileForReadAndWrite(path, mode, permissions);
-  PLOG_IF(ERROR, fd < 0) << "open " << path.value();
   return fd;
 }
 
@@ -213,13 +205,11 @@ FileHandle LoggingOpenFileForReadAndWrite(const base::FilePath& path,
 bool LoggingLockFile(FileHandle file, FileLocking locking) {
   int operation = (locking == FileLocking::kShared) ? LOCK_SH : LOCK_EX;
   int rv = HANDLE_EINTR(flock(file, operation));
-  PLOG_IF(ERROR, rv != 0) << "flock";
   return rv == 0;
 }
 
 bool LoggingUnlockFile(FileHandle file) {
   int rv = flock(file, LOCK_UN);
-  PLOG_IF(ERROR, rv != 0) << "flock";
   return rv == 0;
 }
 
@@ -227,13 +217,11 @@ bool LoggingUnlockFile(FileHandle file) {
 
 FileOffset LoggingSeekFile(FileHandle file, FileOffset offset, int whence) {
   off_t rv = lseek(file, offset, whence);
-  PLOG_IF(ERROR, rv < 0) << "lseek";
   return rv;
 }
 
 bool LoggingTruncateFile(FileHandle file) {
   if (HANDLE_EINTR(ftruncate(file, 0)) != 0) {
-    PLOG(ERROR) << "ftruncate";
     return false;
   }
   return true;
@@ -241,14 +229,12 @@ bool LoggingTruncateFile(FileHandle file) {
 
 bool LoggingCloseFile(FileHandle file) {
   int rv = IGNORE_EINTR(close(file));
-  PLOG_IF(ERROR, rv != 0) << "close";
   return rv == 0;
 }
 
 FileOffset LoggingFileSizeByHandle(FileHandle file) {
   struct stat st;
   if (fstat(file, &st) != 0) {
-    PLOG(ERROR) << "fstat";
     return -1;
   }
   return st.st_size;
@@ -264,7 +250,6 @@ FileHandle StdioFileHandle(StdioStream stdio_stream) {
       return STDERR_FILENO;
   }
 
-  NOTREACHED();
   return kInvalidFileHandle;
 }
 

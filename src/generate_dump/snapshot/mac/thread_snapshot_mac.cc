@@ -14,7 +14,6 @@
 
 #include "snapshot/mac/thread_snapshot_mac.h"
 
-#include "base/check_op.h"
 #include "snapshot/mac/cpu_context_mac.h"
 #include "snapshot/mac/process_reader_mac.h"
 
@@ -30,8 +29,7 @@ ThreadSnapshotMac::ThreadSnapshotMac()
       thread_specific_data_address_(0),
       thread_(MACH_PORT_NULL),
       suspend_count_(0),
-      priority_(0),
-      initialized_() {
+      priority_(0) {
 }
 
 ThreadSnapshotMac::~ThreadSnapshotMac() {
@@ -40,7 +38,6 @@ ThreadSnapshotMac::~ThreadSnapshotMac() {
 bool ThreadSnapshotMac::Initialize(
     ProcessReaderMac* process_reader,
     const ProcessReaderMac::Thread& process_reader_thread) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   thread_ = process_reader_thread.port;
   thread_id_ = process_reader_thread.id;
@@ -89,37 +86,30 @@ bool ThreadSnapshotMac::Initialize(
 #error Port to your CPU architecture
 #endif
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
 const CPUContext* ThreadSnapshotMac::Context() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return &context_;
 }
 
 const MemorySnapshot* ThreadSnapshotMac::Stack() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return &stack_;
 }
 
 uint64_t ThreadSnapshotMac::ThreadID() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return thread_id_;
 }
 
 int ThreadSnapshotMac::SuspendCount() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return suspend_count_;
 }
 
 int ThreadSnapshotMac::Priority() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return priority_;
 }
 
 uint64_t ThreadSnapshotMac::ThreadSpecificDataAddress() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return thread_specific_data_address_;
 }
 

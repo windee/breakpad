@@ -22,8 +22,6 @@
 
 #include <algorithm>
 
-#include "base/logging.h"
-#include "base/notreached.h"
 #include "base/scoped_clear_last_error.h"
 #include "base/strings/stringprintf.h"
 #include "build/build_config.h"
@@ -48,7 +46,6 @@ template <typename T>
 T ReadIntSysctlByName(const char* name, T default_value) {
   T value;
   if (ReadIntSysctlByName_NoLog(name, &value) != 0) {
-    PLOG(WARNING) << "sysctlbyname " << name;
     return default_value;
   }
 
@@ -86,8 +83,7 @@ SystemSnapshotMac::SystemSnapshotMac()
       os_version_major_(0),
       os_version_minor_(0),
       os_version_bugfix_(0),
-      os_server_(false),
-      initialized_() {
+      os_server_(false) {
 }
 
 SystemSnapshotMac::~SystemSnapshotMac() {
@@ -95,7 +91,6 @@ SystemSnapshotMac::~SystemSnapshotMac() {
 
 void SystemSnapshotMac::Initialize(ProcessReaderMac* process_reader,
                                    const timeval* snapshot_time) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   process_reader_ = process_reader;
   snapshot_time_ = snapshot_time;
@@ -113,7 +108,6 @@ void SystemSnapshotMac::Initialize(ProcessReaderMac* process_reader,
   std::string uname_string;
   utsname uts;
   if (uname(&uts) != 0) {
-    PLOG(WARNING) << "uname";
   } else {
     uname_string = base::StringPrintf(
         "%s %s %s %s", uts.sysname, uts.release, uts.version, uts.machine);
@@ -130,11 +124,9 @@ void SystemSnapshotMac::Initialize(ProcessReaderMac* process_reader,
     os_version_full_ = uname_string;
   }
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
 }
 
 CPUArchitecture SystemSnapshotMac::GetCPUArchitecture() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   return process_reader_->Is64Bit() ? kCPUArchitectureX86_64
@@ -147,7 +139,6 @@ CPUArchitecture SystemSnapshotMac::GetCPUArchitecture() const {
 }
 
 uint32_t SystemSnapshotMac::CPURevision() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   // machdep.cpu.family and machdep.cpu.model already take the extended family
@@ -167,12 +158,10 @@ uint32_t SystemSnapshotMac::CPURevision() const {
 }
 
 uint8_t SystemSnapshotMac::CPUCount() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return CastIntSysctlByName<uint8_t>("hw.ncpu", 1);
 }
 
 std::string SystemSnapshotMac::CPUVendor() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   return ReadStringSysctlByName("machdep.cpu.vendor", true);
@@ -185,7 +174,6 @@ std::string SystemSnapshotMac::CPUVendor() const {
 
 void SystemSnapshotMac::CPUFrequency(
     uint64_t* current_hz, uint64_t* max_hz) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 #if defined(ARCH_CPU_X86_FAMILY)
   *current_hz = ReadIntSysctlByName<uint64_t>("hw.cpufrequency", 0);
   *max_hz = ReadIntSysctlByName<uint64_t>("hw.cpufrequency_max", 0);
@@ -201,7 +189,6 @@ void SystemSnapshotMac::CPUFrequency(
 }
 
 uint32_t SystemSnapshotMac::CPUX86Signature() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   return ReadIntSysctlByName<uint32_t>("machdep.cpu.signature", 0);
@@ -212,7 +199,6 @@ uint32_t SystemSnapshotMac::CPUX86Signature() const {
 }
 
 uint64_t SystemSnapshotMac::CPUX86Features() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   return ReadIntSysctlByName<uint64_t>("machdep.cpu.feature_bits", 0);
@@ -223,7 +209,6 @@ uint64_t SystemSnapshotMac::CPUX86Features() const {
 }
 
 uint64_t SystemSnapshotMac::CPUX86ExtendedFeatures() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   return ReadIntSysctlByName<uint64_t>("machdep.cpu.extfeature_bits", 0);
@@ -234,7 +219,6 @@ uint64_t SystemSnapshotMac::CPUX86ExtendedFeatures() const {
 }
 
 uint32_t SystemSnapshotMac::CPUX86Leaf7Features() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   // The machdep.cpu.leaf7_feature_bits sysctl isn’t supported prior to OS X
@@ -259,7 +243,6 @@ uint32_t SystemSnapshotMac::CPUX86Leaf7Features() const {
 }
 
 bool SystemSnapshotMac::CPUX86SupportsDAZ() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
 #if defined(ARCH_CPU_X86_FAMILY)
   // The correct way to check for denormals-as-zeros (DAZ) support is to examine
@@ -298,12 +281,10 @@ bool SystemSnapshotMac::CPUX86SupportsDAZ() const {
 }
 
 SystemSnapshot::OperatingSystem SystemSnapshotMac::GetOperatingSystem() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return kOperatingSystemMacOSX;
 }
 
 bool SystemSnapshotMac::OSServer() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return os_server_;
 }
 
@@ -311,7 +292,6 @@ void SystemSnapshotMac::OSVersion(int* major,
                                   int* minor,
                                   int* bugfix,
                                   std::string* build) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   *major = os_version_major_;
   *minor = os_version_minor_;
   *bugfix = os_version_bugfix_;
@@ -319,12 +299,10 @@ void SystemSnapshotMac::OSVersion(int* major,
 }
 
 std::string SystemSnapshotMac::OSVersionFull() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
   return os_version_full_;
 }
 
 std::string SystemSnapshotMac::MachineDescription() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   std::string model;
   std::string board_id;
@@ -343,7 +321,6 @@ std::string SystemSnapshotMac::MachineDescription() const {
 }
 
 bool SystemSnapshotMac::NXEnabled() const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   int value;
   if (ReadIntSysctlByName_NoLog("kern.nx", &value) != 0) {
@@ -368,7 +345,6 @@ bool SystemSnapshotMac::NXEnabled() const {
 
     // Even if sysctlbyname should have worked, NX is enabled by default in all
     // supported configurations, so return true even while warning.
-    PLOG(WARNING) << "sysctlbyname kern.nx";
     return true;
   }
 
@@ -380,7 +356,6 @@ void SystemSnapshotMac::TimeZone(DaylightSavingTimeStatus* dst_status,
                                  int* daylight_offset_seconds,
                                  std::string* standard_name,
                                  std::string* daylight_name) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   internal::TimeZone(*snapshot_time_,
                      dst_status,

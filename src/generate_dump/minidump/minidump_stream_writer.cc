@@ -14,7 +14,6 @@
 
 #include "minidump/minidump_stream_writer.h"
 
-#include "base/check_op.h"
 
 namespace crashpad {
 namespace internal {
@@ -23,7 +22,6 @@ MinidumpStreamWriter::~MinidumpStreamWriter() {
 }
 
 const MINIDUMP_DIRECTORY* MinidumpStreamWriter::DirectoryListEntry() const {
-  DCHECK_EQ(state(), kStateWritable);
 
   return &directory_list_entry_;
 }
@@ -33,7 +31,6 @@ MinidumpStreamWriter::MinidumpStreamWriter()
 }
 
 bool MinidumpStreamWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpWritable::Freeze()) {
     return false;

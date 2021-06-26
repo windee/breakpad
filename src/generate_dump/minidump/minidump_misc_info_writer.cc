@@ -16,15 +16,12 @@
 
 #include <limits>
 
-#include "base/check_op.h"
-#include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/stl_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "build/build_config.h"
 #include "minidump/minidump_writer_util.h"
-#include "package.h"
 #include "snapshot/process_snapshot.h"
 #include "snapshot/system_snapshot.h"
 #include "util/file/file_writer.h"
@@ -36,6 +33,9 @@
 #elif defined(OS_ANDROID)
 #include <android/api-level.h>
 #endif
+
+#define PACKAGE_TARNAME "crashpad"
+#define PACKAGE_VERSION "0.8.0"
 
 namespace crashpad {
 namespace {
@@ -88,8 +88,6 @@ int AvailabilityVersionToMacOSVersionNumber(int availability) {
 #endif
 
   // Since __MAC_10_10, the format is major * 1'00'00 + minor * 1'00 + bugfix.
-  DCHECK_GE(availability, 10'10'00);
-  DCHECK_LE(availability, 99'99'99);
 
   return availability;
 }
@@ -168,8 +166,6 @@ MinidumpMiscInfoWriter::~MinidumpMiscInfoWriter() {
 
 void MinidumpMiscInfoWriter::InitializeFromSnapshot(
     const ProcessSnapshot* process_snapshot) {
-  DCHECK_EQ(state(), kStateMutable);
-  DCHECK_EQ(misc_info_.Flags1, 0u);
 
   SetProcessID(InRangeCast<uint32_t>(process_snapshot->ProcessID(), 0));
 
@@ -238,7 +234,6 @@ void MinidumpMiscInfoWriter::InitializeFromSnapshot(
 }
 
 void MinidumpMiscInfoWriter::SetProcessID(uint32_t process_id) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.ProcessId = process_id;
   misc_info_.Flags1 |= MINIDUMP_MISC1_PROCESS_ID;
@@ -247,7 +242,6 @@ void MinidumpMiscInfoWriter::SetProcessID(uint32_t process_id) {
 void MinidumpMiscInfoWriter::SetProcessTimes(time_t process_create_time,
                                              uint32_t process_user_time,
                                              uint32_t process_kernel_time) {
-  DCHECK_EQ(state(), kStateMutable);
 
   internal::MinidumpWriterUtil::AssignTimeT(&misc_info_.ProcessCreateTime,
                                             process_create_time);
@@ -263,7 +257,6 @@ void MinidumpMiscInfoWriter::SetProcessorPowerInfo(
     uint32_t processor_mhz_limit,
     uint32_t processor_max_idle_state,
     uint32_t processor_current_idle_state) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.ProcessorMaxMhz = processor_max_mhz;
   misc_info_.ProcessorCurrentMhz = processor_current_mhz;
@@ -275,7 +268,6 @@ void MinidumpMiscInfoWriter::SetProcessorPowerInfo(
 
 void MinidumpMiscInfoWriter::SetProcessIntegrityLevel(
     uint32_t process_integrity_level) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.ProcessIntegrityLevel = process_integrity_level;
   misc_info_.Flags1 |= MINIDUMP_MISC3_PROCESS_INTEGRITY;
@@ -283,14 +275,12 @@ void MinidumpMiscInfoWriter::SetProcessIntegrityLevel(
 
 void MinidumpMiscInfoWriter::SetProcessExecuteFlags(
     uint32_t process_execute_flags) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.ProcessExecuteFlags = process_execute_flags;
   misc_info_.Flags1 |= MINIDUMP_MISC3_PROCESS_EXECUTE_FLAGS;
 }
 
 void MinidumpMiscInfoWriter::SetProtectedProcess(uint32_t protected_process) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.ProtectedProcess = protected_process;
   misc_info_.Flags1 |= MINIDUMP_MISC3_PROTECTED_PROCESS;
@@ -304,7 +294,6 @@ void MinidumpMiscInfoWriter::SetTimeZone(uint32_t time_zone_id,
                                          const std::string& daylight_name,
                                          const SYSTEMTIME& daylight_date,
                                          int32_t daylight_bias) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.TimeZoneId = time_zone_id;
   misc_info_.TimeZone.Bias = bias;
@@ -331,7 +320,6 @@ void MinidumpMiscInfoWriter::SetTimeZone(uint32_t time_zone_id,
 void MinidumpMiscInfoWriter::SetBuildString(
     const std::string& build_string,
     const std::string& debug_build_string) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.Flags1 |= MINIDUMP_MISC4_BUILDSTRING;
 
@@ -347,21 +335,18 @@ void MinidumpMiscInfoWriter::SetBuildString(
 
 void MinidumpMiscInfoWriter::SetXStateData(
     const XSTATE_CONFIG_FEATURE_MSC_INFO& xstate_data) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.XStateData = xstate_data;
   has_xstate_data_ = true;
 }
 
 void MinidumpMiscInfoWriter::SetProcessCookie(uint32_t process_cookie) {
-  DCHECK_EQ(state(), kStateMutable);
 
   misc_info_.ProcessCookie = process_cookie;
   misc_info_.Flags1 |= MINIDUMP_MISC5_PROCESS_COOKIE;
 }
 
 bool MinidumpMiscInfoWriter::Freeze() {
-  DCHECK_EQ(state(), kStateMutable);
 
   if (!MinidumpStreamWriter::Freeze()) {
     return false;
@@ -369,7 +354,6 @@ bool MinidumpMiscInfoWriter::Freeze() {
 
   size_t size = CalculateSizeOfObjectFromFlags();
   if (!AssignIfInRange(&misc_info_.SizeOfInfo, size)) {
-    LOG(ERROR) << "size " << size << " out of range";
     return false;
   }
 
@@ -377,13 +361,11 @@ bool MinidumpMiscInfoWriter::Freeze() {
 }
 
 size_t MinidumpMiscInfoWriter::SizeOfObject() {
-  DCHECK_GE(state(), kStateFrozen);
 
   return CalculateSizeOfObjectFromFlags();
 }
 
 bool MinidumpMiscInfoWriter::WriteObject(FileWriterInterface* file_writer) {
-  DCHECK_EQ(state(), kStateWritable);
 
   return file_writer->Write(&misc_info_, CalculateSizeOfObjectFromFlags());
 }
@@ -393,7 +375,6 @@ MinidumpStreamType MinidumpMiscInfoWriter::StreamType() const {
 }
 
 size_t MinidumpMiscInfoWriter::CalculateSizeOfObjectFromFlags() const {
-  DCHECK_GE(state(), kStateFrozen);
 
   if (has_xstate_data_ || (misc_info_.Flags1 & MINIDUMP_MISC5_PROCESS_COOKIE)) {
     return sizeof(MINIDUMP_MISC_INFO_5);

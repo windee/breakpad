@@ -8,8 +8,6 @@ namespace base {
 namespace mac {
 
 void ScopedMachVM::reset(vm_address_t address, vm_size_t size) {
-  DCHECK(address % PAGE_SIZE == 0);
-  DCHECK(size % PAGE_SIZE == 0);
 
   if (size_) {
     if (address_ < address) {

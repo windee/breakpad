@@ -6,7 +6,6 @@
 #define MINI_CHROMIUM_BASE_MAC_SCOPED_TYPEREF_H_
 
 #include "base/compiler_specific.h"
-#include "base/logging.h"
 #include "base/memory/scoped_policy.h"
 
 namespace base {

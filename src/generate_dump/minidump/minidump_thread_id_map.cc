@@ -18,7 +18,6 @@
 #include <set>
 #include <utility>
 
-#include "base/check_op.h"
 #include "base/numerics/safe_conversions.h"
 #include "snapshot/thread_snapshot.h"
 
@@ -27,7 +26,6 @@ namespace crashpad {
 void BuildMinidumpThreadIDMap(
     const std::vector<const ThreadSnapshot*>& thread_snapshots,
     MinidumpThreadIDMap* thread_id_map) {
-  DCHECK(thread_id_map->empty());
 
   // First, try truncating each 64-bit thread ID to 32 bits. If that’s possible
   // for each unique 64-bit thread ID, then this will be used as the mapping.
@@ -60,7 +58,6 @@ void BuildMinidumpThreadIDMap(
       }
     }
 
-    DCHECK_LE(thread_id_map->size(), std::numeric_limits<uint32_t>::max());
   }
 }
 

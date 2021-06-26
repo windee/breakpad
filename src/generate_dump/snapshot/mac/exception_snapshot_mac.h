@@ -25,7 +25,6 @@
 #include "snapshot/cpu_context.h"
 #include "snapshot/exception_snapshot.h"
 #include "util/mach/mach_extensions.h"
-#include "util/misc/initialization_state_dcheck.h"
 
 namespace crashpad {
 
@@ -95,7 +94,6 @@ class ExceptionSnapshotMac final : public ExceptionSnapshot {
   uint64_t exception_address_;
   exception_type_t exception_;
   uint32_t exception_code_0_;
-  InitializationStateDcheck initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(ExceptionSnapshotMac);
 };

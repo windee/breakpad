@@ -21,14 +21,11 @@
 #include <algorithm>
 #include <utility>
 
-#include "base/logging.h"
-#include "base/mac/mach_logging.h"
 #include "base/mac/scoped_mach_port.h"
 #include "base/mac/scoped_mach_vm.h"
 #include "base/strings/stringprintf.h"
 #include "snapshot/mac/mach_o_image_reader.h"
 #include "snapshot/mac/process_types.h"
-#include "util/misc/scoped_forbid_return.h"
 
 namespace {
 
@@ -94,7 +91,6 @@ ProcessReaderMac::ProcessReaderMac()
       module_readers_(),
       process_memory_(),
       task_(TASK_NULL),
-      initialized_(),
 #if defined(CRASHPAD_MAC_32_BIT_SUPPORT)
       is_64_bit_(false),
 #endif  // CRASHPAD_MAC_32_BIT_SUPPORT
@@ -104,13 +100,11 @@ ProcessReaderMac::ProcessReaderMac()
 
 ProcessReaderMac::~ProcessReaderMac() {
   for (const Thread& thread : threads_) {
-    kern_return_t kr = mach_port_deallocate(mach_task_self(), thread.port);
-    MACH_LOG_IF(ERROR, kr != KERN_SUCCESS, kr) << "mach_port_deallocate";
+    mach_port_deallocate(mach_task_self(), thread.port);
   }
 }
 
 bool ProcessReaderMac::Initialize(task_t task) {
-  INITIALIZATION_STATE_SET_INITIALIZING(initialized_);
 
   if (!process_info_.InitializeWithTask(task)) {
     return false;
@@ -123,23 +117,20 @@ bool ProcessReaderMac::Initialize(task_t task) {
 #if defined(CRASHPAD_MAC_32_BIT_SUPPORT)
   is_64_bit_ = process_info_.Is64Bit();
 #else  // CRASHPAD_MAC_32_BIT_SUPPORT
-  DCHECK(process_info_.Is64Bit());
+
 #endif  // CRASHPAD_MAC_32_BIT_SUPPORT
 
   task_ = task;
 
-  INITIALIZATION_STATE_SET_VALID(initialized_);
   return true;
 }
 
 void ProcessReaderMac::StartTime(timeval* start_time) const {
-  bool rv = process_info_.StartTime(start_time);
-  DCHECK(rv);
+  process_info_.StartTime(start_time);
 }
 
 bool ProcessReaderMac::CPUTimes(timeval* user_time,
                                 timeval* system_time) const {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   // Calculate user and system time the same way the kernel does for
   // getrusage(). See 10.9.2 xnu-2422.90.20/bsd/kern/kern_resource.c calcru().
@@ -155,7 +146,6 @@ bool ProcessReaderMac::CPUTimes(timeval* user_time,
                                reinterpret_cast<task_info_t>(&task_basic_info),
                                &task_basic_info_count);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(WARNING, kr) << "task_info TASK_BASIC_INFO_64";
     return false;
   }
 
@@ -166,7 +156,6 @@ bool ProcessReaderMac::CPUTimes(timeval* user_time,
                  reinterpret_cast<task_info_t>(&task_thread_times),
                  &task_thread_times_count);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(WARNING, kr) << "task_info TASK_THREAD_TIMES";
     return false;
   }
 
@@ -185,7 +174,6 @@ bool ProcessReaderMac::CPUTimes(timeval* user_time,
 }
 
 const std::vector<ProcessReaderMac::Thread>& ProcessReaderMac::Threads() {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   if (!initialized_threads_) {
     InitializeThreads();
@@ -195,7 +183,6 @@ const std::vector<ProcessReaderMac::Thread>& ProcessReaderMac::Threads() {
 }
 
 const std::vector<ProcessReaderMac::Module>& ProcessReaderMac::Modules() {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   if (!initialized_modules_) {
     InitializeModules();
@@ -206,14 +193,12 @@ const std::vector<ProcessReaderMac::Module>& ProcessReaderMac::Modules() {
 
 mach_vm_address_t ProcessReaderMac::DyldAllImageInfo(
     mach_vm_size_t* all_image_info_size) {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   task_dyld_info_data_t dyld_info;
   mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
   kern_return_t kr = task_info(
       task_, TASK_DYLD_INFO, reinterpret_cast<task_info_t>(&dyld_info), &count);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(WARNING, kr) << "task_info";
     return 0;
   }
 
@@ -230,9 +215,6 @@ mach_vm_address_t ProcessReaderMac::DyldAllImageInfo(
     const integer_t kExpectedFormat =
         !Is64Bit() ? TASK_DYLD_ALL_IMAGE_INFO_32 : TASK_DYLD_ALL_IMAGE_INFO_64;
     if (dyld_info.all_image_info_format != kExpectedFormat) {
-      LOG(WARNING) << "unexpected task_dyld_info_data_t::all_image_info_format "
-                   << dyld_info.all_image_info_format;
-      DCHECK_EQ(dyld_info.all_image_info_format, kExpectedFormat);
       return 0;
     }
   }
@@ -245,8 +227,6 @@ mach_vm_address_t ProcessReaderMac::DyldAllImageInfo(
 }
 
 void ProcessReaderMac::InitializeThreads() {
-  DCHECK(!initialized_threads_);
-  DCHECK(threads_.empty());
 
   initialized_threads_ = true;
 
@@ -254,7 +234,6 @@ void ProcessReaderMac::InitializeThreads() {
   mach_msg_type_number_t thread_count = 0;
   kern_return_t kr = task_threads(task_, &threads, &thread_count);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(WARNING, kr) << "task_threads";
     return;
   }
 
@@ -262,8 +241,6 @@ void ProcessReaderMac::InitializeThreads() {
   // by anything until they’re added to |threads_| by the loop below. Any early
   // return (or exception) that happens between here and the completion of the
   // loop below will leak thread port send rights.
-  ScopedForbidReturn threads_need_owners;
-
   base::mac::ScopedMachVM threads_vm(
       reinterpret_cast<vm_address_t>(threads),
       mach_vm_round_page(thread_count * sizeof(*threads)));
@@ -305,7 +282,6 @@ void ProcessReaderMac::InitializeThreads() {
         reinterpret_cast<thread_state_t>(&thread.thread_context),
         &thread_state_count);
     if (kr != KERN_SUCCESS) {
-      MACH_LOG(ERROR, kr) << "thread_get_state(" << kThreadStateFlavor << ")";
       continue;
     }
 
@@ -315,7 +291,6 @@ void ProcessReaderMac::InitializeThreads() {
         reinterpret_cast<thread_state_t>(&thread.float_context),
         &float_state_count);
     if (kr != KERN_SUCCESS) {
-      MACH_LOG(ERROR, kr) << "thread_get_state(" << kFloatStateFlavor << ")";
       continue;
     }
 
@@ -325,7 +300,6 @@ void ProcessReaderMac::InitializeThreads() {
         reinterpret_cast<thread_state_t>(&thread.debug_context),
         &debug_state_count);
     if (kr != KERN_SUCCESS) {
-      MACH_LOG(ERROR, kr) << "thread_get_state(" << kDebugStateFlavor << ")";
       continue;
     }
 
@@ -336,7 +310,6 @@ void ProcessReaderMac::InitializeThreads() {
                      reinterpret_cast<thread_info_t>(&basic_info),
                      &count);
     if (kr != KERN_SUCCESS) {
-      MACH_LOG(WARNING, kr) << "thread_info(THREAD_BASIC_INFO)";
     } else {
       thread.suspend_count = basic_info.suspend_count;
     }
@@ -348,7 +321,7 @@ void ProcessReaderMac::InitializeThreads() {
                      reinterpret_cast<thread_info_t>(&identifier_info),
                      &count);
     if (kr != KERN_SUCCESS) {
-      MACH_LOG(WARNING, kr) << "thread_info(THREAD_IDENTIFIER_INFO)";
+
     } else {
       thread.id = identifier_info.thread_id;
 
@@ -374,7 +347,7 @@ void ProcessReaderMac::InitializeThreads() {
                            &count,
                            &get_default);
     if (kr != KERN_SUCCESS) {
-      MACH_LOG(INFO, kr) << "thread_policy_get";
+
     } else {
       thread.priority = precedence.importance;
     }
@@ -394,12 +367,9 @@ void ProcessReaderMac::InitializeThreads() {
     threads_.push_back(thread);
   }
 
-  threads_need_owners.Disarm();
 }
 
 void ProcessReaderMac::InitializeModules() {
-  DCHECK(!initialized_modules_);
-  DCHECK(modules_.empty());
 
   initialized_modules_ = true;
 
@@ -409,13 +379,10 @@ void ProcessReaderMac::InitializeModules() {
 
   process_types::dyld_all_image_infos all_image_infos;
   if (!all_image_infos.Read(this, all_image_info_addr)) {
-    LOG(WARNING) << "could not read dyld_all_image_infos";
     return;
   }
 
   if (all_image_infos.version < 1) {
-    LOG(WARNING) << "unexpected dyld_all_image_infos version "
-                 << all_image_infos.version;
     return;
   }
 
@@ -423,9 +390,6 @@ void ProcessReaderMac::InitializeModules() {
       process_types::dyld_all_image_infos::ExpectedSizeForVersion(
           this, all_image_infos.version);
   if (all_image_info_size < expected_size) {
-    LOG(WARNING) << "small dyld_all_image_infos size " << all_image_info_size
-                 << " < " << expected_size << " for version "
-                 << all_image_infos.version;
     return;
   }
 
@@ -440,11 +404,6 @@ void ProcessReaderMac::InitializeModules() {
   // Continue along when this situation is detected, because even without any
   // images in infoArray, dyldImageLoadAddress may be set, and it may be
   // possible to recover some information from dyld.
-  if (all_image_infos.infoArrayCount == 0) {
-    LOG(WARNING) << "all_image_infos.infoArrayCount is zero";
-  } else if (!all_image_infos.infoArray) {
-    LOG(WARNING) << "all_image_infos.infoArray is nullptr";
-  }
 
   std::vector<process_types::dyld_image_info> image_info_vector(
       all_image_infos.infoArrayCount);
@@ -452,7 +411,6 @@ void ProcessReaderMac::InitializeModules() {
                                                      all_image_infos.infoArray,
                                                      image_info_vector.size(),
                                                      &image_info_vector[0])) {
-    LOG(WARNING) << "could not read dyld_image_info array";
     return;
   }
 
@@ -464,7 +422,6 @@ void ProcessReaderMac::InitializeModules() {
     module.timestamp = image_info.imageFileModDate;
 
     if (!process_memory_.ReadCString(image_info.imageFilePath, &module.name)) {
-      LOG(WARNING) << "could not read dyld_image_info::imageFilePath";
       // Proceed anyway with an empty module name.
     }
 
@@ -483,14 +440,6 @@ void ProcessReaderMac::InitializeModules() {
     if (all_image_infos.version >= 2 && all_image_infos.dyldImageLoadAddress &&
         image_info.imageLoadAddress == all_image_infos.dyldImageLoadAddress) {
       found_dyld = true;
-      LOG(WARNING) << base::StringPrintf(
-          "found dylinker (%s) in dyld_all_image_infos::infoArray",
-          module.name.c_str());
-
-      LOG_IF(WARNING, file_type != MH_DYLINKER)
-          << base::StringPrintf("dylinker (%s) has unexpected Mach-O type %d",
-                                module.name.c_str(),
-                                file_type);
     }
 
     if (file_type == MH_EXECUTE) {
@@ -514,16 +463,12 @@ void ProcessReaderMac::InitializeModules() {
       if (main_executable_count == 0) {
         std::swap(modules_[0], modules_[index]);
       } else {
-        LOG(WARNING) << base::StringPrintf(
-            "multiple MH_EXECUTE modules (%s, %s)",
-            modules_[0].name.c_str(),
-            modules_[index].name.c_str());
+
       }
       ++main_executable_count;
     }
   }
 
-  LOG_IF(WARNING, main_executable_count == 0) << "no MH_EXECUTE modules";
 
   // all_image_infos.infoArray doesn’t include an entry for dyld, but dyld is
   // loaded into the process’ address space as a module. Its load address is
@@ -562,10 +507,6 @@ void ProcessReaderMac::InitializeModules() {
 
     uint32_t file_type = reader ? reader->FileType() : 0;
 
-    LOG_IF(WARNING, file_type != MH_DYLINKER)
-        << base::StringPrintf("dylinker (%s) has unexpected Mach-O type %d",
-                              module.name.c_str(),
-                              file_type);
 
     if (module.name.empty() && file_type == MH_DYLINKER) {
       // Look inside dyld directly to find its preferred path.
@@ -585,7 +526,6 @@ void ProcessReaderMac::InitializeModules() {
 mach_vm_address_t ProcessReaderMac::CalculateStackRegion(
     mach_vm_address_t stack_pointer,
     mach_vm_size_t* stack_region_size) {
-  INITIALIZATION_STATE_DCHECK_VALID(initialized_);
 
   // For pthreads, it may be possible to compute the stack region based on the
   // internal _pthread::stackaddr and _pthread::stacksize. The _pthread struct
@@ -599,7 +539,6 @@ mach_vm_address_t ProcessReaderMac::CalculateStackRegion(
   kern_return_t kr = MachVMRegionRecurseDeepest(
       task_, &region_base, &region_size, &depth, &protection, &user_tag);
   if (kr != KERN_SUCCESS) {
-    MACH_LOG(INFO, kr) << "mach_vm_region_recurse";
     *stack_region_size = 0;
     return 0;
   }
@@ -640,7 +579,6 @@ mach_vm_address_t ProcessReaderMac::CalculateStackRegion(
     // but that might be wasteful.
     constexpr mach_vm_size_t kDesiredAlignment = 16;
     start_address &= ~(kDesiredAlignment - 1);
-    DCHECK_GE(start_address, region_base);
   }
 
   region_size -= (start_address - region_base);
@@ -669,8 +607,8 @@ mach_vm_address_t ProcessReaderMac::CalculateStackRegion(
     mach_vm_address_t try_address = region_base;
     mach_vm_address_t original_try_address;
 
-    while (try_address += region_size,
-           original_try_address = try_address,
+      while (static_cast<void>(try_address += region_size),
+             static_cast<void>(original_try_address = try_address),
            (kr = MachVMRegionRecurseDeepest(task_,
                                             &try_address,
                                             &region_size,
@@ -681,12 +619,6 @@ mach_vm_address_t ProcessReaderMac::CalculateStackRegion(
                (protection & VM_PROT_READ) != 0 &&
                user_tag == VM_MEMORY_STACK) {
       total_region_size += region_size;
-    }
-
-    if (kr != KERN_SUCCESS && kr != KERN_INVALID_ADDRESS) {
-      // Tolerate KERN_INVALID_ADDRESS because it will be returned when there
-      // are no more regions in the map at or above the specified |try_address|.
-      MACH_LOG(INFO, kr) << "mach_vm_region_recurse";
     }
   }
 
@@ -725,7 +657,6 @@ void ProcessReaderMac::LocateRedZone(mach_vm_address_t* const start_address,
                                                     &red_zone_protection,
                                                     &red_zone_user_tag);
       if (kr != KERN_SUCCESS) {
-        MACH_LOG(INFO, kr) << "mach_vm_region_recurse";
         *start_address = *region_base;
       } else if (red_zone_region_base + red_zone_region_size == *region_base &&
                  (red_zone_protection & VM_PROT_READ) != 0 &&
