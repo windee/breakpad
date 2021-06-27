@@ -62,7 +62,7 @@ typedef enum {
 
 
 
-ReportResult SendCrashReport(const wstring &url,
+ReportResult SendCrashReport(const string &url,
                                const map<string, string> &parameters,
                                const map<string, string> &files,
                                wstring *report_code);

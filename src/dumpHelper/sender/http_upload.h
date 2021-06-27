@@ -89,7 +89,7 @@ class HTTPUpload {
   // If response_code is non-NULL, it will be set to the HTTP response code
   // received (or 0 if the request failed before getting an HTTP response).
   static bool SendMultipartPostRequest(
-      const wstring& url,
+      const string& url,
       const map<string, string>& parameters,
       const map<string, string>& files,
       int *timeout_ms,

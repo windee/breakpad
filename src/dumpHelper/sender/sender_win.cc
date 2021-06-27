@@ -36,7 +36,7 @@
 namespace dump_helper {
 
 ReportResult SendCrashReport(
-    const wstring &url, const map<string, string> &parameters,
+    const string &url, const map<string, string> &parameters,
     const map<string, string> &files, wstring *report_code) {
 
   int http_response = 0;

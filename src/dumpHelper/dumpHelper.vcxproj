@@ -348,7 +348,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
-      <Optimization>Disabled</Optimization>
+      <Optimization>Full</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0600;WINVER=0x0600;WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NOMINMAX;_CRT_RAND_S;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;WIN32_LEAN_AND_MEAN;_SECURE_ATL;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_USING_V110_SDK71_;NO_TCMALLOC;NDEBUG;NVALGRIND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -472,10 +472,10 @@
     <ClInclude Include="postfix_evaluator.h" />
     <ClInclude Include="range_map-inl.h" />
     <ClInclude Include="range_map.h" />
-    <ClInclude Include="sender\crash_sender.h" />
     <ClInclude Include="sender\guid_string.h" />
     <ClInclude Include="sender\http_upload.h" />
     <ClInclude Include="sender\module_info.h" />
+    <ClInclude Include="sender\sender_win.h" />
     <ClInclude Include="simple_symbol_supplier.h" />
     <ClInclude Include="source_line_resolver_base_types.h" />
     <ClInclude Include="stackwalker\stackwalker_address_list.h" />
@@ -536,9 +536,9 @@
     <ClCompile Include="minidump_processor.cc" />
     <ClCompile Include="proc_maps_linux.cc" />
     <ClCompile Include="process_state.cc" />
-    <ClCompile Include="sender\crash_sender.cc" />
     <ClCompile Include="sender\guid_string.cc" />
     <ClCompile Include="sender\http_upload.cc" />
+    <ClCompile Include="sender\sender_win.cc" />
     <ClCompile Include="simple_symbol_supplier.cc" />
     <ClCompile Include="source_line_resolver_base.cc" />
     <ClCompile Include="stackwalker\stackwalker.cc" />

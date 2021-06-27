@@ -22,9 +22,6 @@
     <ClCompile Include="stackwalk_common.cc" />
     <ClCompile Include="symbolic_constants_win.cc" />
     <ClCompile Include="tokenize.cc" />
-    <ClCompile Include="sender\crash_sender.cc">
-      <Filter>sender</Filter>
-    </ClCompile>
     <ClCompile Include="sender\guid_string.cc">
       <Filter>sender</Filter>
     </ClCompile>
@@ -114,6 +111,9 @@
     <ClCompile Include="stackwalker\stackwalker_x86.cc">
       <Filter>stackwalker</Filter>
     </ClCompile>
+    <ClCompile Include="sender\sender_win.cc">
+      <Filter>sender</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common\basictypes.h" />
@@ -153,9 +153,6 @@
     <ClInclude Include="symbolic_constants_win.h" />
     <ClInclude Include="tokenize.h" />
     <ClInclude Include="windows_frame_info.h" />
-    <ClInclude Include="sender\crash_sender.h">
-      <Filter>sender</Filter>
-    </ClInclude>
     <ClInclude Include="sender\guid_string.h">
       <Filter>sender</Filter>
     </ClInclude>
@@ -374,6 +371,9 @@
     </ClInclude>
     <ClInclude Include="common\processor\system_info.h">
       <Filter>common\processor</Filter>
+    </ClInclude>
+    <ClInclude Include="sender\sender_win.h">
+      <Filter>sender</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -455,7 +455,7 @@ namespace dump_helper {
   }
 
   bool HTTPUpload::SendMultipartPostRequest(
-      const wstring& url,
+      const string& url,
       const map<string, string>& parameters,
       const map<string, string>& files,
       int* timeout_ms,
@@ -475,7 +475,7 @@ namespace dump_helper {
     }
 
     return SendRequestInner(
-        url,
+		UTF8ToWide(url),
         L"POST",
         content_type_header,
         request_body,
