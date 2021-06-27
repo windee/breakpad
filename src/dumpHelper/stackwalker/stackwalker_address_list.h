@@ -37,7 +37,6 @@
 #ifndef PROCESSOR_STACKWALKER_ADDRESS_LIST_H_
 #define PROCESSOR_STACKWALKER_ADDRESS_LIST_H_
 
-#include "common/basictypes.h"
 #include "common/minidump/breakpad_types.h"
 #include "common/processor/stackwalker.h"
 
@@ -52,8 +51,7 @@ class StackwalkerAddressList : public Stackwalker {
   // Stackwalker constructor.
   StackwalkerAddressList(const uint64_t* frames,
                          size_t frame_count,
-                         const CodeModules* modules,
-                         StackFrameSymbolizer* frame_symbolizer);
+                         const CodeModules* modules);
 
  private:
   // Implementation of Stackwalker.

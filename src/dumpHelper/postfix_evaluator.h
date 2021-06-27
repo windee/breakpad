@@ -74,12 +74,12 @@
 #include <string>
 #include <vector>
 
-#include "common/using_std_string.h"
 
 namespace dump_helper {
 
 using std::map;
 using std::vector;
+using std::string;
 
 class MemoryRegion;
 
@@ -98,14 +98,6 @@ class PostfixEvaluator {
   PostfixEvaluator(DictionaryType *dictionary, const MemoryRegion *memory)
       : dictionary_(dictionary), memory_(memory), stack_() {}
 
-  // Evaluate the expression, starting with an empty stack. The results of
-  // execution will be stored in one (or more) variables in the dictionary.
-  // Returns false if any failures occur during execution, leaving
-  // variables in the dictionary in an indeterminate state. If assigned is
-  // non-NULL, any keys set in the dictionary as a result of evaluation
-  // will also be set to true in assigned, providing a way to determine if
-  // an expression modifies any of its input variables.
-  bool Evaluate(const string &expression, DictionaryValidityType *assigned);
 
   // Like Evaluate, but provides the value left on the stack to the
   // caller. If evaluation succeeds and leaves exactly one value on

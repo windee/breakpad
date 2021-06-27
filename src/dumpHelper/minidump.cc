@@ -79,21 +79,13 @@ bool IsContextSizeUnique(uint32_t context_size) {
   int num_matching_contexts = 0;
   if (context_size == sizeof(MDRawContextX86))
     num_matching_contexts++;
-  if (context_size == sizeof(MDRawContextPPC))
-    num_matching_contexts++;
-  if (context_size == sizeof(MDRawContextPPC64))
-    num_matching_contexts++;
   if (context_size == sizeof(MDRawContextAMD64))
-    num_matching_contexts++;
-  if (context_size == sizeof(MDRawContextSPARC))
     num_matching_contexts++;
   if (context_size == sizeof(MDRawContextARM))
     num_matching_contexts++;
   if (context_size == sizeof(MDRawContextARM64))
     num_matching_contexts++;
   if (context_size == sizeof(MDRawContextARM64_Old))
-    num_matching_contexts++;
-  if (context_size == sizeof(MDRawContextMIPS))
     num_matching_contexts++;
   return num_matching_contexts == 1;
 }
@@ -441,9 +433,6 @@ bool MinidumpContext::Read(uint32_t expected_size) {
   if (!IsContextSizeUnique(sizeof(MDRawContextAMD64))) {
     return false;
   }
-  if (!IsContextSizeUnique(sizeof(MDRawContextPPC64))) {
-    return false;
-  }
   if (!IsContextSizeUnique(sizeof(MDRawContextARM64_Old))) {
     return false;
   }
@@ -550,94 +539,6 @@ bool MinidumpContext::Read(uint32_t expected_size) {
     SetContextFlags(context_amd64->context_flags);
 
     SetContextAMD64(context_amd64.release());
-  } else if (expected_size == sizeof(MDRawContextPPC64)) {
-    // |context_flags| of MDRawContextPPC64 is 64 bits, but other MDRawContext
-    // in the else case have 32 bits |context_flags|, so special case it here.
-    uint64_t context_flags;
-    if (!minidump_->ReadBytes(&context_flags, sizeof(context_flags))) {
-      return false;
-    }
-    if (minidump_->swap())
-      Swap(&context_flags);
-
-    uint32_t cpu_type = context_flags & MD_CONTEXT_CPU_MASK;
-    scoped_ptr<MDRawContextPPC64> context_ppc64(new MDRawContextPPC64());
-
-    if (cpu_type == 0) {
-      if (minidump_->GetContextCPUFlagsFromSystemInfo(&cpu_type)) {
-        context_ppc64->context_flags |= cpu_type;
-      } else {
-        return false;
-      }
-    }
-
-    if (cpu_type != MD_CONTEXT_PPC64) {
-      // TODO: Fall through to switch below.
-      // https://bugs.chromium.org/p/google-breakpad/issues/detail?id=550
-      return false;
-    }
-
-    // Set the context_flags member, which has already been read, and
-    // read the rest of the structure beginning with the first member
-    // after context_flags.
-    context_ppc64->context_flags = context_flags;
-
-    size_t flags_size = sizeof(context_ppc64->context_flags);
-    uint8_t* context_after_flags =
-          reinterpret_cast<uint8_t*>(context_ppc64.get()) + flags_size;
-    if (!minidump_->ReadBytes(context_after_flags,
-                              sizeof(MDRawContextPPC64) - flags_size)) {
-      return false;
-    }
-
-    // Do this after reading the entire MDRawContext structure because
-    // GetSystemInfo may seek minidump to a new position.
-    if (!CheckAgainstSystemInfo(cpu_type)) {
-      return false;
-    }
-    if (minidump_->swap()) {
-      // context_ppc64->context_flags was already swapped.
-      Swap(&context_ppc64->srr0);
-      Swap(&context_ppc64->srr1);
-      for (unsigned int gpr_index = 0;
-           gpr_index < MD_CONTEXT_PPC64_GPR_COUNT;
-           ++gpr_index) {
-        Swap(&context_ppc64->gpr[gpr_index]);
-      }
-      Swap(&context_ppc64->cr);
-      Swap(&context_ppc64->xer);
-      Swap(&context_ppc64->lr);
-      Swap(&context_ppc64->ctr);
-      Swap(&context_ppc64->vrsave);
-      for (unsigned int fpr_index = 0;
-           fpr_index < MD_FLOATINGSAVEAREA_PPC_FPR_COUNT;
-           ++fpr_index) {
-        Swap(&context_ppc64->float_save.fpregs[fpr_index]);
-      }
-      // Don't swap context_ppc64->float_save.fpscr_pad because it is only
-      // used for padding.
-      Swap(&context_ppc64->float_save.fpscr);
-      for (unsigned int vr_index = 0;
-           vr_index < MD_VECTORSAVEAREA_PPC_VR_COUNT;
-           ++vr_index) {
-        Normalize128(&context_ppc64->vector_save.save_vr[vr_index], true);
-        Swap(&context_ppc64->vector_save.save_vr[vr_index]);
-      }
-      Swap(&context_ppc64->vector_save.save_vscr);
-      // Don't swap the padding fields in vector_save.
-      Swap(&context_ppc64->vector_save.save_vrvalid);
-    }
-
-    SetContextFlags(static_cast<uint32_t>(context_ppc64->context_flags));
-
-    // Check for data loss when converting context flags from uint64_t into
-    // uint32_t
-    if (static_cast<uint64_t>(GetContextFlags()) !=
-        context_ppc64->context_flags) {
-      return false;
-    }
-
-    SetContextPPC64(context_ppc64.release());
   } else if (expected_size == sizeof(MDRawContextARM64_Old)) {
     // |context_flags| of MDRawContextARM64_Old is 64 bits, but other MDRawContext
     // in the else case have 32 bits |context_flags|, so special case it here.
@@ -813,130 +714,6 @@ bool MinidumpContext::Read(uint32_t expected_size) {
         break;
       }
 
-      case MD_CONTEXT_PPC: {
-        if (expected_size != sizeof(MDRawContextPPC)) {
-          return false;
-        }
-
-        scoped_ptr<MDRawContextPPC> context_ppc(new MDRawContextPPC());
-
-        // Set the context_flags member, which has already been read, and
-        // read the rest of the structure beginning with the first member
-        // after context_flags.
-        context_ppc->context_flags = context_flags;
-
-        size_t flags_size = sizeof(context_ppc->context_flags);
-        uint8_t* context_after_flags =
-          reinterpret_cast<uint8_t*>(context_ppc.get()) + flags_size;
-        if (!minidump_->ReadBytes(context_after_flags,
-                                  sizeof(MDRawContextPPC) - flags_size)) {
-          return false;
-        }
-
-        // Do this after reading the entire MDRawContext structure because
-        // GetSystemInfo may seek minidump to a new position.
-        if (!CheckAgainstSystemInfo(cpu_type)) {
-          return false;
-        }
-
-        // Normalize the 128-bit types in the dump.
-        // Since this is PowerPC, by definition, the values are big-endian.
-        for (unsigned int vr_index = 0;
-             vr_index < MD_VECTORSAVEAREA_PPC_VR_COUNT;
-             ++vr_index) {
-          Normalize128(&context_ppc->vector_save.save_vr[vr_index], true);
-        }
-
-        if (minidump_->swap()) {
-          // context_ppc->context_flags was already swapped.
-          Swap(&context_ppc->srr0);
-          Swap(&context_ppc->srr1);
-          for (unsigned int gpr_index = 0;
-               gpr_index < MD_CONTEXT_PPC_GPR_COUNT;
-               ++gpr_index) {
-            Swap(&context_ppc->gpr[gpr_index]);
-          }
-          Swap(&context_ppc->cr);
-          Swap(&context_ppc->xer);
-          Swap(&context_ppc->lr);
-          Swap(&context_ppc->ctr);
-          Swap(&context_ppc->mq);
-          Swap(&context_ppc->vrsave);
-          for (unsigned int fpr_index = 0;
-               fpr_index < MD_FLOATINGSAVEAREA_PPC_FPR_COUNT;
-               ++fpr_index) {
-            Swap(&context_ppc->float_save.fpregs[fpr_index]);
-          }
-          // Don't swap context_ppc->float_save.fpscr_pad because it is only
-          // used for padding.
-          Swap(&context_ppc->float_save.fpscr);
-          for (unsigned int vr_index = 0;
-               vr_index < MD_VECTORSAVEAREA_PPC_VR_COUNT;
-               ++vr_index) {
-            Swap(&context_ppc->vector_save.save_vr[vr_index]);
-          }
-          Swap(&context_ppc->vector_save.save_vscr);
-          // Don't swap the padding fields in vector_save.
-          Swap(&context_ppc->vector_save.save_vrvalid);
-        }
-
-        SetContextPPC(context_ppc.release());
-
-        break;
-      }
-
-      case MD_CONTEXT_SPARC: {
-        if (expected_size != sizeof(MDRawContextSPARC)) {
-          return false;
-        }
-
-        scoped_ptr<MDRawContextSPARC> context_sparc(new MDRawContextSPARC());
-
-        // Set the context_flags member, which has already been read, and
-        // read the rest of the structure beginning with the first member
-        // after context_flags.
-        context_sparc->context_flags = context_flags;
-
-        size_t flags_size = sizeof(context_sparc->context_flags);
-        uint8_t* context_after_flags =
-            reinterpret_cast<uint8_t*>(context_sparc.get()) + flags_size;
-        if (!minidump_->ReadBytes(context_after_flags,
-                                  sizeof(MDRawContextSPARC) - flags_size)) {
-          return false;
-        }
-
-        // Do this after reading the entire MDRawContext structure because
-        // GetSystemInfo may seek minidump to a new position.
-        if (!CheckAgainstSystemInfo(cpu_type)) {
-          return false;
-        }
-
-        if (minidump_->swap()) {
-          // context_sparc->context_flags was already swapped.
-          for (unsigned int gpr_index = 0;
-               gpr_index < MD_CONTEXT_SPARC_GPR_COUNT;
-               ++gpr_index) {
-            Swap(&context_sparc->g_r[gpr_index]);
-          }
-          Swap(&context_sparc->ccr);
-          Swap(&context_sparc->pc);
-          Swap(&context_sparc->npc);
-          Swap(&context_sparc->y);
-          Swap(&context_sparc->asi);
-          Swap(&context_sparc->fprs);
-          for (unsigned int fpr_index = 0;
-               fpr_index < MD_FLOATINGSAVEAREA_SPARC_FPR_COUNT;
-               ++fpr_index) {
-            Swap(&context_sparc->float_save.regs[fpr_index]);
-          }
-          Swap(&context_sparc->float_save.filler);
-          Swap(&context_sparc->float_save.fsr);
-        }
-        SetContextSPARC(context_sparc.release());
-
-        break;
-      }
-
       case MD_CONTEXT_ARM: {
         if (expected_size != sizeof(MDRawContextARM)) {
           return false;
@@ -1036,66 +813,6 @@ bool MinidumpContext::Read(uint32_t expected_size) {
         break;
       }
 
-      case MD_CONTEXT_MIPS:
-      case MD_CONTEXT_MIPS64: {
-        if (expected_size != sizeof(MDRawContextMIPS)) {
-          return false;
-        }
-
-        scoped_ptr<MDRawContextMIPS> context_mips(new MDRawContextMIPS());
-
-        // Set the context_flags member, which has already been read, and
-        // read the rest of the structure beginning with the first member
-        // after context_flags.
-        context_mips->context_flags = context_flags;
-
-        size_t flags_size = sizeof(context_mips->context_flags);
-        uint8_t* context_after_flags =
-            reinterpret_cast<uint8_t*>(context_mips.get()) + flags_size;
-        if (!minidump_->ReadBytes(context_after_flags,
-                                  sizeof(MDRawContextMIPS) - flags_size)) {
-          return false;
-        }
-
-        // Do this after reading the entire MDRawContext structure because
-        // GetSystemInfo may seek minidump to a new position.
-        if (!CheckAgainstSystemInfo(cpu_type)) {
-          return false;
-        }
-
-        if (minidump_->swap()) {
-          // context_mips->context_flags was already swapped.
-          for (int ireg_index = 0;
-               ireg_index < MD_CONTEXT_MIPS_GPR_COUNT;
-               ++ireg_index) {
-            Swap(&context_mips->iregs[ireg_index]);
-          }
-	  Swap(&context_mips->mdhi);
-	  Swap(&context_mips->mdlo);
-          for (int dsp_index = 0;
-               dsp_index < MD_CONTEXT_MIPS_DSP_COUNT;
-               ++dsp_index) {
-            Swap(&context_mips->hi[dsp_index]);
-            Swap(&context_mips->lo[dsp_index]);
-          }
-	  Swap(&context_mips->dsp_control);
-          Swap(&context_mips->epc);
-          Swap(&context_mips->badvaddr);
-          Swap(&context_mips->status);
-          Swap(&context_mips->cause);
-          for (int fpr_index = 0;
-               fpr_index < MD_FLOATINGSAVEAREA_MIPS_FPR_COUNT;
-               ++fpr_index) {
-            Swap(&context_mips->float_save.regs[fpr_index]);
-          }
-          Swap(&context_mips->float_save.fpcsr);
-          Swap(&context_mips->float_save.fir);
-        }
-        SetContextMIPS(context_mips.release());
-
-        break;
-      }
-
       default: {
         // Unknown context type - Don't log as an error yet. Let the
         // caller work that out.
@@ -1139,23 +856,8 @@ bool MinidumpContext::CheckAgainstSystemInfo(uint32_t context_cpu_type) {
       }
       break;
 
-    case MD_CONTEXT_PPC:
-      if (system_info_cpu_type == MD_CPU_ARCHITECTURE_PPC)
-        return_value = true;
-      break;
-
-    case MD_CONTEXT_PPC64:
-      if (system_info_cpu_type == MD_CPU_ARCHITECTURE_PPC64)
-        return_value = true;
-      break;
-
     case MD_CONTEXT_AMD64:
       if (system_info_cpu_type == MD_CPU_ARCHITECTURE_AMD64)
-        return_value = true;
-      break;
-
-    case MD_CONTEXT_SPARC:
-      if (system_info_cpu_type == MD_CPU_ARCHITECTURE_SPARC)
         return_value = true;
       break;
 
@@ -1171,16 +873,6 @@ bool MinidumpContext::CheckAgainstSystemInfo(uint32_t context_cpu_type) {
 
     case MD_CONTEXT_ARM64_OLD:
       if (system_info_cpu_type == MD_CPU_ARCHITECTURE_ARM64_OLD)
-        return_value = true;
-      break;
-
-    case MD_CONTEXT_MIPS:
-      if (system_info_cpu_type == MD_CPU_ARCHITECTURE_MIPS)
-        return_value = true;
-      break;
-
-    case MD_CONTEXT_MIPS64:
-      if (system_info_cpu_type == MD_CPU_ARCHITECTURE_MIPS64)
         return_value = true;
       break;
   }
@@ -4296,304 +3988,6 @@ void MinidumpMemoryInfoList::Print() {
 }
 
 //
-// MinidumpLinuxMaps
-//
-
-MinidumpLinuxMaps::MinidumpLinuxMaps(Minidump *minidump)
-    : MinidumpObject(minidump) {
-}
-
-void MinidumpLinuxMaps::Print() const {
-  if (!valid_) {
-    return;
-  }
-  std::cout << region_.line << std::endl;
-}
-
-//
-// MinidumpLinuxMapsList
-//
-
-MinidumpLinuxMapsList::MinidumpLinuxMapsList(Minidump *minidump)
-    : MinidumpStream(minidump),
-      maps_(NULL),
-      maps_count_(0) {
-}
-
-MinidumpLinuxMapsList::~MinidumpLinuxMapsList() {
-  if (maps_) {
-    for (unsigned int i = 0; i < maps_->size(); i++) {
-      delete (*maps_)[i];
-    }
-    delete maps_;
-  }
-}
-
-const MinidumpLinuxMaps *MinidumpLinuxMapsList::GetLinuxMapsForAddress(
-    uint64_t address) const {
-  if (!valid_ || (maps_ == NULL)) {
-    return NULL;
-  }
-
-  // Search every memory mapping.
-  for (unsigned int index = 0; index < maps_count_; index++) {
-    // Check if address is within bounds of the current memory region.
-    if ((*maps_)[index]->GetBase() <= address &&
-        (*maps_)[index]->GetBase() + (*maps_)[index]->GetSize() > address) {
-      return (*maps_)[index];
-    }
-  }
-
-  // No mapping encloses the memory address.
-  return NULL;
-}
-
-const MinidumpLinuxMaps *MinidumpLinuxMapsList::GetLinuxMapsAtIndex(
-    unsigned int index) const {
-  if (!valid_ || (maps_ == NULL)) {
-    return NULL;
-  }
-
-  // Index out of bounds.
-  if (index >= maps_count_ || (maps_ == NULL)) {
-    return NULL;
-  }
-  return (*maps_)[index];
-}
-
-bool MinidumpLinuxMapsList::Read(uint32_t expected_size) {
-  // Invalidate cached data.
-  if (maps_) {
-    for (unsigned int i = 0; i < maps_->size(); i++) {
-      delete (*maps_)[i];
-    }
-    delete maps_;
-  }
-  maps_ = NULL;
-  maps_count_ = 0;
-
-  valid_ = false;
-
-  // Load and check expected stream length.
-  uint32_t length = 0;
-  if (!minidump_->SeekToStreamType(MD_LINUX_MAPS, &length)) {
-    return false;
-  }
-  if (expected_size != length) {
-    return false;
-  }
-
-  // Create a vector to read stream data. The vector needs to have
-  // at least enough capacity to read all the data.
-  vector<char> mapping_bytes(length);
-  if (!minidump_->ReadBytes(&mapping_bytes[0], length)) {
-    return false;
-  }
-  string map_string(mapping_bytes.begin(), mapping_bytes.end());
-  vector<MappedMemoryRegion> all_regions;
-
-  // Parse string into mapping data.
-  if (!ParseProcMaps(map_string, &all_regions)) {
-    return false;
-  }
-
-  scoped_ptr<MinidumpLinuxMappings> maps(new MinidumpLinuxMappings());
-
-  // Push mapping data into wrapper classes.
-  for (size_t i = 0; i < all_regions.size(); i++) {
-    scoped_ptr<MinidumpLinuxMaps> ele(new MinidumpLinuxMaps(minidump_));
-    ele->region_ = all_regions[i];
-    ele->valid_ = true;
-    maps->push_back(ele.release());
-  }
-
-  // Set instance variables.
-  maps_ = maps.release();
-  maps_count_ = static_cast<uint32_t>(maps_->size());
-  valid_ = true;
-  return true;
-}
-
-void MinidumpLinuxMapsList::Print() const {
-  if (!valid_ || (maps_ == NULL)) {
-    return;
-  }
-  for (size_t i = 0; i < maps_->size(); i++) {
-    (*maps_)[i]->Print();
-  }
-}
-
-//
-// MinidumpCrashpadInfo
-//
-
-
-MinidumpCrashpadInfo::MinidumpCrashpadInfo(Minidump* minidump)
-    : MinidumpStream(minidump),
-      crashpad_info_(),
-      module_crashpad_info_links_(),
-      module_crashpad_info_(),
-      module_crashpad_info_list_annotations_(),
-      module_crashpad_info_simple_annotations_(),
-      simple_annotations_() {
-}
-
-
-bool MinidumpCrashpadInfo::Read(uint32_t expected_size) {
-  valid_ = false;
-
-  if (expected_size != sizeof(crashpad_info_)) {
-    return false;
-  }
-
-  if (!minidump_->ReadBytes(&crashpad_info_, sizeof(crashpad_info_))) {
-    return false;
-  }
-
-  if (minidump_->swap()) {
-    Swap(&crashpad_info_.version);
-    Swap(&crashpad_info_.report_id);
-    Swap(&crashpad_info_.client_id);
-    Swap(&crashpad_info_.simple_annotations);
-    Swap(&crashpad_info_.module_list);
-  }
-
-  if (crashpad_info_.simple_annotations.data_size) {
-    if (!minidump_->ReadSimpleStringDictionary(
-        crashpad_info_.simple_annotations.rva,
-        &simple_annotations_)) {
-      return false;
-    }
-  }
-
-  if (crashpad_info_.module_list.data_size) {
-    if (!minidump_->SeekSet(crashpad_info_.module_list.rva)) {
-      return false;
-    }
-
-    uint32_t count;
-    if (!minidump_->ReadBytes(&count, sizeof(count))) {
-      return false;
-    }
-
-    if (minidump_->swap()) {
-      Swap(&count);
-    }
-
-    scoped_array<MDRawModuleCrashpadInfoLink> module_crashpad_info_links(
-        new MDRawModuleCrashpadInfoLink[count]);
-
-    // Read the entire array in one fell swoop, instead of reading one entry
-    // at a time in the loop.
-    if (!minidump_->ReadBytes(
-            &module_crashpad_info_links[0],
-            sizeof(MDRawModuleCrashpadInfoLink) * count)) {
-      return false;
-    }
-
-    for (uint32_t index = 0; index < count; ++index) {
-      if (minidump_->swap()) {
-        Swap(&module_crashpad_info_links[index].minidump_module_list_index);
-        Swap(&module_crashpad_info_links[index].location);
-      }
-
-      if (!minidump_->SeekSet(module_crashpad_info_links[index].location.rva)) {
-        return false;
-      }
-
-      MDRawModuleCrashpadInfo module_crashpad_info;
-      if (!minidump_->ReadBytes(&module_crashpad_info,
-                                sizeof(module_crashpad_info))) {
-        return false;
-      }
-
-      if (minidump_->swap()) {
-        Swap(&module_crashpad_info.version);
-        Swap(&module_crashpad_info.list_annotations);
-        Swap(&module_crashpad_info.simple_annotations);
-      }
-
-      std::vector<std::string> list_annotations;
-      if (module_crashpad_info.list_annotations.data_size) {
-        if (!minidump_->ReadStringList(
-                module_crashpad_info.list_annotations.rva,
-                &list_annotations)) {
-          return false;
-        }
-      }
-
-      std::map<std::string, std::string> simple_annotations;
-      if (module_crashpad_info.simple_annotations.data_size) {
-        if (!minidump_->ReadSimpleStringDictionary(
-                module_crashpad_info.simple_annotations.rva,
-                &simple_annotations)) {
-          return false;
-        }
-      }
-
-      module_crashpad_info_links_.push_back(
-          module_crashpad_info_links[index].minidump_module_list_index);
-      module_crashpad_info_.push_back(module_crashpad_info);
-      module_crashpad_info_list_annotations_.push_back(list_annotations);
-      module_crashpad_info_simple_annotations_.push_back(simple_annotations);
-    }
-  }
-
-  valid_ = true;
-  return true;
-}
-
-
-void MinidumpCrashpadInfo::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawCrashpadInfo\n");
-  printf("  version = %d\n", crashpad_info_.version);
-  printf("  report_id = %s\n",
-         MDGUIDToString(crashpad_info_.report_id).c_str());
-  printf("  client_id = %s\n",
-         MDGUIDToString(crashpad_info_.client_id).c_str());
-  for (std::map<std::string, std::string>::const_iterator iterator =
-           simple_annotations_.begin();
-       iterator != simple_annotations_.end();
-       ++iterator) {
-    printf("  simple_annotations[\"%s\"] = %s\n",
-           iterator->first.c_str(), iterator->second.c_str());
-  }
-  for (uint32_t module_index = 0;
-       module_index < module_crashpad_info_links_.size();
-       ++module_index) {
-    printf("  module_list[%d].minidump_module_list_index = %d\n",
-           module_index, module_crashpad_info_links_[module_index]);
-    printf("  module_list[%d].version = %d\n",
-           module_index, module_crashpad_info_[module_index].version);
-    for (uint32_t annotation_index = 0;
-         annotation_index <
-             module_crashpad_info_list_annotations_[module_index].size();
-         ++annotation_index) {
-      printf("  module_list[%d].list_annotations[%d] = %s\n",
-             module_index,
-             annotation_index,
-             module_crashpad_info_list_annotations_
-                 [module_index][annotation_index].c_str());
-    }
-    for (std::map<std::string, std::string>::const_iterator iterator =
-             module_crashpad_info_simple_annotations_[module_index].begin();
-         iterator !=
-             module_crashpad_info_simple_annotations_[module_index].end();
-         ++iterator) {
-      printf("  module_list[%d].simple_annotations[\"%s\"] = %s\n",
-             module_index, iterator->first.c_str(), iterator->second.c_str());
-    }
-  }
-
-  printf("\n");
-}
-
-
-//
 // Minidump
 //
 
@@ -4673,20 +4067,8 @@ bool Minidump::GetContextCPUFlagsFromSystemInfo(uint32_t *context_cpu_flags) {
       case MD_CPU_ARCHITECTURE_X86:
         *context_cpu_flags = MD_CONTEXT_X86;
         break;
-      case MD_CPU_ARCHITECTURE_MIPS:
-        *context_cpu_flags = MD_CONTEXT_MIPS;
-        break;
-      case MD_CPU_ARCHITECTURE_MIPS64:
-        *context_cpu_flags = MD_CONTEXT_MIPS64;
-        break;
       case MD_CPU_ARCHITECTURE_ALPHA:
         *context_cpu_flags = MD_CONTEXT_ALPHA;
-        break;
-      case MD_CPU_ARCHITECTURE_PPC:
-        *context_cpu_flags = MD_CONTEXT_PPC;
-        break;
-      case MD_CPU_ARCHITECTURE_PPC64:
-        *context_cpu_flags = MD_CONTEXT_PPC64;
         break;
       case MD_CPU_ARCHITECTURE_SHX:
         *context_cpu_flags = MD_CONTEXT_SHX;
@@ -4714,9 +4096,6 @@ bool Minidump::GetContextCPUFlagsFromSystemInfo(uint32_t *context_cpu_flags) {
         break;
       case MD_CPU_ARCHITECTURE_X86_WIN64:
         *context_cpu_flags = 0;
-        break;
-      case MD_CPU_ARCHITECTURE_SPARC:
-        *context_cpu_flags = MD_CONTEXT_SPARC;
         break;
       case MD_CPU_ARCHITECTURE_UNKNOWN:
         *context_cpu_flags = 0;
@@ -4912,11 +4291,6 @@ MinidumpMemoryInfoList* Minidump::GetMemoryInfoList() {
   return GetStream(&memory_info_list);
 }
 
-MinidumpLinuxMapsList *Minidump::GetLinuxMapsList() {
-  MinidumpLinuxMapsList *linux_maps_list;
-  return GetStream(&linux_maps_list);
-}
-
 bool Minidump::IsAndroid() {
   MDOSPlatform platform;
   return GetPlatform(&platform) && platform == MD_OS_ANDROID;
@@ -4941,11 +4315,6 @@ bool Minidump::GetPlatform(MDOSPlatform* platform) {
   }
   *platform = static_cast<MDOSPlatform>(system_info->platform_id);
   return true;
-}
-
-MinidumpCrashpadInfo* Minidump::GetCrashpadInfo() {
-  MinidumpCrashpadInfo* crashpad_info;
-  return GetStream(&crashpad_info);
 }
 
 static const char* get_stream_name(uint32_t stream_type) {
@@ -5174,136 +4543,6 @@ string* Minidump::ReadString(off_t offset) {
 
   return UTF16ToUTF8(string_utf16, swap_);
 }
-
-
-bool Minidump::ReadUTF8String(off_t offset, string* string_utf8) {
-  if (!valid_) {
-    return false;
-  }
-  if (!SeekSet(offset)) {
-    return false;
-  }
-
-  uint32_t bytes;
-  if (!ReadBytes(&bytes, sizeof(bytes))) {
-    return false;
-  }
-
-  if (swap_) {
-    Swap(&bytes);
-  }
-
-  if (bytes > max_string_length_) {
-    return false;
-  }
-
-  string_utf8->resize(bytes);
-
-  if (!ReadBytes(&(*string_utf8)[0], bytes)) {
-    return false;
-  }
-
-  return true;
-}
-
-
-bool Minidump::ReadStringList(
-    off_t offset,
-    std::vector<std::string>* string_list) {
-  string_list->clear();
-
-  if (!SeekSet(offset)) {
-    return false;
-  }
-
-  uint32_t count;
-  if (!ReadBytes(&count, sizeof(count))) {
-    return false;
-  }
-
-  if (swap_) {
-    Swap(&count);
-  }
-
-  scoped_array<MDRVA> rvas(new MDRVA[count]);
-
-  // Read the entire array in one fell swoop, instead of reading one entry
-  // at a time in the loop.
-  if (!ReadBytes(&rvas[0], sizeof(MDRVA) * count)) {
-    return false;
-  }
-
-  for (uint32_t index = 0; index < count; ++index) {
-    if (swap()) {
-      Swap(&rvas[index]);
-    }
-
-    string entry;
-    if (!ReadUTF8String(rvas[index], &entry)) {
-      return false;
-    }
-
-    string_list->push_back(entry);
-  }
-
-  return true;
-}
-
-
-bool Minidump::ReadSimpleStringDictionary(
-    off_t offset,
-    std::map<std::string, std::string>* simple_string_dictionary) {
-  simple_string_dictionary->clear();
-
-  if (!SeekSet(offset)) {
-    return false;
-  }
-
-  uint32_t count;
-  if (!ReadBytes(&count, sizeof(count))) {
-    return false;
-  }
-
-  if (swap()) {
-    Swap(&count);
-  }
-
-  scoped_array<MDRawSimpleStringDictionaryEntry> entries(
-      new MDRawSimpleStringDictionaryEntry[count]);
-
-  // Read the entire array in one fell swoop, instead of reading one entry
-  // at a time in the loop.
-  if (!ReadBytes(
-          &entries[0],
-          sizeof(MDRawSimpleStringDictionaryEntry) * count)) {
-    return false;
-  }
-
-  for (uint32_t index = 0; index < count; ++index) {
-    if (swap()) {
-      Swap(&entries[index]);
-    }
-
-    string key;
-    if (!ReadUTF8String(entries[index].key, &key)) {
-      return false;
-    }
-
-    string value;
-    if (!ReadUTF8String(entries[index].value, &value)) {
-      return false;
-    }
-
-    if (simple_string_dictionary->find(key) !=
-        simple_string_dictionary->end()) {
-    } else {
-      simple_string_dictionary->insert(std::make_pair(key, value));
-    }
-  }
-
-  return true;
-}
-
 
 bool Minidump::SeekToStreamType(uint32_t  stream_type,
                                 uint32_t* stream_length) {

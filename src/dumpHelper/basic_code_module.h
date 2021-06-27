@@ -43,10 +43,10 @@
 
 #include <string>
 
-#include "common/using_std_string.h"
 #include "common/processor/code_module.h"
 
 namespace dump_helper {
+using namespace std;
 
 class BasicCodeModule : public CodeModule {
  public:

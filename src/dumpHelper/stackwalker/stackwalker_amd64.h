@@ -59,8 +59,7 @@ class StackwalkerAMD64 : public Stackwalker {
   StackwalkerAMD64(const SystemInfo* system_info,
                    const MDRawContextAMD64* context,
                    MemoryRegion* memory,
-                   const CodeModules* modules,
-                   StackFrameSymbolizer* frame_symbolizer);
+                   const CodeModules* modules);
 
  private:
   // A STACK CFI-driven frame walker for the AMD64

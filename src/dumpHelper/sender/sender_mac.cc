@@ -100,11 +100,11 @@ int SendCrashReport(string url, const map<string, string> &parameters, string fi
                  CURLFORM_COPYCONTENTS,  PathHelper::BaseName(file).c_str(),
                  CURLFORM_END);
     
-// curl_formadd(&formpost,
-//              &lastptr,
-//              CURLFORM_COPYNAME, "upload_file_minidump",
-//              CURLFORM_FILE, file.c_str(),
-//              CURLFORM_END);
+ curl_formadd(&formpost,
+              &lastptr,
+              CURLFORM_COPYNAME, "upload_file_minidump",
+              CURLFORM_FILE, file.c_str(),
+              CURLFORM_END);
   
 //  /* Fill in the submit field too, even if this is rarely needed */
 //  curl_formadd(&formpost,

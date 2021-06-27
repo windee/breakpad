@@ -45,20 +45,20 @@
 #include <string>
 #include <vector>
 
-#include "common/using_std_string.h"
 #include "common/minidump/breakpad_types.h"
 #include "common/processor/code_modules.h"
 #include "common/processor/memory_region.h"
-#include "common/processor/stack_frame_symbolizer.h"
+#include "common/processor/system_info.h"
+#include "common/processor/stack_frame.h"
 
 namespace dump_helper {
 
 class CallStack;
 class DumpContext;
-class StackFrameSymbolizer;
 
 using std::set;
 using std::vector;
+using std::string;
 
 class Stackwalker {
  public:
@@ -89,8 +89,7 @@ class Stackwalker {
      DumpContext* context,
      MemoryRegion* memory,
      const CodeModules* modules,
-     const CodeModules* unloaded_modules,
-     StackFrameSymbolizer* resolver_helper);
+     const CodeModules* unloaded_modules);
 
 
   static void set_max_frames(uint32_t max_frames) {
@@ -115,8 +114,7 @@ class Stackwalker {
   // frame_symbolizer MUST NOT be NULL (asserted).
   Stackwalker(const SystemInfo* system_info,
               MemoryRegion* memory,
-              const CodeModules* modules,
-              StackFrameSymbolizer* frame_symbolizer);
+              const CodeModules* modules);
 
   // This can be used to filter out potential return addresses when
   // the stack walker resorts to stack scanning.
@@ -203,10 +201,6 @@ class Stackwalker {
   // to any loaded modules.
   // This field is optional and may be NULL.
   const CodeModules* unloaded_modules_;
-
- protected:
-  // The StackFrameSymbolizer implementation.
-  StackFrameSymbolizer* frame_symbolizer_;
 
  private:
   // Obtains the context frame, the innermost called procedure in a stack

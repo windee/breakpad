@@ -38,7 +38,6 @@
 #include "common/scoped_ptr.h"
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
-#include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame_cpu.h"
 #include "common/processor/system_info.h"
 #include "cfi_frame_info.h"
@@ -93,9 +92,8 @@ StackwalkerAMD64::cfi_register_map_[] = {
 StackwalkerAMD64::StackwalkerAMD64(const SystemInfo* system_info,
                                    const MDRawContextAMD64* context,
                                    MemoryRegion* memory,
-                                   const CodeModules* modules,
-                                   StackFrameSymbolizer* resolver_helper)
-    : Stackwalker(system_info, memory, modules, resolver_helper),
+                                   const CodeModules* modules)
+    : Stackwalker(system_info, memory, modules),
       context_(context),
       cfi_walker_(cfi_register_map_,
                   (sizeof(cfi_register_map_) / sizeof(cfi_register_map_[0]))) {
@@ -273,12 +271,6 @@ StackFrame* StackwalkerAMD64::GetCallerFrame(const CallStack* stack,
   const vector<StackFrame*> &frames = *stack->frames();
   StackFrameAMD64* last_frame = static_cast<StackFrameAMD64*>(frames.back());
   scoped_ptr<StackFrameAMD64> new_frame;
-
-  // If we have DWARF CFI information, use it.
-  scoped_ptr<CFIFrameInfo> cfi_frame_info(
-      frame_symbolizer_->FindCFIFrameInfo(last_frame));
-  if (cfi_frame_info.get())
-    new_frame.reset(GetCallerByCFIFrameInfo(frames, cfi_frame_info.get()));
 
   // If CFI was not available or failed, try using frame pointer recovery.
   if (!new_frame.get()) {

@@ -58,8 +58,7 @@ class StackwalkerARM : public Stackwalker {
                  const MDRawContextARM* context,
                  int fp_register,
                  MemoryRegion* memory,
-                 const CodeModules* modules,
-                 StackFrameSymbolizer* frame_symbolizer);
+                 const CodeModules* modules);
 
   // Change the context validity mask of the frame returned by
   // GetContextFrame to VALID. This is only for use by unit tests; the

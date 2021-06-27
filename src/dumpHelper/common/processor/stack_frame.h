@@ -32,11 +32,11 @@
 
 #include <string>
 
-#include "common/using_std_string.h"
 #include "common/minidump/breakpad_types.h"
 
 namespace dump_helper {
 
+using std::string;
 class CodeModule;
 
 struct StackFrame {

@@ -348,7 +348,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
-      <Optimization>Full</Optimization>
+      <Optimization>MinSpace</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0600;WINVER=0x0600;WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NOMINMAX;_CRT_RAND_S;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;WIN32_LEAN_AND_MEAN;_SECURE_ATL;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_USING_V110_SDK71_;NO_TCMALLOC;NDEBUG;NVALGRIND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -361,7 +361,7 @@
       <AdditionalOptions>/ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <Link>
-      <AdditionalDependencies>wininet.lib;version.lib;msimg32.lib;ws2_32.lib;usp10.lib;psapi.lib;dbghelp.lib</AdditionalDependencies>
+      <AdditionalDependencies>wininet.lib;version.lib;msimg32.lib;ws2_32.lib;psapi.lib;dbghelp.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>../third_party/platformsdk_win7/files/Lib/x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/dynamicbase /ignore:4199 /ignore:4221 /nxcompat %(AdditionalOptions)</AdditionalOptions>
       <DelayLoadDLLs>dbghelp.dll;dwmapi.dll;uxtheme.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
@@ -390,84 +390,44 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="common\basictypes.h" />
     <ClInclude Include="common\getopt.h" />
-    <ClInclude Include="common\logging.h" />
     <ClInclude Include="common\macros.h" />
     <ClInclude Include="common\md5.h" />
     <ClInclude Include="common\minidump\breakpad_types.h" />
     <ClInclude Include="common\minidump\minidump_cpu_amd64.h" />
     <ClInclude Include="common\minidump\minidump_cpu_arm.h" />
     <ClInclude Include="common\minidump\minidump_cpu_arm64.h" />
-    <ClInclude Include="common\minidump\minidump_cpu_mips.h" />
-    <ClInclude Include="common\minidump\minidump_cpu_ppc.h" />
-    <ClInclude Include="common\minidump\minidump_cpu_ppc64.h" />
-    <ClInclude Include="common\minidump\minidump_cpu_sparc.h" />
     <ClInclude Include="common\minidump\minidump_cpu_x86.h" />
-    <ClInclude Include="common\minidump\minidump_exception_fuchsia.h" />
-    <ClInclude Include="common\minidump\minidump_exception_linux.h" />
     <ClInclude Include="common\minidump\minidump_exception_mac.h" />
-    <ClInclude Include="common\minidump\minidump_exception_ps3.h" />
-    <ClInclude Include="common\minidump\minidump_exception_solaris.h" />
     <ClInclude Include="common\minidump\minidump_exception_win32.h" />
     <ClInclude Include="common\minidump\minidump_format.h" />
     <ClInclude Include="common\minidump\minidump_size.h" />
     <ClInclude Include="common\path_helper.h" />
-    <ClInclude Include="common\processor\basic_source_line_resolver.h" />
     <ClInclude Include="common\processor\call_stack.h" />
     <ClInclude Include="common\processor\code_module.h" />
     <ClInclude Include="common\processor\code_modules.h" />
     <ClInclude Include="common\processor\dump_context.h" />
     <ClInclude Include="common\processor\dump_object.h" />
     <ClInclude Include="common\processor\exception_record.h" />
-    <ClInclude Include="common\processor\exploitability.h" />
     <ClInclude Include="common\processor\fast_source_line_resolver.h" />
     <ClInclude Include="common\processor\memory_region.h" />
-    <ClInclude Include="common\processor\microdump.h" />
-    <ClInclude Include="common\processor\microdump_processor.h" />
     <ClInclude Include="common\processor\minidump.h" />
     <ClInclude Include="common\processor\minidump_processor.h" />
     <ClInclude Include="common\processor\process_result.h" />
     <ClInclude Include="common\processor\process_state.h" />
-    <ClInclude Include="common\processor\proc_maps_linux.h" />
-    <ClInclude Include="common\processor\source_line_resolver_base.h" />
-    <ClInclude Include="common\processor\source_line_resolver_interface.h" />
     <ClInclude Include="common\processor\stackwalker.h" />
     <ClInclude Include="common\processor\stack_frame.h" />
     <ClInclude Include="common\processor\stack_frame_cpu.h" />
-    <ClInclude Include="common\processor\stack_frame_symbolizer.h" />
-    <ClInclude Include="common\processor\symbol_supplier.h" />
     <ClInclude Include="common\processor\system_info.h" />
     <ClInclude Include="common\stdio_wrapper.h" />
-    <ClInclude Include="common\using_std_string.h" />
     <ClInclude Include="basic_code_module.h" />
     <ClInclude Include="basic_code_modules.h" />
     <ClInclude Include="address_map-inl.h" />
     <ClInclude Include="address_map.h" />
-    <ClInclude Include="basic_source_line_resolver_types.h" />
     <ClInclude Include="cfi_frame_info-inl.h" />
     <ClInclude Include="cfi_frame_info.h" />
-    <ClInclude Include="contained_range_map-inl.h" />
-    <ClInclude Include="contained_range_map.h" />
     <ClInclude Include="convert_old_arm64_context.h" />
-    <ClInclude Include="disasm\ia32_implicit.h" />
-    <ClInclude Include="disasm\ia32_insn.h" />
-    <ClInclude Include="disasm\ia32_invariant.h" />
-    <ClInclude Include="disasm\ia32_modrm.h" />
-    <ClInclude Include="disasm\ia32_opcode_tables.h" />
-    <ClInclude Include="disasm\ia32_operand.h" />
-    <ClInclude Include="disasm\ia32_reg.h" />
-    <ClInclude Include="disasm\ia32_settings.h" />
-    <ClInclude Include="disasm\libdis.h" />
-    <ClInclude Include="disasm\qword.h" />
-    <ClInclude Include="disasm\x86_imm.h" />
-    <ClInclude Include="disasm\x86_operand_list.h" />
-    <ClInclude Include="disassembler_x86.h" />
-    <ClInclude Include="exploitability_linux.h" />
-    <ClInclude Include="exploitability_win.h" />
-    <ClInclude Include="fast_source_line_resolver_types.h" />
     <ClInclude Include="linked_ptr.h" />
-    <ClInclude Include="module_factory.h" />
     <ClInclude Include="postfix_evaluator-inl.h" />
     <ClInclude Include="postfix_evaluator.h" />
     <ClInclude Include="range_map-inl.h" />
@@ -476,86 +436,39 @@
     <ClInclude Include="sender\http_upload.h" />
     <ClInclude Include="sender\module_info.h" />
     <ClInclude Include="sender\sender_win.h" />
-    <ClInclude Include="simple_symbol_supplier.h" />
-    <ClInclude Include="source_line_resolver_base_types.h" />
     <ClInclude Include="stackwalker\stackwalker_address_list.h" />
     <ClInclude Include="stackwalker\stackwalker_amd64.h" />
     <ClInclude Include="stackwalker\stackwalker_arm.h" />
     <ClInclude Include="stackwalker\stackwalker_arm64.h" />
-    <ClInclude Include="stackwalker\stackwalker_mips.h" />
-    <ClInclude Include="stackwalker\stackwalker_ppc.h" />
-    <ClInclude Include="stackwalker\stackwalker_ppc64.h" />
-    <ClInclude Include="stackwalker\stackwalker_sparc.h" />
     <ClInclude Include="stackwalker\stackwalker_x86.h" />
     <ClInclude Include="stackwalk_common.h" />
-    <ClInclude Include="static_address_map-inl.h" />
-    <ClInclude Include="static_address_map.h" />
-    <ClInclude Include="static_contained_range_map-inl.h" />
-    <ClInclude Include="static_contained_range_map.h" />
-    <ClInclude Include="static_map-inl.h" />
-    <ClInclude Include="static_map.h" />
-    <ClInclude Include="static_map_iterator-inl.h" />
-    <ClInclude Include="static_map_iterator.h" />
-    <ClInclude Include="static_range_map-inl.h" />
-    <ClInclude Include="static_range_map.h" />
     <ClInclude Include="symbolic_constants_win.h" />
-    <ClInclude Include="tokenize.h" />
-    <ClInclude Include="windows_frame_info.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common\getopt.cc" />
-    <ClCompile Include="common\logging.cc" />
     <ClCompile Include="common\path_helper.cc" />
-    <ClCompile Include="disasm\ia32_implicit.c" />
-    <ClCompile Include="disasm\ia32_insn.c" />
-    <ClCompile Include="disasm\ia32_invariant.c" />
-    <ClCompile Include="disasm\ia32_modrm.c" />
-    <ClCompile Include="disasm\ia32_opcode_tables.c" />
-    <ClCompile Include="disasm\ia32_operand.c" />
-    <ClCompile Include="disasm\ia32_reg.c" />
-    <ClCompile Include="disasm\ia32_settings.c" />
-    <ClCompile Include="disasm\x86_disasm.c" />
-    <ClCompile Include="disasm\x86_format.c" />
-    <ClCompile Include="disasm\x86_imm.c" />
-    <ClCompile Include="disasm\x86_insn.c" />
-    <ClCompile Include="disasm\x86_misc.c" />
-    <ClCompile Include="disasm\x86_operand_list.c" />
     <ClCompile Include="dump_object.cc" />
     <ClCompile Include="dump_helper.cc" />
     <ClCompile Include="basic_code_modules.cc" />
-    <ClCompile Include="basic_source_line_resolver.cc" />
     <ClCompile Include="call_stack.cc" />
     <ClCompile Include="cfi_frame_info.cc" />
     <ClCompile Include="convert_old_arm64_context.cc" />
-    <ClCompile Include="disassembler_x86.cc" />
     <ClCompile Include="dump_context.cc" />
-    <ClCompile Include="exploitability.cc" />
-    <ClCompile Include="exploitability_linux.cc" />
-    <ClCompile Include="exploitability_win.cc" />
     <ClCompile Include="minidump.cc" />
     <ClCompile Include="minidump_processor.cc" />
-    <ClCompile Include="proc_maps_linux.cc" />
     <ClCompile Include="process_state.cc" />
     <ClCompile Include="sender\guid_string.cc" />
     <ClCompile Include="sender\http_upload.cc" />
     <ClCompile Include="sender\sender_win.cc" />
-    <ClCompile Include="simple_symbol_supplier.cc" />
-    <ClCompile Include="source_line_resolver_base.cc" />
     <ClCompile Include="stackwalker\stackwalker.cc" />
     <ClCompile Include="stackwalker\stackwalker_address_list.cc" />
     <ClCompile Include="stackwalker\stackwalker_amd64.cc" />
     <ClCompile Include="stackwalker\stackwalker_arm.cc" />
     <ClCompile Include="stackwalker\stackwalker_arm64.cc" />
-    <ClCompile Include="stackwalker\stackwalker_mips.cc" />
-    <ClCompile Include="stackwalker\stackwalker_ppc.cc" />
-    <ClCompile Include="stackwalker\stackwalker_ppc64.cc" />
-    <ClCompile Include="stackwalker\stackwalker_sparc.cc" />
     <ClCompile Include="stackwalker\stackwalker_x86.cc" />
     <ClCompile Include="stack_frame_cpu.cc" />
-    <ClCompile Include="stack_frame_symbolizer.cc" />
     <ClCompile Include="stackwalk_common.cc" />
     <ClCompile Include="symbolic_constants_win.cc" />
-    <ClCompile Include="tokenize.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -57,10 +57,6 @@ class DumpContext : public DumpObject {
   const MDRawContextAMD64* GetContextAMD64() const;
   const MDRawContextARM*   GetContextARM() const;
   const MDRawContextARM64* GetContextARM64() const;
-  const MDRawContextMIPS*  GetContextMIPS() const;
-  const MDRawContextPPC*   GetContextPPC() const;
-  const MDRawContextPPC64* GetContextPPC64() const;
-  const MDRawContextSPARC* GetContextSPARC() const;
   const MDRawContextX86*   GetContextX86() const;
 
   // A convenience method to get the instruction pointer out of the
@@ -80,13 +76,9 @@ class DumpContext : public DumpObject {
   // Sets row CPU-specific context data for the names CPU type.
   void SetContextFlags(uint32_t context_flags);
   void SetContextX86(MDRawContextX86* x86);
-  void SetContextPPC(MDRawContextPPC* ppc);
-  void SetContextPPC64(MDRawContextPPC64* ppc64);
   void SetContextAMD64(MDRawContextAMD64* amd64);
-  void SetContextSPARC(MDRawContextSPARC* ctx_sparc);
   void SetContextARM(MDRawContextARM* arm);
   void SetContextARM64(MDRawContextARM64* arm64);
-  void SetContextMIPS(MDRawContextMIPS* ctx_mips);
 
   // Free the CPU-specific context structure.
   void FreeContext();
@@ -96,15 +88,11 @@ class DumpContext : public DumpObject {
   union {
     MDRawContextBase*  base;
     MDRawContextX86*   x86;
-    MDRawContextPPC*   ppc;
-    MDRawContextPPC64* ppc64;
     MDRawContextAMD64* amd64;
     // on Solaris SPARC, sparc is defined as a numeric constant,
     // so variables can NOT be named as sparc
-    MDRawContextSPARC* ctx_sparc;
     MDRawContextARM*   arm;
     MDRawContextARM64* arm64;
-    MDRawContextMIPS*  ctx_mips;
   } context_;
 
   // Store this separately because of the weirdo AMD64 context

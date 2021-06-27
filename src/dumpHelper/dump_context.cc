@@ -74,36 +74,12 @@ const MDRawContextX86* DumpContext::GetContextX86() const {
   return context_.x86;
 }
 
-const MDRawContextPPC* DumpContext::GetContextPPC() const {
-  if (GetContextCPU() != MD_CONTEXT_PPC) {
-    return NULL;
-  }
-
-  return context_.ppc;
-}
-
-const MDRawContextPPC64* DumpContext::GetContextPPC64() const {
-  if (GetContextCPU() != MD_CONTEXT_PPC64) {
-    return NULL;
-  }
-
-  return context_.ppc64;
-}
-
 const MDRawContextAMD64* DumpContext::GetContextAMD64() const {
   if (GetContextCPU() != MD_CONTEXT_AMD64) {
     return NULL;
   }
 
   return context_.amd64;
-}
-
-const MDRawContextSPARC* DumpContext::GetContextSPARC() const {
-  if (GetContextCPU() != MD_CONTEXT_SPARC) {
-    return NULL;
-  }
-
-  return context_.ctx_sparc;
 }
 
 const MDRawContextARM* DumpContext::GetContextARM() const {
@@ -120,15 +96,6 @@ const MDRawContextARM64* DumpContext::GetContextARM64() const {
   }
 
   return context_.arm64;
-}
-
-const MDRawContextMIPS* DumpContext::GetContextMIPS() const {
-  if ((GetContextCPU() != MD_CONTEXT_MIPS) &&
-      (GetContextCPU() != MD_CONTEXT_MIPS64)) {
-    return NULL;
-  }
-
-  return context_.ctx_mips;
 }
 
 bool DumpContext::GetInstructionPointer(uint64_t* ip) const {
@@ -149,21 +116,8 @@ bool DumpContext::GetInstructionPointer(uint64_t* ip) const {
   case MD_CONTEXT_ARM64:
     *ip = GetContextARM64()->iregs[MD_CONTEXT_ARM64_REG_PC];
     break;
-  case MD_CONTEXT_PPC:
-    *ip = GetContextPPC()->srr0;
-    break;
-  case MD_CONTEXT_PPC64:
-    *ip = GetContextPPC64()->srr0;
-    break;
-  case MD_CONTEXT_SPARC:
-    *ip = GetContextSPARC()->pc;
-    break;
   case MD_CONTEXT_X86:
     *ip = GetContextX86()->eip;
-    break;
-  case MD_CONTEXT_MIPS:
-  case MD_CONTEXT_MIPS64:
-    *ip = GetContextMIPS()->epc;
     break;
   default:
     // This should never happen.
@@ -190,21 +144,8 @@ bool DumpContext::GetStackPointer(uint64_t* sp) const {
   case MD_CONTEXT_ARM64:
     *sp = GetContextARM64()->iregs[MD_CONTEXT_ARM64_REG_SP];
     break;
-  case MD_CONTEXT_PPC:
-    *sp = GetContextPPC()->gpr[MD_CONTEXT_PPC_REG_SP];
-    break;
-  case MD_CONTEXT_PPC64:
-    *sp = GetContextPPC64()->gpr[MD_CONTEXT_PPC64_REG_SP];
-    break;
-  case MD_CONTEXT_SPARC:
-    *sp = GetContextSPARC()->g_r[MD_CONTEXT_SPARC_REG_SP];
-    break;
   case MD_CONTEXT_X86:
     *sp = GetContextX86()->esp;
-    break;
-  case MD_CONTEXT_MIPS:
-  case MD_CONTEXT_MIPS64:
-    *sp = GetContextMIPS()->iregs[MD_CONTEXT_MIPS_REG_SP];
     break;
   default:
     // This should never happen.
@@ -221,20 +162,8 @@ void DumpContext::SetContextX86(MDRawContextX86* x86) {
   context_.x86 = x86;
 }
 
-void DumpContext::SetContextPPC(MDRawContextPPC* ppc) {
-  context_.ppc = ppc;
-}
-
-void DumpContext::SetContextPPC64(MDRawContextPPC64* ppc64) {
-  context_.ppc64 = ppc64;
-}
-
 void DumpContext::SetContextAMD64(MDRawContextAMD64* amd64) {
   context_.amd64 = amd64;
-}
-
-void DumpContext::SetContextSPARC(MDRawContextSPARC* ctx_sparc) {
-  context_.ctx_sparc = ctx_sparc;
 }
 
 void DumpContext::SetContextARM(MDRawContextARM* arm) {
@@ -245,30 +174,14 @@ void DumpContext::SetContextARM64(MDRawContextARM64* arm64) {
   context_.arm64 = arm64;
 }
 
-void DumpContext::SetContextMIPS(MDRawContextMIPS* ctx_mips) {
-  context_.ctx_mips = ctx_mips;
-}
-
 void DumpContext::FreeContext() {
   switch (GetContextCPU()) {
     case MD_CONTEXT_X86:
       delete context_.x86;
       break;
 
-    case MD_CONTEXT_PPC:
-      delete context_.ppc;
-      break;
-
-    case MD_CONTEXT_PPC64:
-      delete context_.ppc64;
-      break;
-
     case MD_CONTEXT_AMD64:
       delete context_.amd64;
-      break;
-
-    case MD_CONTEXT_SPARC:
-      delete context_.ctx_sparc;
       break;
 
     case MD_CONTEXT_ARM:
@@ -277,11 +190,6 @@ void DumpContext::FreeContext() {
 
     case MD_CONTEXT_ARM64:
       delete context_.arm64;
-      break;
-
-    case MD_CONTEXT_MIPS:
-    case MD_CONTEXT_MIPS64:
-      delete context_.ctx_mips;
       break;
 
     default:
@@ -364,88 +272,6 @@ void DumpContext::Print() {
       break;
     }
 
-    case MD_CONTEXT_PPC: {
-      const MDRawContextPPC* context_ppc = GetContextPPC();
-      printf("MDRawContextPPC\n");
-      printf("  context_flags            = 0x%x\n",
-             context_ppc->context_flags);
-      printf("  srr0                     = 0x%x\n", context_ppc->srr0);
-      printf("  srr1                     = 0x%x\n", context_ppc->srr1);
-      for (unsigned int gpr_index = 0;
-           gpr_index < MD_CONTEXT_PPC_GPR_COUNT;
-           ++gpr_index) {
-        printf("  gpr[%2d]                  = 0x%x\n",
-               gpr_index, context_ppc->gpr[gpr_index]);
-      }
-      printf("  cr                       = 0x%x\n", context_ppc->cr);
-      printf("  xer                      = 0x%x\n", context_ppc->xer);
-      printf("  lr                       = 0x%x\n", context_ppc->lr);
-      printf("  ctr                      = 0x%x\n", context_ppc->ctr);
-      printf("  mq                       = 0x%x\n", context_ppc->mq);
-      printf("  vrsave                   = 0x%x\n", context_ppc->vrsave);
-      for (unsigned int fpr_index = 0;
-           fpr_index < MD_FLOATINGSAVEAREA_PPC_FPR_COUNT;
-           ++fpr_index) {
-        printf("  float_save.fpregs[%2d]    = 0x%" PRIx64 "\n",
-               fpr_index, context_ppc->float_save.fpregs[fpr_index]);
-      }
-      printf("  float_save.fpscr         = 0x%x\n",
-             context_ppc->float_save.fpscr);
-      // TODO(mmentovai): print the 128-bit quantities in
-      // context_ppc->vector_save.  This isn't done yet because printf
-      // doesn't support 128-bit quantities, and printing them using
-      // PRIx64 as two 64-bit quantities requires knowledge of the CPU's
-      // byte ordering.
-      printf("  vector_save.save_vrvalid = 0x%x\n",
-             context_ppc->vector_save.save_vrvalid);
-      printf("\n");
-
-      break;
-    }
-
-    case MD_CONTEXT_PPC64: {
-      const MDRawContextPPC64* context_ppc64 = GetContextPPC64();
-      printf("MDRawContextPPC64\n");
-      printf("  context_flags            = 0x%" PRIx64 "\n",
-             context_ppc64->context_flags);
-      printf("  srr0                     = 0x%" PRIx64 "\n",
-             context_ppc64->srr0);
-      printf("  srr1                     = 0x%" PRIx64 "\n",
-             context_ppc64->srr1);
-      for (unsigned int gpr_index = 0;
-           gpr_index < MD_CONTEXT_PPC64_GPR_COUNT;
-           ++gpr_index) {
-        printf("  gpr[%2d]                  = 0x%" PRIx64 "\n",
-               gpr_index, context_ppc64->gpr[gpr_index]);
-      }
-      printf("  cr                       = 0x%" PRIx64 "\n", context_ppc64->cr);
-      printf("  xer                      = 0x%" PRIx64 "\n",
-             context_ppc64->xer);
-      printf("  lr                       = 0x%" PRIx64 "\n", context_ppc64->lr);
-      printf("  ctr                      = 0x%" PRIx64 "\n",
-             context_ppc64->ctr);
-      printf("  vrsave                   = 0x%" PRIx64 "\n",
-             context_ppc64->vrsave);
-      for (unsigned int fpr_index = 0;
-           fpr_index < MD_FLOATINGSAVEAREA_PPC_FPR_COUNT;
-           ++fpr_index) {
-        printf("  float_save.fpregs[%2d]    = 0x%" PRIx64 "\n",
-               fpr_index, context_ppc64->float_save.fpregs[fpr_index]);
-      }
-      printf("  float_save.fpscr         = 0x%x\n",
-             context_ppc64->float_save.fpscr);
-      // TODO(mmentovai): print the 128-bit quantities in
-      // context_ppc64->vector_save.  This isn't done yet because printf
-      // doesn't support 128-bit quantities, and printing them using
-      // PRIx64 as two 64-bit quantities requires knowledge of the CPU's
-      // byte ordering.
-      printf("  vector_save.save_vrvalid = 0x%x\n",
-             context_ppc64->vector_save.save_vrvalid);
-      printf("\n");
-
-      break;
-    }
-
     case MD_CONTEXT_AMD64: {
       const MDRawContextAMD64* context_amd64 = GetContextAMD64();
       printf("MDRawContextAMD64\n");
@@ -497,37 +323,6 @@ void DumpContext::Print() {
       printf("  rip           = 0x%" PRIx64 "\n", context_amd64->rip);
       // TODO: print xmm, vector, debug registers
       printf("\n");
-      break;
-    }
-
-    case MD_CONTEXT_SPARC: {
-      const MDRawContextSPARC* context_sparc = GetContextSPARC();
-      printf("MDRawContextSPARC\n");
-      printf("  context_flags       = 0x%x\n",
-             context_sparc->context_flags);
-      for (unsigned int g_r_index = 0;
-           g_r_index < MD_CONTEXT_SPARC_GPR_COUNT;
-           ++g_r_index) {
-        printf("  g_r[%2d]             = 0x%" PRIx64 "\n",
-               g_r_index, context_sparc->g_r[g_r_index]);
-      }
-      printf("  ccr                 = 0x%" PRIx64 "\n", context_sparc->ccr);
-      printf("  pc                  = 0x%" PRIx64 "\n", context_sparc->pc);
-      printf("  npc                 = 0x%" PRIx64 "\n", context_sparc->npc);
-      printf("  y                   = 0x%" PRIx64 "\n", context_sparc->y);
-      printf("  asi                 = 0x%" PRIx64 "\n", context_sparc->asi);
-      printf("  fprs                = 0x%" PRIx64 "\n", context_sparc->fprs);
-
-      for (unsigned int fpr_index = 0;
-           fpr_index < MD_FLOATINGSAVEAREA_SPARC_FPR_COUNT;
-           ++fpr_index) {
-        printf("  float_save.regs[%2d] = 0x%" PRIx64 "\n",
-               fpr_index, context_sparc->float_save.regs[fpr_index]);
-      }
-      printf("  float_save.filler   = 0x%" PRIx64 "\n",
-             context_sparc->float_save.filler);
-      printf("  float_save.fsr      = 0x%" PRIx64 "\n",
-             context_sparc->float_save.fsr);
       break;
     }
 
@@ -588,54 +383,6 @@ void DumpContext::Print() {
                freg_index, fp_value.high, fp_value.low);
       }
 
-      break;
-    }
-
-    case MD_CONTEXT_MIPS:
-    case MD_CONTEXT_MIPS64: {
-      const MDRawContextMIPS* context_mips = GetContextMIPS();
-      printf("MDRawContextMIPS\n");
-      printf("  context_flags        = 0x%x\n",
-             context_mips->context_flags);
-      for (int ireg_index = 0;
-           ireg_index < MD_CONTEXT_MIPS_GPR_COUNT;
-           ++ireg_index) {
-        printf("  iregs[%2d]           = 0x%" PRIx64 "\n",
-               ireg_index, context_mips->iregs[ireg_index]);
-      }
-      printf("  mdhi                 = 0x%" PRIx64 "\n",
-             context_mips->mdhi);
-      printf("  mdlo                 = 0x%" PRIx64 "\n",
-             context_mips->mdhi);
-      for (int dsp_index = 0;
-           dsp_index < MD_CONTEXT_MIPS_DSP_COUNT;
-           ++dsp_index) {
-        printf("  hi[%1d]              = 0x%" PRIx32 "\n",
-               dsp_index, context_mips->hi[dsp_index]);
-        printf("  lo[%1d]              = 0x%" PRIx32 "\n",
-               dsp_index, context_mips->lo[dsp_index]);
-      }
-      printf("  dsp_control          = 0x%" PRIx32 "\n",
-             context_mips->dsp_control);
-      printf("  epc                  = 0x%" PRIx64 "\n",
-             context_mips->epc);
-      printf("  badvaddr             = 0x%" PRIx64 "\n",
-             context_mips->badvaddr);
-      printf("  status               = 0x%" PRIx32 "\n",
-             context_mips->status);
-      printf("  cause                = 0x%" PRIx32 "\n",
-             context_mips->cause);
-
-      for (int fpr_index = 0;
-           fpr_index < MD_FLOATINGSAVEAREA_MIPS_FPR_COUNT;
-           ++fpr_index) {
-        printf("  float_save.regs[%2d] = 0x%" PRIx64 "\n",
-               fpr_index, context_mips->float_save.regs[fpr_index]);
-      }
-      printf("  float_save.fpcsr     = 0x%" PRIx32 "\n",
-             context_mips->float_save.fpcsr);
-      printf("  float_save.fir       = 0x%" PRIx32 "\n",
-             context_mips->float_save.fir);
       break;
     }
 

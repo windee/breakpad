@@ -213,23 +213,6 @@ bool PostfixEvaluator<ValueType>::EvaluateInternal(
   return true;
 }
 
-template<typename ValueType>
-bool PostfixEvaluator<ValueType>::Evaluate(const string &expression,
-                                           DictionaryValidityType *assigned) {
-  // Ensure that the stack is cleared before returning.
-  AutoStackClearer clearer(&stack_);
-
-  if (!EvaluateInternal(expression, assigned))
-    return false;
-
-  // If there's anything left on the stack, it indicates incomplete execution.
-  // This is a failure case.  If the stack is empty, evalution was complete
-  // and successful.
-  if (stack_.empty())
-    return true;
-
-  return false;
-}
 
 template<typename ValueType>
 bool PostfixEvaluator<ValueType>::EvaluateForValue(const string &expression,

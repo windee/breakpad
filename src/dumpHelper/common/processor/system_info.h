@@ -37,9 +37,9 @@
 
 #include <string>
 
-#include "common/using_std_string.h"
-
 namespace dump_helper {
+
+using std::string;
 
 struct SystemInfo {
  public:

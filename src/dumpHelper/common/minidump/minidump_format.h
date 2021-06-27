@@ -115,10 +115,6 @@ typedef struct {
 #include "minidump_cpu_amd64.h"
 #include "minidump_cpu_arm.h"
 #include "minidump_cpu_arm64.h"
-#include "minidump_cpu_mips.h"
-#include "minidump_cpu_ppc.h"
-#include "minidump_cpu_ppc64.h"
-#include "minidump_cpu_sparc.h"
 #include "minidump_cpu_x86.h"
 
 /*
@@ -549,11 +545,7 @@ typedef struct {
   uint64_t  exception_information[MD_EXCEPTION_MAXIMUM_PARAMETERS];
 } MDException;  /* MINIDUMP_EXCEPTION */
 
-#include "minidump_exception_fuchsia.h"
-#include "minidump_exception_linux.h"
 #include "minidump_exception_mac.h"
-#include "minidump_exception_ps3.h"
-#include "minidump_exception_solaris.h"
 #include "minidump_exception_win32.h"
 
 typedef struct {
@@ -1070,29 +1062,7 @@ typedef struct {
   MDRawSimpleStringDictionaryEntry entries[0];
 } MDRawSimpleStringDictionary;
 
-typedef struct {
-  uint32_t version;
-  MDLocationDescriptor list_annotations;
-  MDLocationDescriptor simple_annotations;  /* MDRawSimpleStringDictionary */
-} MDRawModuleCrashpadInfo;
 
-typedef struct {
-  uint32_t minidump_module_list_index;
-  MDLocationDescriptor location;  /* MDRawModuleCrashpadInfo */
-} MDRawModuleCrashpadInfoLink;
-
-typedef struct {
-  uint32_t count;
-  MDLocationDescriptor modules[0];  /* MDRawModuleCrashpadInfoLink */
-} MDRawModuleCrashpadInfoList;
-
-typedef struct {
-  uint32_t version;
-  MDGUID report_id;
-  MDGUID client_id;
-  MDLocationDescriptor simple_annotations;  /* MDRawSimpleStringDictionary */
-  MDLocationDescriptor module_list;  /* MDRawModuleCrashpadInfoList */
-} MDRawCrashpadInfo;
 
 #if defined(_MSC_VER)
 #pragma warning(pop)

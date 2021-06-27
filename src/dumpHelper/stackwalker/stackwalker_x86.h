@@ -62,8 +62,7 @@ class StackwalkerX86 : public Stackwalker {
   StackwalkerX86(const SystemInfo* system_info,
                  const MDRawContextX86* context,
                  MemoryRegion* memory,
-                 const CodeModules* modules,
-                 StackFrameSymbolizer* frame_symbolizer);
+                 const CodeModules* modules);
 
  private:
   // A STACK CFI-driven frame walker for the X86.
@@ -76,14 +75,6 @@ class StackwalkerX86 : public Stackwalker {
   virtual StackFrame* GetContextFrame();
   virtual StackFrame* GetCallerFrame(const CallStack* stack,
                                      bool stack_scan_allowed);
-
-  // Use windows_frame_info (derived from STACK WIN and FUNC records)
-  // to construct the frame that called frames.back(). The caller
-  // takes ownership of the returned frame. Return NULL on failure.
-  StackFrameX86* GetCallerByWindowsFrameInfo(
-      const vector<StackFrame*> &frames,
-      WindowsFrameInfo* windows_frame_info,
-      bool stack_scan_allowed);
 
   // Use cfi_frame_info (derived from STACK CFI records) to construct
   // the frame that called frames.back(). The caller takes ownership

@@ -57,8 +57,7 @@ class StackwalkerARM64 : public Stackwalker {
   StackwalkerARM64(const SystemInfo* system_info,
                    const MDRawContextARM64* context,
                    MemoryRegion* memory,
-                   const CodeModules* modules,
-                   StackFrameSymbolizer* frame_symbolizer);
+                   const CodeModules* modules);
 
   // Change the context validity mask of the frame returned by
   // GetContextFrame to VALID. This is only for use by unit tests; the

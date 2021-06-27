@@ -90,14 +90,11 @@
 #include <string>
 #include <vector>
 
-#include "common/basictypes.h"
-#include "common/using_std_string.h"
 #include "common/processor/code_module.h"
 #include "common/processor/code_modules.h"
 #include "common/processor/dump_context.h"
 #include "common/processor/dump_object.h"
 #include "common/processor/memory_region.h"
-#include "common/processor/proc_maps_linux.h"
 
 
 namespace dump_helper {
@@ -105,6 +102,7 @@ namespace dump_helper {
 
 using std::map;
 using std::vector;
+using std::string;
 
 
 class Minidump;
@@ -1011,131 +1009,6 @@ class MinidumpMemoryInfoList : public MinidumpStream {
   DISALLOW_COPY_AND_ASSIGN(MinidumpMemoryInfoList);
 };
 
-// MinidumpLinuxMaps wraps information about a single mapped memory region
-// from /proc/self/maps.
-class MinidumpLinuxMaps : public MinidumpObject {
- public:
-  // The memory address of the base of the mapped region.
-  uint64_t GetBase() const { return valid_ ? region_.start : 0; }
-  // The size of the mapped region.
-  uint64_t GetSize() const { return valid_ ? region_.end - region_.start : 0; }
-
-  // The permissions of the mapped region.
-  bool IsReadable() const {
-    return valid_ ? region_.permissions & MappedMemoryRegion::READ : false;
-  }
-  bool IsWriteable() const {
-    return valid_ ? region_.permissions & MappedMemoryRegion::WRITE : false;
-  }
-  bool IsExecutable() const {
-    return valid_ ? region_.permissions & MappedMemoryRegion::EXECUTE : false;
-  }
-  bool IsPrivate() const {
-    return valid_ ? region_.permissions & MappedMemoryRegion::PRIVATE : false;
-  }
-
-  // The offset of the mapped region.
-  uint64_t GetOffset() const { return valid_ ? region_.offset : 0; }
-
-  // The major device number.
-  uint8_t GetMajorDevice() const { return valid_ ? region_.major_device : 0; }
-  // The minor device number.
-  uint8_t GetMinorDevice() const { return valid_ ? region_.minor_device : 0; }
-
-  // The inode of the mapped region.
-  uint64_t GetInode() const { return valid_ ? region_.inode : 0; }
-
-  // The pathname of the mapped region.
-  const string GetPathname() const { return valid_ ? region_.path : ""; }
-
-  // Print the contents of this mapping.
-  void Print() const;
-
- private:
-  // These objects are managed by MinidumpLinuxMapsList.
-  friend class MinidumpLinuxMapsList;
-
-  // This caller owns the pointer.
-  explicit MinidumpLinuxMaps(Minidump *minidump);
-
-  // The memory region struct that this class wraps.
-  MappedMemoryRegion region_;
-
-  DISALLOW_COPY_AND_ASSIGN(MinidumpLinuxMaps);
-};
-
-// MinidumpLinuxMapsList corresponds to the Linux-exclusive MD_LINUX_MAPS
-// stream, which contains the contents of /prod/self/maps, which contains
-// the mapped memory regions and their access permissions.
-class MinidumpLinuxMapsList : public MinidumpStream {
- public:
-  virtual ~MinidumpLinuxMapsList();
-
-  // Get number of mappings.
-  unsigned int get_maps_count() const { return valid_ ? maps_count_ : 0; }
-
-  // Get mapping at the given memory address. The caller owns the pointer.
-  const MinidumpLinuxMaps *GetLinuxMapsForAddress(uint64_t address) const;
-  // Get mapping at the given index. The caller owns the pointer.
-  const MinidumpLinuxMaps *GetLinuxMapsAtIndex(unsigned int index) const;
-
-  // Print the contents of /proc/self/maps to stdout.
-  void Print() const;
-
- private:
-  friend class Minidump;
-
-  typedef vector<MinidumpLinuxMaps *> MinidumpLinuxMappings;
-
-  static const uint32_t kStreamType = MD_LINUX_MAPS;
-
-  // The caller owns the pointer.
-  explicit MinidumpLinuxMapsList(Minidump *minidump);
-
-  // Read and load the contents of the process mapping data.
-  // The stream should have data in the form of /proc/self/maps.
-  // This method returns whether the stream was read successfully.
-  bool Read(uint32_t expected_size) override;
-
-  // The list of individual mappings.
-  MinidumpLinuxMappings *maps_;
-  // The number of mappings.
-  uint32_t maps_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(MinidumpLinuxMapsList);
-};
-
-// MinidumpCrashpadInfo wraps MDRawCrashpadInfo, which is an optional stream in
-// a minidump that provides additional information about the process state
-// at the time the minidump was generated.
-class MinidumpCrashpadInfo : public MinidumpStream {
- public:
-  const MDRawCrashpadInfo* crashpad_info() const {
-    return valid_ ? &crashpad_info_ : NULL;
-  }
-
-  // Print a human-readable representation of the object to stdout.
-  void Print();
-
- private:
-  friend class Minidump;
-
-  static const uint32_t kStreamType = MD_CRASHPAD_INFO_STREAM;
-
-  explicit MinidumpCrashpadInfo(Minidump* minidump_);
-
-  bool Read(uint32_t expected_size);
-
-  MDRawCrashpadInfo crashpad_info_;
-  std::vector<uint32_t> module_crashpad_info_links_;
-  std::vector<MDRawModuleCrashpadInfo> module_crashpad_info_;
-  std::vector<std::vector<std::string>> module_crashpad_info_list_annotations_;
-  std::vector<std::map<std::string, std::string>>
-      module_crashpad_info_simple_annotations_;
-  std::map<std::string, std::string> simple_annotations_;
-};
-
-
 // Minidump is the user's interface to a minidump file.  It wraps MDRawHeader
 // and provides access to the minidump's top-level stream directory.
 class Minidump {
@@ -1197,10 +1070,6 @@ class Minidump {
   virtual MinidumpMiscInfo* GetMiscInfo();
   virtual MinidumpBreakpadInfo* GetBreakpadInfo();
   virtual MinidumpMemoryInfoList* GetMemoryInfoList();
-  MinidumpCrashpadInfo* GetCrashpadInfo();
-
-  // The next method also calls GetStream, but is exclusive for Linux dumps.
-  virtual MinidumpLinuxMapsList *GetLinuxMapsList();
 
   // The next set of methods are provided for users who wish to access
   // data in minidump files directly, while leveraging the rest of
@@ -1231,14 +1100,6 @@ class Minidump {
   // specifies the offset that a length-encoded string is stored at in the
   // minidump file.
   string* ReadString(off_t offset);
-
-  bool ReadUTF8String(off_t offset, string* string_utf8);
-
-  bool ReadStringList(off_t offset, std::vector<std::string>* string_list);
-
-  bool ReadSimpleStringDictionary(
-      off_t offset,
-      std::map<std::string, std::string>* simple_string_dictionary);
 
   // SeekToStreamType positions the file at the beginning of a stream
   // identified by stream_type, and informs the caller of the stream's

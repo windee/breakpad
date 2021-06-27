@@ -38,7 +38,6 @@
 #include "common/scoped_ptr.h"
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
-#include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame_cpu.h"
 #include "common/processor/system_info.h"
 #include "cfi_frame_info.h"
@@ -51,9 +50,8 @@ StackwalkerARM::StackwalkerARM(const SystemInfo* system_info,
                                const MDRawContextARM* context,
                                int fp_register,
                                MemoryRegion* memory,
-                               const CodeModules* modules,
-                               StackFrameSymbolizer* resolver_helper)
-    : Stackwalker(system_info, memory, modules, resolver_helper),
+                               const CodeModules* modules)
+    : Stackwalker(system_info, memory, modules),
       context_(context), fp_register_(fp_register),
       context_frame_validity_(StackFrameARM::CONTEXT_VALID_ALL) { }
 
@@ -241,16 +239,6 @@ StackFrame* StackwalkerARM::GetCallerFrame(const CallStack* stack,
   const vector<StackFrame*> &frames = *stack->frames();
   StackFrameARM* last_frame = static_cast<StackFrameARM*>(frames.back());
   scoped_ptr<StackFrameARM> frame;
-
-  // See if there is DWARF call frame information covering this address.
-  // TODO(jperaza): Ignore iOS CFI info until it is properly collected.
-  // https://bugs.chromium.org/p/google-breakpad/issues/detail?id=764
-  if (!system_info_ || system_info_->os != "iOS") {
-    scoped_ptr<CFIFrameInfo> cfi_frame_info(
-        frame_symbolizer_->FindCFIFrameInfo(last_frame));
-    if (cfi_frame_info.get())
-      frame.reset(GetCallerByCFIFrameInfo(frames, cfi_frame_info.get()));
-  }
 
   // If CFI failed, or there wasn't CFI available, fall back
   // to frame pointer, if this is configured.

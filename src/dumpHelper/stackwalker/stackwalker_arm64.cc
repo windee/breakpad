@@ -38,10 +38,11 @@
 #include "common/scoped_ptr.h"
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
-#include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame_cpu.h"
+#include "common/processor/code_module.h"
 #include "cfi_frame_info.h"
 #include "stackwalker/stackwalker_arm64.h"
+
 
 namespace dump_helper {
 
@@ -49,9 +50,8 @@ namespace dump_helper {
 StackwalkerARM64::StackwalkerARM64(const SystemInfo* system_info,
                                    const MDRawContextARM64* context,
                                    MemoryRegion* memory,
-                                   const CodeModules* modules,
-                                   StackFrameSymbolizer* resolver_helper)
-    : Stackwalker(system_info, memory, modules, resolver_helper),
+                                   const CodeModules* modules)
+    : Stackwalker(system_info, memory, modules),
       context_(context),
       context_frame_validity_(StackFrameARM64::CONTEXT_VALID_ALL),
       address_range_mask_(0xffffffffffffffff) {
@@ -286,12 +286,6 @@ StackFrame* StackwalkerARM64::GetCallerFrame(const CallStack* stack,
   const vector<StackFrame*> &frames = *stack->frames();
   StackFrameARM64* last_frame = static_cast<StackFrameARM64*>(frames.back());
   scoped_ptr<StackFrameARM64> frame;
-
-  // See if there is DWARF call frame information covering this address.
-  scoped_ptr<CFIFrameInfo> cfi_frame_info(
-      frame_symbolizer_->FindCFIFrameInfo(last_frame));
-  if (cfi_frame_info.get())
-    frame.reset(GetCallerByCFIFrameInfo(frames, cfi_frame_info.get()));
 
   // If CFI failed, or there wasn't CFI available, fall back to frame pointer.
   if (!frame.get())

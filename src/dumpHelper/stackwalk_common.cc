@@ -43,7 +43,6 @@
 #include <sstream>
 
 #include "common/stdio_wrapper.h"
-#include "common/using_std_string.h"
 #include "common/processor/call_stack.h"
 #include "common/processor/code_module.h"
 #include "common/processor/code_modules.h"
@@ -58,6 +57,7 @@ namespace dump_helper {
 namespace {
 
 using std::vector;
+using std::string;
 // PrintStack prints the call stack in |stack| to stdout, in a reasonably
 // useful form.  Module, function, and source file names are displayed if
 // they are available.  The code offset to the base code address of the
@@ -70,8 +70,7 @@ using std::vector;
 static void PrintStack(const CallStack *stack,
                        const string &cpu,
                        const MemoryRegion* memory,
-                       const CodeModules* modules,
-                       SourceLineResolverInterface* resolver) {
+                       const CodeModules* modules) {
   int frame_count = stack->frames()->size();
   if (frame_count == 0) {
     printf(" <no frames>\n");
@@ -181,8 +180,7 @@ static void PrintModules(
 
 }  // namespace
 
-void PrintProcessState(const ProcessState& process_state,
-                       SourceLineResolverInterface* resolver) {
+void PrintProcessState(const ProcessState& process_state) {
   // Print OS and CPU information.
   string cpu = process_state.system_info()->cpu;
   string cpu_info = process_state.system_info()->cpu_info;
@@ -248,7 +246,7 @@ void PrintProcessState(const ProcessState& process_state,
                                     "requested dump, did not crash");
     PrintStack(process_state.threads()->at(requesting_thread), cpu,
                process_state.thread_memory_regions()->at(requesting_thread),
-               process_state.modules(), resolver);
+               process_state.modules());
   }
 
 

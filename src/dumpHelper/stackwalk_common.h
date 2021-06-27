@@ -39,7 +39,6 @@
 namespace dump_helper {
 
 class ProcessState;
-class SourceLineResolverInterface;
 struct Minidump_Info {
 	std::string dump_path;
 	std::string stack_md5;
@@ -51,7 +50,7 @@ struct Minidump_Info {
 	std::string app_name;
 };
 
-void PrintProcessState(const ProcessState& process_state,SourceLineResolverInterface* resolver);
+void PrintProcessState(const ProcessState& process_state);
 void GetUploadInfo(const ProcessState& process_state, Minidump_Info* dmpInfo);
 
 }  // namespace dump_helper

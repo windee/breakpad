@@ -2,34 +2,21 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="basic_code_modules.cc" />
-    <ClCompile Include="basic_source_line_resolver.cc" />
     <ClCompile Include="call_stack.cc" />
     <ClCompile Include="cfi_frame_info.cc" />
     <ClCompile Include="convert_old_arm64_context.cc" />
-    <ClCompile Include="disassembler_x86.cc" />
     <ClCompile Include="dump_context.cc" />
-    <ClCompile Include="exploitability.cc" />
-    <ClCompile Include="exploitability_linux.cc" />
-    <ClCompile Include="exploitability_win.cc" />
     <ClCompile Include="minidump.cc" />
     <ClCompile Include="minidump_processor.cc" />
-    <ClCompile Include="proc_maps_linux.cc" />
     <ClCompile Include="process_state.cc" />
-    <ClCompile Include="simple_symbol_supplier.cc" />
-    <ClCompile Include="source_line_resolver_base.cc" />
     <ClCompile Include="stack_frame_cpu.cc" />
-    <ClCompile Include="stack_frame_symbolizer.cc" />
     <ClCompile Include="stackwalk_common.cc" />
     <ClCompile Include="symbolic_constants_win.cc" />
-    <ClCompile Include="tokenize.cc" />
     <ClCompile Include="sender\guid_string.cc">
       <Filter>sender</Filter>
     </ClCompile>
     <ClCompile Include="sender\http_upload.cc">
       <Filter>sender</Filter>
-    </ClCompile>
-    <ClCompile Include="common\logging.cc">
-      <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\path_helper.cc">
       <Filter>common</Filter>
@@ -39,48 +26,6 @@
     </ClCompile>
     <ClCompile Include="dump_object.cc" />
     <ClCompile Include="dump_helper.cc" />
-    <ClCompile Include="disasm\ia32_implicit.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_insn.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_invariant.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_modrm.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_opcode_tables.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_operand.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_reg.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\ia32_settings.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\x86_disasm.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\x86_format.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\x86_imm.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\x86_insn.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\x86_misc.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
-    <ClCompile Include="disasm\x86_operand_list.c">
-      <Filter>disasm</Filter>
-    </ClCompile>
     <ClCompile Include="stackwalker\stackwalker.cc">
       <Filter>stackwalker</Filter>
     </ClCompile>
@@ -96,18 +41,6 @@
     <ClCompile Include="stackwalker\stackwalker_arm64.cc">
       <Filter>stackwalker</Filter>
     </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_mips.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_ppc.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_ppc64.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_sparc.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
     <ClCompile Include="stackwalker\stackwalker_x86.cc">
       <Filter>stackwalker</Filter>
     </ClCompile>
@@ -116,43 +49,20 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common\basictypes.h" />
     <ClInclude Include="basic_code_module.h" />
     <ClInclude Include="basic_code_modules.h" />
     <ClInclude Include="address_map-inl.h" />
     <ClInclude Include="address_map.h" />
-    <ClInclude Include="basic_source_line_resolver_types.h" />
     <ClInclude Include="cfi_frame_info-inl.h" />
     <ClInclude Include="cfi_frame_info.h" />
-    <ClInclude Include="contained_range_map-inl.h" />
-    <ClInclude Include="contained_range_map.h" />
     <ClInclude Include="convert_old_arm64_context.h" />
-    <ClInclude Include="disassembler_x86.h" />
-    <ClInclude Include="exploitability_linux.h" />
-    <ClInclude Include="exploitability_win.h" />
-    <ClInclude Include="fast_source_line_resolver_types.h" />
     <ClInclude Include="linked_ptr.h" />
-    <ClInclude Include="module_factory.h" />
     <ClInclude Include="postfix_evaluator-inl.h" />
     <ClInclude Include="postfix_evaluator.h" />
     <ClInclude Include="range_map-inl.h" />
     <ClInclude Include="range_map.h" />
-    <ClInclude Include="simple_symbol_supplier.h" />
-    <ClInclude Include="source_line_resolver_base_types.h" />
     <ClInclude Include="stackwalk_common.h" />
-    <ClInclude Include="static_address_map-inl.h" />
-    <ClInclude Include="static_address_map.h" />
-    <ClInclude Include="static_contained_range_map-inl.h" />
-    <ClInclude Include="static_contained_range_map.h" />
-    <ClInclude Include="static_map-inl.h" />
-    <ClInclude Include="static_map.h" />
-    <ClInclude Include="static_map_iterator-inl.h" />
-    <ClInclude Include="static_map_iterator.h" />
-    <ClInclude Include="static_range_map-inl.h" />
-    <ClInclude Include="static_range_map.h" />
     <ClInclude Include="symbolic_constants_win.h" />
-    <ClInclude Include="tokenize.h" />
-    <ClInclude Include="windows_frame_info.h" />
     <ClInclude Include="sender\guid_string.h">
       <Filter>sender</Filter>
     </ClInclude>
@@ -161,9 +71,6 @@
     </ClInclude>
     <ClInclude Include="sender\module_info.h">
       <Filter>sender</Filter>
-    </ClInclude>
-    <ClInclude Include="common\logging.h">
-      <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\macros.h">
       <Filter>common</Filter>
@@ -174,50 +81,11 @@
     <ClInclude Include="common\stdio_wrapper.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="common\using_std_string.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="common\getopt.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\md5.h">
       <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_implicit.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_insn.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_invariant.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_modrm.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_opcode_tables.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_operand.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_reg.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\ia32_settings.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\libdis.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\qword.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\x86_imm.h">
-      <Filter>disasm</Filter>
-    </ClInclude>
-    <ClInclude Include="disasm\x86_operand_list.h">
-      <Filter>disasm</Filter>
     </ClInclude>
     <ClInclude Include="stackwalker\stackwalker_address_list.h">
       <Filter>stackwalker</Filter>
@@ -229,18 +97,6 @@
       <Filter>stackwalker</Filter>
     </ClInclude>
     <ClInclude Include="stackwalker\stackwalker_arm64.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_mips.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_ppc.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_ppc64.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_sparc.h">
       <Filter>stackwalker</Filter>
     </ClInclude>
     <ClInclude Include="stackwalker\stackwalker_x86.h">
@@ -258,34 +114,10 @@
     <ClInclude Include="common\minidump\minidump_cpu_arm64.h">
       <Filter>common\minidump</Filter>
     </ClInclude>
-    <ClInclude Include="common\minidump\minidump_cpu_mips.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\minidump\minidump_cpu_ppc.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\minidump\minidump_cpu_ppc64.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\minidump\minidump_cpu_sparc.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
     <ClInclude Include="common\minidump\minidump_cpu_x86.h">
       <Filter>common\minidump</Filter>
     </ClInclude>
-    <ClInclude Include="common\minidump\minidump_exception_fuchsia.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\minidump\minidump_exception_linux.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
     <ClInclude Include="common\minidump\minidump_exception_mac.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\minidump\minidump_exception_ps3.h">
-      <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\minidump\minidump_exception_solaris.h">
       <Filter>common\minidump</Filter>
     </ClInclude>
     <ClInclude Include="common\minidump\minidump_exception_win32.h">
@@ -296,9 +128,6 @@
     </ClInclude>
     <ClInclude Include="common\minidump\minidump_size.h">
       <Filter>common\minidump</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\basic_source_line_resolver.h">
-      <Filter>common\processor</Filter>
     </ClInclude>
     <ClInclude Include="common\processor\call_stack.h">
       <Filter>common\processor</Filter>
@@ -318,19 +147,10 @@
     <ClInclude Include="common\processor\exception_record.h">
       <Filter>common\processor</Filter>
     </ClInclude>
-    <ClInclude Include="common\processor\exploitability.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
     <ClInclude Include="common\processor\fast_source_line_resolver.h">
       <Filter>common\processor</Filter>
     </ClInclude>
     <ClInclude Include="common\processor\memory_region.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\microdump.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\microdump_processor.h">
       <Filter>common\processor</Filter>
     </ClInclude>
     <ClInclude Include="common\processor\minidump.h">
@@ -339,19 +159,10 @@
     <ClInclude Include="common\processor\minidump_processor.h">
       <Filter>common\processor</Filter>
     </ClInclude>
-    <ClInclude Include="common\processor\proc_maps_linux.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
     <ClInclude Include="common\processor\process_result.h">
       <Filter>common\processor</Filter>
     </ClInclude>
     <ClInclude Include="common\processor\process_state.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\source_line_resolver_base.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\source_line_resolver_interface.h">
       <Filter>common\processor</Filter>
     </ClInclude>
     <ClInclude Include="common\processor\stack_frame.h">
@@ -360,13 +171,7 @@
     <ClInclude Include="common\processor\stack_frame_cpu.h">
       <Filter>common\processor</Filter>
     </ClInclude>
-    <ClInclude Include="common\processor\stack_frame_symbolizer.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
     <ClInclude Include="common\processor\stackwalker.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\symbol_supplier.h">
       <Filter>common\processor</Filter>
     </ClInclude>
     <ClInclude Include="common\processor\system_info.h">
@@ -385,9 +190,6 @@
     </Filter>
     <Filter Include="stackwalker">
       <UniqueIdentifier>{4b6b51d8-8e8e-4d69-88cb-f80003a75e71}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="disasm">
-      <UniqueIdentifier>{37189463-4bcc-47ad-be7d-4a7f5b43f8c8}</UniqueIdentifier>
     </Filter>
     <Filter Include="common\minidump">
       <UniqueIdentifier>{6b0061bc-b975-48e4-a6fd-09b1ab54ed5f}</UniqueIdentifier>

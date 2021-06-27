@@ -46,7 +46,6 @@
 
 namespace dump_helper {
 
-struct WindowsFrameInfo;
 class CFIFrameInfo;
 
 struct StackFrameX86 : public StackFrame {
@@ -73,7 +72,6 @@ struct StackFrameX86 : public StackFrame {
   StackFrameX86()
      : context(),
        context_validity(CONTEXT_VALID_NONE),
-       windows_frame_info(NULL),
        cfi_frame_info(NULL) {}
   ~StackFrameX86();
 
@@ -93,60 +91,7 @@ struct StackFrameX86 : public StackFrame {
 
   // Any stack walking information we found describing this.instruction.
   // These may be NULL if there is no such information for that address.
-  WindowsFrameInfo *windows_frame_info;
   CFIFrameInfo *cfi_frame_info;
-};
-
-struct StackFramePPC : public StackFrame {
-  // ContextValidity should eventually contain entries for the validity of
-  // other nonvolatile (callee-save) registers as in
-  // StackFrameX86::ContextValidity, but the ppc stackwalker doesn't currently
-  // locate registers other than the ones listed here.
-  enum ContextValidity {
-    CONTEXT_VALID_NONE = 0,
-    CONTEXT_VALID_SRR0 = 1 << 0,
-    CONTEXT_VALID_GPR1 = 1 << 1,
-    CONTEXT_VALID_ALL  = -1
-  };
-
-  StackFramePPC() : context(), context_validity(CONTEXT_VALID_NONE) {}
-
-  // Register state.  This is only fully valid for the topmost frame in a
-  // stack.  In other frames, the values of nonvolatile registers may be
-  // present, given sufficient debugging information.  Refer to
-  // context_validity.
-  MDRawContextPPC context;
-
-  // context_validity is actually ContextValidity, but int is used because
-  // the OR operator doesn't work well with enumerated types.  This indicates
-  // which fields in context are valid.
-  int context_validity;
-};
-
-struct StackFramePPC64 : public StackFrame {
-  // ContextValidity should eventually contain entries for the validity of
-  // other nonvolatile (callee-save) registers as in
-  // StackFrameX86::ContextValidity, but the ppc stackwalker doesn't currently
-  // locate registers other than the ones listed here.
-  enum ContextValidity {
-    CONTEXT_VALID_NONE = 0,
-    CONTEXT_VALID_SRR0 = 1 << 0,
-    CONTEXT_VALID_GPR1 = 1 << 1,
-    CONTEXT_VALID_ALL  = -1
-  };
-
-  StackFramePPC64() : context(), context_validity(CONTEXT_VALID_NONE) {}
-
-  // Register state.  This is only fully valid for the topmost frame in a
-  // stack.  In other frames, the values of nonvolatile registers may be
-  // present, given sufficient debugging information.  Refer to
-  // context_validity.
-  MDRawContextPPC64 context;
-
-  // context_validity is actually ContextValidity, but int is used because
-  // the OR operator doesn't work well with enumerated types.  This indicates
-  // which fields in context are valid.
-  int context_validity;
 };
 
 struct StackFrameAMD64 : public StackFrame {
@@ -191,30 +136,6 @@ struct StackFrameAMD64 : public StackFrame {
   // we use int instead because the bitwise inclusive or operator
   // yields an int when applied to enum values, and C++ doesn't
   // silently convert from ints to enums.
-  int context_validity;
-};
-
-struct StackFrameSPARC : public StackFrame {
-  // to be confirmed
-  enum ContextValidity {
-    CONTEXT_VALID_NONE = 0,
-    CONTEXT_VALID_PC   = 1 << 0,
-    CONTEXT_VALID_SP   = 1 << 1,
-    CONTEXT_VALID_FP   = 1 << 2,
-    CONTEXT_VALID_ALL  = -1
-  };
-
-  StackFrameSPARC() : context(), context_validity(CONTEXT_VALID_NONE) {}
-
-  // Register state.  This is only fully valid for the topmost frame in a
-  // stack.  In other frames, the values of nonvolatile registers may be
-  // present, given sufficient debugging information.  Refer to
-  // context_validity.
-  MDRawContextSPARC context;
-
-  // context_validity is actually ContextValidity, but int is used because
-  // the OR operator doesn't work well with enumerated types.  This indicates
-  // which fields in context are valid.
   int context_validity;
 };
 
@@ -332,72 +253,6 @@ struct StackFrameARM64 : public StackFrame {
   // For each register in context whose value has been recovered, we set
   // the corresponding CONTEXT_VALID_ bit in context_validity.
   uint64_t context_validity;
-};
-
-struct StackFrameMIPS : public StackFrame {  
-  // MIPS callee save registers for o32 ABI (32bit registers) are: 
-  // 1. $s0-$s7, 
-  // 2. $sp, $fp
-  // 3. $f20-$f31 
-  // 
-  // The register structure is available at
-  // http://en.wikipedia.org/wiki/MIPS_architecture#Compiler_register_usage
-
-#define INDEX_MIPS_REG_S0 MD_CONTEXT_MIPS_REG_S0  // 16
-#define INDEX_MIPS_REG_S7 MD_CONTEXT_MIPS_REG_S7  // 23
-#define INDEX_MIPS_REG_GP MD_CONTEXT_MIPS_REG_GP  // 28
-#define INDEX_MIPS_REG_RA MD_CONTEXT_MIPS_REG_RA  // 31
-#define INDEX_MIPS_REG_PC 34 
-#define SHIFT_MIPS_REG_S0 0
-#define SHIFT_MIPS_REG_GP 8
-#define SHIFT_MIPS_REG_PC 12 
-
-  enum ContextValidity {
-    CONTEXT_VALID_NONE = 0,
-    CONTEXT_VALID_S0 = 1 << 0,  // $16
-    CONTEXT_VALID_S1 = 1 << 1,  // $17
-    CONTEXT_VALID_S2 = 1 << 2,  // $18
-    CONTEXT_VALID_S3 = 1 << 3,  // $19
-    CONTEXT_VALID_S4 = 1 << 4,  // $20
-    CONTEXT_VALID_S5 = 1 << 5,  // $21
-    CONTEXT_VALID_S6 = 1 << 6,  // $22
-    CONTEXT_VALID_S7 = 1 << 7,  // $23
-    // GP is not calee-save for o32 abi.
-    CONTEXT_VALID_GP = 1 << 8,  // $28
-    CONTEXT_VALID_SP = 1 << 9,  // $29
-    CONTEXT_VALID_FP = 1 << 10,  // $30
-    CONTEXT_VALID_RA = 1 << 11,  // $31  
-    CONTEXT_VALID_PC = 1 << 12,  // $34
-    CONTEXT_VALID_ALL = ~CONTEXT_VALID_NONE
-  };
-  
-  // Return the ContextValidity flag for register rN.
-  static ContextValidity RegisterValidFlag(int n) {
-    if (n >= INDEX_MIPS_REG_S0 && n <= INDEX_MIPS_REG_S7)
-      return ContextValidity(1 << (n - INDEX_MIPS_REG_S0 + SHIFT_MIPS_REG_S0));
-    else if (n >= INDEX_MIPS_REG_GP && n <= INDEX_MIPS_REG_RA)
-      return ContextValidity(1 << (n - INDEX_MIPS_REG_GP + SHIFT_MIPS_REG_GP));
-    else if (n == INDEX_MIPS_REG_PC)
-      return ContextValidity(1 << SHIFT_MIPS_REG_PC);
-
-    return CONTEXT_VALID_NONE;
-  }
-
-  StackFrameMIPS() : context(), context_validity(CONTEXT_VALID_NONE) {}
-
-  // Register state. This is only fully valid for the topmost frame in a
-  // stack. In other frames, which registers are present depends on what
-  // debugging information were available. Refer to 'context_validity' below.
-  MDRawContextMIPS context;   
-
-  // For each register in context whose value has been recovered,
-  // the corresponding CONTEXT_VALID_ bit in 'context_validity' is set.
-  //
-  // context_validity's type should actually be ContextValidity, but
-  // type int is used instead because the bitwise inclusive or operator
-  // yields an int when applied to enum values, and C++ doesn't
-  // silently convert from ints to enums.
-  int context_validity;
 };
 
 }  // namespace dump_helper

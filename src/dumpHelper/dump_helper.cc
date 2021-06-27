@@ -41,13 +41,10 @@
 
 #include "common/path_helper.h"
 #include "common/scoped_ptr.h"
-#include "common/using_std_string.h"
-#include "common/processor/basic_source_line_resolver.h"
 #include "common/processor/minidump.h"
 #include "common/processor/minidump_processor.h"
 #include "common/processor/process_state.h"
 #include "common/md5.h"
-#include "simple_symbol_supplier.h"
 #include "stackwalk_common.h"
 
 
@@ -62,14 +59,12 @@
 
 
 namespace {
-
-using dump_helper::BasicSourceLineResolver;
+using std::string;
 using dump_helper::Minidump;
 using dump_helper::MinidumpMemoryList;
 using dump_helper::MinidumpThreadList;
 using dump_helper::MinidumpProcessor;
 using dump_helper::ProcessState;
-using dump_helper::SimpleSymbolSupplier;
 using dump_helper::scoped_ptr;
 using dump_helper::Minidump_Info;
 using dump_helper::PathHelper;
@@ -84,10 +79,7 @@ struct Options {
 const std::string server_url = "https://kim-api1.kwaitalk.com/clientlog/log/crash";
 
 bool GenerateDumpInfo(const string& minidump_file, Minidump_Info* dmpInfo) {
-  scoped_ptr<SimpleSymbolSupplier> symbol_supplier;
-  BasicSourceLineResolver resolver;
-  MinidumpProcessor minidump_processor(symbol_supplier.get(), &resolver);
-
+  MinidumpProcessor minidump_processor;
   // Increase the maximum number of threads and regions.
   MinidumpThreadList::set_max_threads(std::numeric_limits<uint32_t>::max());
   MinidumpMemoryList::set_max_regions(std::numeric_limits<uint32_t>::max());
@@ -107,7 +99,7 @@ bool GenerateDumpInfo(const string& minidump_file, Minidump_Info* dmpInfo) {
   dmpInfo->dump_path = minidump_file;
   GetUploadInfo(process_state, dmpInfo);
 
-  //PrintProcessState(process_state, &resolver);
+  //PrintProcessState(process_state);
 
   return true;
 }
@@ -145,11 +137,11 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 	std::map<string, string> params = options.parameters;
-	params["crash_reason"] = vecInfo[0].crash_reason;
-	params["crash_address"] = vecInfo[0].crash_address;
-	params["modName"] = vecInfo[0].module_name;
-	params["modVersion"] = vecInfo[0].module_version;
-	params["modOffset"] = vecInfo[0].module_offset;
+	params["crashReason"] = vecInfo[0].crash_reason;
+	params["crashAddress"] = vecInfo[0].crash_address;
+	params["moduleName"] = vecInfo[0].module_name;
+	params["moduleVersion"] = vecInfo[0].module_version;
+	params["moduleOffset"] = vecInfo[0].module_offset;
 	params["stackMd5"] = vecInfo[0].stack_md5;
 
 	std::map<string, string> files;

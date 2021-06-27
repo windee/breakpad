@@ -38,6 +38,7 @@
 
 namespace dump_helper {
 
+using std::string;
 // Additional argument that describes the exception.
 class ExceptionParameter {
  public:

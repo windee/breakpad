@@ -37,7 +37,6 @@
 #include <string>
 #include <vector>
 
-#include "common/using_std_string.h"
 #include "common/minidump/breakpad_types.h"
 #include "common/processor/code_modules.h"
 #include "common/processor/exception_record.h"
@@ -48,6 +47,7 @@
 namespace dump_helper {
 
 using std::vector;
+using std::string;
 
 class CallStack;
 class CodeModules;

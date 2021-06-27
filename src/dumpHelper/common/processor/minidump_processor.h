@@ -33,39 +33,21 @@
 #include <assert.h>
 #include <string>
 
-#include "common/using_std_string.h"
 #include "common/minidump/breakpad_types.h"
 #include "common/processor/process_result.h"
 
 namespace dump_helper {
 
+using std::string;
 class Minidump;
 class ProcessState;
-class StackFrameSymbolizer;
-class SourceLineResolverInterface;
-class SymbolSupplier;
 struct SystemInfo;
 
 class MinidumpProcessor {
  public:
   // Initializes this MinidumpProcessor.  supplier should be an
   // implementation of the SymbolSupplier abstract base class.
-  MinidumpProcessor(SymbolSupplier* supplier,
-                    SourceLineResolverInterface* resolver);
-
-  // Initializes the MinidumpProcessor with the option of
-  // enabling the exploitability framework to analyze dumps
-  // for probable security relevance.
-  MinidumpProcessor(SymbolSupplier* supplier,
-                    SourceLineResolverInterface* resolver,
-                    bool enable_exploitability);
-
-  // Initializes the MinidumpProcessor with source line resolver helper, and
-  // the option of enabling the exploitability framework to analyze dumps
-  // for probable security relevance.
-  // Does not take ownership of resolver_helper, which must NOT be NULL.
-  MinidumpProcessor(StackFrameSymbolizer* stack_frame_symbolizer,
-                    bool enable_exploitability);
+  MinidumpProcessor();
 
   ~MinidumpProcessor();
 
@@ -128,15 +110,6 @@ class MinidumpProcessor {
   void set_enable_objdump(bool enabled) { enable_objdump_ = enabled; }
 
  private:
-  StackFrameSymbolizer* frame_symbolizer_;
-  // Indicate whether resolver_helper_ is owned by this instance.
-  bool own_frame_symbolizer_;
-
-  // This flag enables the exploitability scanner which attempts to
-  // guess how likely it is that the crash represents an exploitable
-  // memory corruption issue.
-  bool enable_exploitability_;
-
   // This flag permits the exploitability scanner to shell out to objdump
   // for purposes of disassembly.
   bool enable_objdump_;

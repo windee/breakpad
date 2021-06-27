@@ -36,45 +36,20 @@
 
 #include "common/scoped_ptr.h"
 #include "common/stdio_wrapper.h"
-#include "common/using_std_string.h"
 #include "common/processor/call_stack.h"
 #include "common/processor/minidump.h"
 #include "common/processor/process_state.h"
-#include "common/processor/exploitability.h"
-#include "common/processor/stack_frame_symbolizer.h"
 #include "stackwalker/stackwalker_x86.h"
 #include "symbolic_constants_win.h"
 
 namespace dump_helper {
+using std::string;
 
-MinidumpProcessor::MinidumpProcessor(SymbolSupplier *supplier,
-                                     SourceLineResolverInterface *resolver)
-    : frame_symbolizer_(new StackFrameSymbolizer(supplier, resolver)),
-      own_frame_symbolizer_(true),
-      enable_exploitability_(false),
-      enable_objdump_(false) {
-}
-
-MinidumpProcessor::MinidumpProcessor(SymbolSupplier *supplier,
-                                     SourceLineResolverInterface *resolver,
-                                     bool enable_exploitability)
-    : frame_symbolizer_(new StackFrameSymbolizer(supplier, resolver)),
-      own_frame_symbolizer_(true),
-      enable_exploitability_(enable_exploitability),
-      enable_objdump_(false) {
-}
-
-MinidumpProcessor::MinidumpProcessor(StackFrameSymbolizer *frame_symbolizer,
-                                     bool enable_exploitability)
-    : frame_symbolizer_(frame_symbolizer),
-      own_frame_symbolizer_(false),
-      enable_exploitability_(enable_exploitability),
-      enable_objdump_(false) {
-  assert(frame_symbolizer_);
+MinidumpProcessor::MinidumpProcessor()
+    : enable_objdump_(false) {
 }
 
 MinidumpProcessor::~MinidumpProcessor() {
-  if (own_frame_symbolizer_) delete frame_symbolizer_;
 }
 
 ProcessResult MinidumpProcessor::Process(
@@ -90,11 +65,10 @@ ProcessResult MinidumpProcessor::Process(
   }
   process_state->time_date_stamp_ = header->time_date_stamp;
 
-  bool has_process_create_time =
-      GetProcessCreateTime(dump, &process_state->process_create_time_);
+  GetProcessCreateTime(dump, &process_state->process_create_time_);
 
-  bool has_cpu_info = GetCPUInfo(dump, &process_state->system_info_);
-  bool has_os_info = GetOSInfo(dump, &process_state->system_info_);
+  GetCPUInfo(dump, &process_state->system_info_);
+  GetOSInfo(dump, &process_state->system_info_);
 
   uint32_t dump_thread_id = 0;
   bool has_dump_thread = false;
@@ -174,9 +148,6 @@ ProcessResult MinidumpProcessor::Process(
   bool interrupted = false;
   bool found_requesting_thread = false;
   unsigned int thread_count = threads->thread_count();
-
-  // Reset frame_symbolizer_ at the beginning of stackwalk for each minidump.
-  frame_symbolizer_->Reset();
 
   for (unsigned int thread_index = 0;
        thread_index < thread_count;
@@ -258,8 +229,7 @@ ProcessResult MinidumpProcessor::Process(
                                        context,
                                        thread_memory,
                                        process_state->modules_,
-                                       process_state->unloaded_modules_,
-                                       frame_symbolizer_));
+                                       process_state->unloaded_modules_));
 
     scoped_ptr<CallStack> stack(new CallStack());
     if (stackwalker.get()) {
@@ -291,20 +261,6 @@ ProcessResult MinidumpProcessor::Process(
   // Exploitability defaults to EXPLOITABILITY_NOT_ANALYZED
   process_state->exploitability_ = EXPLOITABILITY_NOT_ANALYZED;
 
-  // If an exploitability run was requested we perform the platform specific
-  // rating.
-  if (enable_exploitability_) {
-    scoped_ptr<Exploitability> exploitability(
-        Exploitability::ExploitabilityForPlatform(dump,
-                                                  process_state,
-                                                  enable_objdump_));
-    // The engine will be null if the platform is not supported
-    if (exploitability != NULL) {
-      process_state->exploitability_ = exploitability->CheckExploitability();
-    } else {
-      process_state->exploitability_ = EXPLOITABILITY_ERR_NOENGINE;
-    }
-  }
 
   return PROCESS_OK;
 }
@@ -715,54 +671,6 @@ string MinidumpProcessor::GetCrashReason(Minidump *dump, uint64_t *address) {
     return reason;
 
   switch (raw_system_info->platform_id) {
-    case MD_OS_FUCHSIA: {
-      switch (exception_code) {
-        case MD_EXCEPTION_CODE_FUCHSIA_GENERAL:
-          reason = "GENERAL / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_FATAL_PAGE_FAULT:
-          reason = "FATAL_PAGE_FAULT / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_UNDEFINED_INSTRUCTION:
-          reason = "UNDEFINED_INSTRUCTION / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_SW_BREAKPOINT:
-          reason = "SW_BREAKPOINT / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_HW_BREAKPOINT:
-          reason = "HW_BREAKPOINT / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_UNALIGNED_ACCESS:
-          reason = "UNALIGNED_ACCESS / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_THREAD_STARTING:
-          reason = "THREAD_STARTING / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_THREAD_EXITING:
-          reason = "THREAD_EXITING / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_POLICY_ERROR:
-          reason = "POLICY_ERROR / ";
-          reason.append(flags_string);
-          break;
-        case MD_EXCEPTION_CODE_FUCHSIA_PROCESS_STARTING:
-          reason = "PROCESS_STARTING / ";
-          reason.append(flags_string);
-          break;
-        default:
-              ;
-      }
-      break;
-    }
-
     case MD_OS_MAC_OS_X:
     case MD_OS_IOS: {
       switch (exception_code) {
@@ -1249,411 +1157,6 @@ string MinidumpProcessor::GetCrashReason(Minidump *dump, uint64_t *address) {
           break;
         case MD_EXCEPTION_CODE_WIN_SIMULATED:
           reason = "Simulated Exception";
-          break;
-        default:
-          break;
-      }
-      break;
-    }
-
-    case MD_OS_ANDROID:
-    case MD_OS_LINUX: {
-      switch (exception_code) {
-        case MD_EXCEPTION_CODE_LIN_SIGHUP:
-          reason = "SIGHUP";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGINT:
-          reason = "SIGINT";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGQUIT:
-          reason = "SIGQUIT";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGILL:
-          reason = "SIGILL / ";
-          switch (exception_flags) {
-            case MD_EXCEPTION_FLAG_LIN_ILL_ILLOPC:
-              reason.append("ILL_ILLOPC");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_ILLOPN:
-              reason.append("ILL_ILLOPN");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_ILLADR:
-              reason.append("ILL_ILLADR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_ILLTRP:
-              reason.append("ILL_ILLTRP");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_PRVOPC:
-              reason.append("ILL_PRVOPC");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_PRVREG:
-              reason.append("ILL_PRVREG");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_COPROC:
-              reason.append("ILL_COPROC");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_ILL_BADSTK:
-              reason.append("ILL_BADSTK");
-              break;
-            default:
-              reason.append(flags_string);
-              break;
-          }
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGTRAP:
-          reason = "SIGTRAP";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGABRT:
-          reason = "SIGABRT";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGBUS:
-          reason = "SIGBUS / ";
-          switch (exception_flags) {
-            case MD_EXCEPTION_FLAG_LIN_BUS_ADRALN:
-              reason.append("BUS_ADRALN");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_BUS_ADRERR:
-              reason.append("BUS_ADRERR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_BUS_OBJERR:
-              reason.append("BUS_OBJERR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_BUS_MCEERR_AR:
-              reason.append("BUS_MCEERR_AR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_BUS_MCEERR_AO:
-              reason.append("BUS_MCEERR_AO");
-              break;
-            default:
-              reason.append(flags_string);
-              break;
-          }
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGFPE:
-          reason = "SIGFPE / ";
-          switch (exception_flags) {
-            case MD_EXCEPTION_FLAG_LIN_FPE_INTDIV:
-              reason.append("FPE_INTDIV");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_INTOVF:
-              reason.append("FPE_INTOVF");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_FLTDIV:
-              reason.append("FPE_FLTDIV");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_FLTOVF:
-              reason.append("FPE_FLTOVF");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_FLTUND:
-              reason.append("FPE_FLTUND");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_FLTRES:
-              reason.append("FPE_FLTRES");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_FLTINV:
-              reason.append("FPE_FLTINV");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_FPE_FLTSUB:
-              reason.append("FPE_FLTSUB");
-              break;
-            default:
-              reason.append(flags_string);
-              break;
-          }
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGKILL:
-          reason = "SIGKILL";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGUSR1:
-          reason = "SIGUSR1";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGSEGV:
-          reason = "SIGSEGV /";
-          switch (exception_flags) {
-            case MD_EXCEPTION_FLAG_LIN_SEGV_MAPERR:
-              reason.append("SEGV_MAPERR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_SEGV_ACCERR:
-              reason.append("SEGV_ACCERR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_SEGV_BNDERR:
-              reason.append("SEGV_BNDERR");
-              break;
-            case MD_EXCEPTION_FLAG_LIN_SEGV_PKUERR:
-              reason.append("SEGV_PKUERR");
-              break;
-            default:
-              reason.append(flags_string);
-              break;
-          }
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGUSR2:
-          reason = "SIGUSR2";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGPIPE:
-          reason = "SIGPIPE";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGALRM:
-          reason = "SIGALRM";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGTERM:
-          reason = "SIGTERM";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGSTKFLT:
-          reason = "SIGSTKFLT";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGCHLD:
-          reason = "SIGCHLD";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGCONT:
-          reason = "SIGCONT";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGSTOP:
-          reason = "SIGSTOP";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGTSTP:
-          reason = "SIGTSTP";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGTTIN:
-          reason = "SIGTTIN";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGTTOU:
-          reason = "SIGTTOU";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGURG:
-          reason = "SIGURG";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGXCPU:
-          reason = "SIGXCPU";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGXFSZ:
-          reason = "SIGXFSZ";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGVTALRM:
-          reason = "SIGVTALRM";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGPROF:
-          reason = "SIGPROF";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGWINCH:
-          reason = "SIGWINCH";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGIO:
-          reason = "SIGIO";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGPWR:
-          reason = "SIGPWR";
-          break;
-        case MD_EXCEPTION_CODE_LIN_SIGSYS:
-          reason = "SIGSYS";
-          break;
-      case MD_EXCEPTION_CODE_LIN_DUMP_REQUESTED:
-          reason = "DUMP_REQUESTED";
-          break;
-        default:
-          break;
-      }
-      break;
-    }
-
-    case MD_OS_SOLARIS: {
-      switch (exception_code) {
-        case MD_EXCEPTION_CODE_SOL_SIGHUP:
-          reason = "SIGHUP";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGINT:
-          reason = "SIGINT";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGQUIT:
-          reason = "SIGQUIT";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGILL:
-          reason = "SIGILL";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGTRAP:
-          reason = "SIGTRAP";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGIOT:
-          reason = "SIGIOT | SIGABRT";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGEMT:
-          reason = "SIGEMT";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGFPE:
-          reason = "SIGFPE";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGKILL:
-          reason = "SIGKILL";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGBUS:
-          reason = "SIGBUS";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGSEGV:
-          reason = "SIGSEGV";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGSYS:
-          reason = "SIGSYS";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGPIPE:
-          reason = "SIGPIPE";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGALRM:
-          reason = "SIGALRM";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGTERM:
-          reason = "SIGTERM";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGUSR1:
-          reason = "SIGUSR1";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGUSR2:
-          reason = "SIGUSR2";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGCLD:
-          reason = "SIGCLD | SIGCHLD";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGPWR:
-          reason = "SIGPWR";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGWINCH:
-          reason = "SIGWINCH";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGURG:
-          reason = "SIGURG";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGPOLL:
-          reason = "SIGPOLL | SIGIO";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGSTOP:
-          reason = "SIGSTOP";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGTSTP:
-          reason = "SIGTSTP";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGCONT:
-          reason = "SIGCONT";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGTTIN:
-          reason = "SIGTTIN";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGTTOU:
-          reason = "SIGTTOU";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGVTALRM:
-          reason = "SIGVTALRM";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGPROF:
-          reason = "SIGPROF";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGXCPU:
-          reason = "SIGXCPU";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGXFSZ:
-          reason = "SIGXFSZ";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGWAITING:
-          reason = "SIGWAITING";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGLWP:
-          reason = "SIGLWP";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGFREEZE:
-          reason = "SIGFREEZE";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGTHAW:
-          reason = "SIGTHAW";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGCANCEL:
-          reason = "SIGCANCEL";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGLOST:
-          reason = "SIGLOST";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGXRES:
-          reason = "SIGXRES";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGJVM1:
-          reason = "SIGJVM1";
-          break;
-        case MD_EXCEPTION_CODE_SOL_SIGJVM2:
-          reason = "SIGJVM2";
-          break;
-        default:
-          break;
-      }
-      break;
-    }
-
-    case MD_OS_PS3: {
-      switch (exception_code) {
-        case MD_EXCEPTION_CODE_PS3_UNKNOWN:
-          reason = "UNKNOWN";
-          break;
-        case MD_EXCEPTION_CODE_PS3_TRAP_EXCEP:
-          reason = "TRAP_EXCEP";
-          break;
-        case MD_EXCEPTION_CODE_PS3_PRIV_INSTR:
-          reason = "PRIV_INSTR";
-          break;
-        case MD_EXCEPTION_CODE_PS3_ILLEGAL_INSTR:
-          reason = "ILLEGAL_INSTR";
-          break;
-        case MD_EXCEPTION_CODE_PS3_INSTR_STORAGE:
-          reason = "INSTR_STORAGE";
-          break;
-        case MD_EXCEPTION_CODE_PS3_INSTR_SEGMENT:
-          reason = "INSTR_SEGMENT";
-          break;
-        case MD_EXCEPTION_CODE_PS3_DATA_STORAGE:
-          reason = "DATA_STORAGE";
-          break;
-        case MD_EXCEPTION_CODE_PS3_DATA_SEGMENT:
-          reason = "DATA_SEGMENT";
-          break;
-        case MD_EXCEPTION_CODE_PS3_FLOAT_POINT:
-          reason = "FLOAT_POINT";
-          break;
-        case MD_EXCEPTION_CODE_PS3_DABR_MATCH:
-          reason = "DABR_MATCH";
-          break;
-        case MD_EXCEPTION_CODE_PS3_ALIGN_EXCEP:
-          reason = "ALIGN_EXCEP";
-          break;
-        case MD_EXCEPTION_CODE_PS3_MEMORY_ACCESS:
-          reason = "MEMORY_ACCESS";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_ALIGN:
-          reason = "COPRO_ALIGN";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_INVALID_COM:
-          reason = "COPRO_INVALID_COM";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_ERR:
-          reason = "COPRO_ERR";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_FIR:
-          reason = "COPRO_FIR";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_DATA_SEGMENT:
-          reason = "COPRO_DATA_SEGMENT";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_DATA_STORAGE:
-          reason = "COPRO_DATA_STORAGE";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_STOP_INSTR:
-          reason = "COPRO_STOP_INSTR";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_HALT_INSTR:
-          reason = "COPRO_HALT_INSTR";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_HALTINST_UNKNOWN:
-          reason = "COPRO_HALTINSTR_UNKNOWN";
-          break;
-        case MD_EXCEPTION_CODE_PS3_COPRO_MEMORY_ACCESS:
-          reason = "COPRO_MEMORY_ACCESS";
-          break;
-        case MD_EXCEPTION_CODE_PS3_GRAPHIC:
-          reason = "GRAPHIC";
           break;
         default:
           break;

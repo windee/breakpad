@@ -43,17 +43,12 @@
 #include "common/processor/code_modules.h"
 #include "common/processor/dump_context.h"
 #include "common/processor/stack_frame.h"
-#include "common/processor/stack_frame_symbolizer.h"
 #include "common/processor/system_info.h"
 #include "linked_ptr.h"
-#include "stackwalker/stackwalker_ppc.h"
-#include "stackwalker/stackwalker_ppc64.h"
-#include "stackwalker/stackwalker_sparc.h"
 #include "stackwalker/stackwalker_x86.h"
 #include "stackwalker/stackwalker_amd64.h"
 #include "stackwalker/stackwalker_arm.h"
 #include "stackwalker/stackwalker_arm64.h"
-#include "stackwalker/stackwalker_mips.h"
 
 namespace dump_helper {
 
@@ -71,25 +66,37 @@ uint32_t Stackwalker::max_frames_scanned_ = 1 << 14;  // 16k
 
 Stackwalker::Stackwalker(const SystemInfo* system_info,
                          MemoryRegion* memory,
-                         const CodeModules* modules,
-                         StackFrameSymbolizer* frame_symbolizer)
+                         const CodeModules* modules)
     : system_info_(system_info),
       memory_(memory),
       modules_(modules),
-      unloaded_modules_(NULL),
-      frame_symbolizer_(frame_symbolizer) {
-  assert(frame_symbolizer_);
+      unloaded_modules_(NULL) {
+}
+
+void FillFrameModule(
+    const CodeModules* modules,
+    const CodeModules* unloaded_modules,
+    StackFrame* frame) {
+  assert(frame);
+
+  const CodeModule* module = NULL;
+  if (modules) {
+    module = modules->GetModuleForAddress(frame->instruction);
+  }
+  if (!module && unloaded_modules) {
+    module = unloaded_modules->GetModuleForAddress(frame->instruction);
+  }
+
+  frame->module = module;
 }
 
 void InsertSpecialAttentionModule(
-    StackFrameSymbolizer::SymbolizerResult symbolizer_result,
     const CodeModule* module,
     vector<const CodeModule*>* modules) {
   if (!module) {
     return;
   }
-  assert(symbolizer_result == StackFrameSymbolizer::kError ||
-         symbolizer_result == StackFrameSymbolizer::kWarningCorruptSymbols);
+
   bool found = false;
   vector<const CodeModule*>::iterator iter;
   for (iter = modules->begin(); iter != modules->end(); ++iter) {
@@ -99,10 +106,6 @@ void InsertSpecialAttentionModule(
     }
   }
   if (!found) {
-    //BPLOG(INFO) << ((symbolizer_result == StackFrameSymbolizer::kError) ?
-    //                   "Couldn't load symbols for: " :
-    //                   "Detected corrupt symbols for: ")
-    //            << module->debug_file() << "|" << module->debug_identifier();
     modules->push_back(module);
   }
 }
@@ -133,28 +136,8 @@ bool Stackwalker::Walk(
     // context frame (above) or a caller frame (below).
 
     // Resolve the module information, if a module map was provided.
-    StackFrameSymbolizer::SymbolizerResult symbolizer_result =
-        frame_symbolizer_->FillSourceLineInfo(modules_, unloaded_modules_,
-                                              system_info_,
-                                              frame.get());
-    switch (symbolizer_result) {
-      case StackFrameSymbolizer::kInterrupt:
-        return false;
-        break;
-      case StackFrameSymbolizer::kError:
-        InsertSpecialAttentionModule(symbolizer_result, frame->module,
-                                     modules_without_symbols);
-        break;
-      case StackFrameSymbolizer::kWarningCorruptSymbols:
-        InsertSpecialAttentionModule(symbolizer_result, frame->module,
-                                     modules_with_corrupt_symbols);
-        break;
-      case StackFrameSymbolizer::kNoError:
-        break;
-      default:
-        assert(false);
-        break;
-    }
+    FillFrameModule(modules_, unloaded_modules_, frame.get());
+    InsertSpecialAttentionModule(frame->module, modules_without_symbols);
 
     // Keep track of the number of dubious frames so far.
     switch (frame.get()->trust) {
@@ -190,8 +173,7 @@ Stackwalker* Stackwalker::StackwalkerForCPU(
     DumpContext* context,
     MemoryRegion* memory,
     const CodeModules* modules,
-    const CodeModules* unloaded_modules,
-    StackFrameSymbolizer* frame_symbolizer) {
+    const CodeModules* unloaded_modules) {
   if (!context) {
     return NULL;
   }
@@ -203,38 +185,13 @@ Stackwalker* Stackwalker::StackwalkerForCPU(
     case MD_CONTEXT_X86:
       cpu_stackwalker = new StackwalkerX86(system_info,
                                            context->GetContextX86(),
-                                           memory, modules, frame_symbolizer);
-      break;
-
-    case MD_CONTEXT_PPC:
-      cpu_stackwalker = new StackwalkerPPC(system_info,
-                                           context->GetContextPPC(),
-                                           memory, modules, frame_symbolizer);
-      break;
-
-    case MD_CONTEXT_PPC64:
-      cpu_stackwalker = new StackwalkerPPC64(system_info,
-                                             context->GetContextPPC64(),
-                                             memory, modules, frame_symbolizer);
+                                           memory, modules);
       break;
 
     case MD_CONTEXT_AMD64:
       cpu_stackwalker = new StackwalkerAMD64(system_info,
                                              context->GetContextAMD64(),
-                                             memory, modules, frame_symbolizer);
-      break;
-
-    case MD_CONTEXT_SPARC:
-      cpu_stackwalker = new StackwalkerSPARC(system_info,
-                                             context->GetContextSPARC(),
-                                             memory, modules, frame_symbolizer);
-      break;
-
-    case MD_CONTEXT_MIPS:
-    case MD_CONTEXT_MIPS64:
-      cpu_stackwalker = new StackwalkerMIPS(system_info,
-                                            context->GetContextMIPS(),
-                                            memory, modules, frame_symbolizer);
+                                             memory, modules);
       break;
 
     case MD_CONTEXT_ARM:
@@ -244,16 +201,14 @@ Stackwalker* Stackwalker::StackwalkerForCPU(
         fp_register = MD_CONTEXT_ARM_REG_IOS_FP;
       cpu_stackwalker = new StackwalkerARM(system_info,
                                            context->GetContextARM(),
-                                           fp_register, memory, modules,
-                                           frame_symbolizer);
+                                           fp_register, memory, modules);
       break;
     }
 
     case MD_CONTEXT_ARM64:
       cpu_stackwalker = new StackwalkerARM64(system_info,
                                              context->GetContextARM64(),
-                                             memory, modules,
-                                             frame_symbolizer);
+                                             memory, modules);
       break;
   }
 
@@ -292,29 +247,14 @@ bool Stackwalker::TerminateWalk(uint64_t caller_ip,
 bool Stackwalker::InstructionAddressSeemsValid(uint64_t address) const {
   StackFrame frame;
   frame.instruction = address;
-  StackFrameSymbolizer::SymbolizerResult symbolizer_result =
-      frame_symbolizer_->FillSourceLineInfo(modules_, unloaded_modules_,
-                                            system_info_, &frame);
+  FillFrameModule(modules_, unloaded_modules_, &frame);
 
   if (!frame.module) {
     // not inside any loaded module
     return false;
   }
 
-  if (!frame_symbolizer_->HasImplementation()) {
-    // No valid implementation to symbolize stack frame, but the address is
-    // within a known module.
-    return true;
-  }
-
-  if (symbolizer_result != StackFrameSymbolizer::kNoError &&
-      symbolizer_result != StackFrameSymbolizer::kWarningCorruptSymbols) {
-    // Some error occurred during symbolization, but the address is within a
-    // known module
-    return true;
-  }
-
-  return !frame.function_name.empty();
+  return true;
 }
 
 }  // namespace dump_helper

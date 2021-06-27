@@ -105,18 +105,17 @@ string PathHelper::FileName(const string& path) {
 vector<string> PathHelper::DumpFiles(const string& dir) {
 	vector<string> vec;
 #ifdef _WIN32
-	WIN32_FIND_DATAA findData;//����һ���ļ��������ݽṹ
+	WIN32_FIND_DATAA findData;
 	memset(&findData, 0, sizeof(WIN32_FIND_DATAA));
-	HANDLE hFind = FindFirstFileA((dir + "/*.*").c_str(), &findData);//��ʼ�����ļ�
+	HANDLE hFind = FindFirstFileA((dir + "/*.*").c_str(), &findData);
 
-	if (hFind == INVALID_HANDLE_VALUE)//�ļ�����ʧ��
+	if (hFind == INVALID_HANDLE_VALUE)
 	{
 		return vec;
 	}
 
-	while (FindNextFileA(hFind, &findData) == TRUE)//������һ���ļ�
+	while (FindNextFileA(hFind, &findData) == TRUE)
 	{
-		//����ļ�����һ��Ŀ¼
 		if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 		{
 			const string filename = findData.cFileName;
@@ -133,7 +132,7 @@ vector<string> PathHelper::DumpFiles(const string& dir) {
 
 	if ((dp = opendir(dir.c_str())) == NULL)
 	{
-		return vec; //�����Ǹ��ļ�������Ŀ¼������
+		return vec;
 	}
 
 	while ((entry = readdir(dp)) != NULL)

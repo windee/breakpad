@@ -39,7 +39,6 @@
 
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
-#include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame.h"
 #include "stackwalker/stackwalker_address_list.h"
 
@@ -48,13 +47,11 @@ namespace dump_helper {
 StackwalkerAddressList::StackwalkerAddressList(
     const uint64_t* frames,
     size_t frame_count,
-    const CodeModules* modules,
-    StackFrameSymbolizer* frame_symbolizer)
-    : Stackwalker(NULL, NULL, modules, frame_symbolizer),
+    const CodeModules* modules)
+    : Stackwalker(NULL, NULL, modules),
       frames_(frames),
       frame_count_(frame_count) {
   assert(frames);
-  assert(frame_symbolizer);
 }
 
 StackFrame* StackwalkerAddressList::GetContextFrame() {
