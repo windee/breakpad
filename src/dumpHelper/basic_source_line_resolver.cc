@@ -112,9 +112,7 @@ void BasicSourceLineResolver::Module::LogParseError(
    int *num_errors) {
   if (++(*num_errors) <= kMaxErrorsPrinted) {
     if (line_number > 0) {
-      BPLOG(ERROR) << "Line " << line_number << ": " << message;
     } else {
-      BPLOG(ERROR) << message;
     }
   }
 }

@@ -40,7 +40,6 @@
 #include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame_cpu.h"
 #include "cfi_frame_info.h"
-#include "common/logging.h"
 #include "postfix_evaluator-inl.h"
 #include "stackwalker/stackwalker_mips.h"
 #include "windows_frame_info.h"
@@ -58,18 +57,10 @@ StackwalkerMIPS::StackwalkerMIPS(const SystemInfo* system_info,
   if (memory_) {
     if (context_->context_flags & MD_CONTEXT_MIPS64 ) {
       if (0xffffffffffffffff - memory_->GetBase() < memory_->GetSize() - 1) {
-        BPLOG(ERROR) << "Memory out of range for stackwalking mips64: "
-            << HexString(memory_->GetBase())
-            << "+"
-            << HexString(memory_->GetSize());
         memory_ = NULL;
       }
     } else {
       if (0xffffffff - memory_->GetBase() < memory_->GetSize() - 1) {
-        BPLOG(ERROR) << "Memory out of range for stackwalking mips32: "
-            << HexString(memory_->GetBase())
-            << "+"
-            << HexString(memory_->GetSize());
         memory_ = NULL;
       }
     }
@@ -78,7 +69,6 @@ StackwalkerMIPS::StackwalkerMIPS(const SystemInfo* system_info,
 
 StackFrame* StackwalkerMIPS::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context.";
     return NULL;
   }
 
@@ -248,7 +238,6 @@ StackFrameMIPS* StackwalkerMIPS::GetCallerByCFIFrameInfo(
 StackFrame* StackwalkerMIPS::GetCallerFrame(const CallStack* stack,
                                             bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 
@@ -321,13 +310,11 @@ StackFrameMIPS* StackwalkerMIPS::GetCallerByStackScan(
       if (!ScanForReturnAddress(last_sp, &caller_sp, &caller_pc, count)) {
         // If we can't find an instruction pointer even with stack scanning,
         // give up.
-        BPLOG(ERROR) << " ScanForReturnAddress failed ";
         return NULL;
       }
       // Get $fp stored in the stack frame.
       if (!memory_->GetMemoryAtAddress(caller_sp - sizeof(caller_pc),
           &caller_fp)) {
-        BPLOG(INFO) << " GetMemoryAtAddress for fp failed " ;
         return NULL;
       }
 
@@ -337,7 +324,6 @@ StackFrameMIPS* StackwalkerMIPS::GetCallerByStackScan(
     } while ((caller_fp - caller_sp >= kMaxFrameStackSize) && count > 0);
 
     if (!count) {
-      BPLOG(INFO) << " No frame found " ;
       return NULL;
     }
 
@@ -387,13 +373,11 @@ StackFrameMIPS* StackwalkerMIPS::GetCallerByStackScan(
       if (!ScanForReturnAddress(last_sp, &caller_sp, &caller_pc, count)) {
         // If we can't find an instruction pointer even with stack scanning,
         // give up.
-        BPLOG(ERROR) << " ScanForReturnAddress failed ";
         return NULL;
       }
       // Get $fp stored in the stack frame.
       if (!memory_->GetMemoryAtAddress(caller_sp - sizeof(caller_pc),
           &caller_fp)) {
-        BPLOG(INFO) << " GetMemoryAtAddress for fp failed " ;
         return NULL;
       }
 
@@ -403,7 +387,6 @@ StackFrameMIPS* StackwalkerMIPS::GetCallerByStackScan(
     } while ((caller_fp - caller_sp >= kMaxFrameStackSize) && count > 0);
 
     if (!count) {
-      BPLOG(INFO) << " No frame found " ;
       return NULL;
     }
 

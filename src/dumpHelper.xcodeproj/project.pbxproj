@@ -39,7 +39,6 @@
 		DF02722A26833CB500676E9A /* dump_helper.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271AA26833CB500676E9A /* dump_helper.cc */; };
 		DF02722B26833CB500676E9A /* exploitability_win.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271AB26833CB500676E9A /* exploitability_win.cc */; };
 		DF02722D26833CB500676E9A /* path_helper.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271CE26833CB500676E9A /* path_helper.cc */; };
-		DF02722E26833CB500676E9A /* logging.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271E426833CB500676E9A /* logging.cc */; };
 		DF02722F26833CB500676E9A /* convert_old_arm64_context.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271E726833CB500676E9A /* convert_old_arm64_context.cc */; };
 		DF02723026833CB500676E9A /* stack_frame_cpu.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271E826833CB500676E9A /* stack_frame_cpu.cc */; };
 		DF02723126833CB500676E9A /* minidump_processor.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271E926833CB500676E9A /* minidump_processor.cc */; };
@@ -175,7 +174,6 @@
 		DF0271CA26833CB500676E9A /* basic_source_line_resolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = basic_source_line_resolver.h; sourceTree = "<group>"; };
 		DF0271CB26833CB500676E9A /* path_helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = path_helper.h; sourceTree = "<group>"; };
 		DF0271CC26833CB500676E9A /* using_std_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = using_std_string.h; sourceTree = "<group>"; };
-		DF0271CD26833CB500676E9A /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = logging.h; sourceTree = "<group>"; };
 		DF0271CE26833CB500676E9A /* path_helper.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = path_helper.cc; sourceTree = "<group>"; };
 		DF0271D026833CB500676E9A /* macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = macros.h; sourceTree = "<group>"; };
 		DF0271D126833CB500676E9A /* basictypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = basictypes.h; sourceTree = "<group>"; };
@@ -196,7 +194,6 @@
 		DF0271E126833CB500676E9A /* minidump_cpu_ppc64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minidump_cpu_ppc64.h; sourceTree = "<group>"; };
 		DF0271E226833CB500676E9A /* breakpad_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = breakpad_types.h; sourceTree = "<group>"; };
 		DF0271E326833CB500676E9A /* minidump_exception_ps3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minidump_exception_ps3.h; sourceTree = "<group>"; };
-		DF0271E426833CB500676E9A /* logging.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = logging.cc; sourceTree = "<group>"; };
 		DF0271E526833CB500676E9A /* contained_range_map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = contained_range_map.h; sourceTree = "<group>"; };
 		DF0271E626833CB500676E9A /* range_map-inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "range_map-inl.h"; sourceTree = "<group>"; };
 		DF0271E726833CB500676E9A /* convert_old_arm64_context.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = convert_old_arm64_context.cc; sourceTree = "<group>"; };
@@ -374,12 +371,10 @@
 				DF0271B126833CB500676E9A /* processor */,
 				DF0271CB26833CB500676E9A /* path_helper.h */,
 				DF0271CC26833CB500676E9A /* using_std_string.h */,
-				DF0271CD26833CB500676E9A /* logging.h */,
 				DF0271CE26833CB500676E9A /* path_helper.cc */,
 				DF0271D026833CB500676E9A /* macros.h */,
 				DF0271D126833CB500676E9A /* basictypes.h */,
 				DF0271D226833CB500676E9A /* minidump */,
-				DF0271E426833CB500676E9A /* logging.cc */,
 			);
 			path = common;
 			sourceTree = "<group>";
@@ -596,7 +591,6 @@
 				DF02723726833CB500676E9A /* stackwalker_amd64.cc in Sources */,
 				DF02723B26833CB500676E9A /* stackwalker_mips.cc in Sources */,
 				DF02723C26833CB500676E9A /* stackwalker_x86.cc in Sources */,
-				DF02722E26833CB500676E9A /* logging.cc in Sources */,
 				DF02723326833CB500676E9A /* stackwalker_arm64.cc in Sources */,
 				DF02720C26833CB500676E9A /* exploitability_linux.cc in Sources */,
 			);

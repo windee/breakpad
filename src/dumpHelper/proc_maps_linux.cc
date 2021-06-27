@@ -13,7 +13,6 @@
 #include <stdio.h>
 
 #include "common/using_std_string.h"
-#include "common/logging.h"
 
 #if defined(OS_ANDROID) && !defined(__LP64__)
 // In 32-bit mode, Bionic's inttypes.h defines PRI/SCNxPTR as an
@@ -45,7 +44,6 @@ bool ParseProcMaps(const string& input,
     }
   }
   if (l.size() > 0) {
-    BPLOG(ERROR) << "Input doesn't end in newline";
     return false;
   }
 
@@ -67,7 +65,6 @@ bool ParseProcMaps(const string& input,
                SCNd64 " %n", &region.start, &region.end, permissions,
                &region.offset, &region.major_device, &region.minor_device,
                &region.inode, &path_index) < 7) {
-      BPLOG(ERROR) << "sscanf failed for line: " << line;
       return false;
     }
 

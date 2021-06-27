@@ -42,7 +42,6 @@
 #endif  // _WIN32
 
 #include "common/stdio_wrapper.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -69,7 +68,6 @@ uint32_t DumpContext::GetContextFlags() const {
 
 const MDRawContextX86* DumpContext::GetContextX86() const {
   if (GetContextCPU() != MD_CONTEXT_X86) {
-    BPLOG(ERROR) << "DumpContext cannot get x86 context";
     return NULL;
   }
 
@@ -78,7 +76,6 @@ const MDRawContextX86* DumpContext::GetContextX86() const {
 
 const MDRawContextPPC* DumpContext::GetContextPPC() const {
   if (GetContextCPU() != MD_CONTEXT_PPC) {
-    BPLOG(ERROR) << "DumpContext cannot get ppc context";
     return NULL;
   }
 
@@ -87,7 +84,6 @@ const MDRawContextPPC* DumpContext::GetContextPPC() const {
 
 const MDRawContextPPC64* DumpContext::GetContextPPC64() const {
   if (GetContextCPU() != MD_CONTEXT_PPC64) {
-    BPLOG(ERROR) << "DumpContext cannot get ppc64 context";
     return NULL;
   }
 
@@ -96,7 +92,6 @@ const MDRawContextPPC64* DumpContext::GetContextPPC64() const {
 
 const MDRawContextAMD64* DumpContext::GetContextAMD64() const {
   if (GetContextCPU() != MD_CONTEXT_AMD64) {
-    BPLOG(ERROR) << "DumpContext cannot get amd64 context";
     return NULL;
   }
 
@@ -105,7 +100,6 @@ const MDRawContextAMD64* DumpContext::GetContextAMD64() const {
 
 const MDRawContextSPARC* DumpContext::GetContextSPARC() const {
   if (GetContextCPU() != MD_CONTEXT_SPARC) {
-    BPLOG(ERROR) << "DumpContext cannot get sparc context";
     return NULL;
   }
 
@@ -114,7 +108,6 @@ const MDRawContextSPARC* DumpContext::GetContextSPARC() const {
 
 const MDRawContextARM* DumpContext::GetContextARM() const {
   if (GetContextCPU() != MD_CONTEXT_ARM) {
-    BPLOG(ERROR) << "DumpContext cannot get arm context";
     return NULL;
   }
 
@@ -123,7 +116,6 @@ const MDRawContextARM* DumpContext::GetContextARM() const {
 
 const MDRawContextARM64* DumpContext::GetContextARM64() const {
   if (GetContextCPU() != MD_CONTEXT_ARM64) {
-    BPLOG(ERROR) << "DumpContext cannot get arm64 context";
     return NULL;
   }
 
@@ -133,7 +125,6 @@ const MDRawContextARM64* DumpContext::GetContextARM64() const {
 const MDRawContextMIPS* DumpContext::GetContextMIPS() const {
   if ((GetContextCPU() != MD_CONTEXT_MIPS) &&
       (GetContextCPU() != MD_CONTEXT_MIPS64)) {
-    BPLOG(ERROR) << "DumpContext cannot get MIPS context";
     return NULL;
   }
 
@@ -141,12 +132,10 @@ const MDRawContextMIPS* DumpContext::GetContextMIPS() const {
 }
 
 bool DumpContext::GetInstructionPointer(uint64_t* ip) const {
-  BPLOG_IF(ERROR, !ip) << "DumpContext::GetInstructionPointer requires |ip|";
   assert(ip);
   *ip = 0;
 
   if (!valid_) {
-    BPLOG(ERROR) << "Invalid DumpContext for GetInstructionPointer";
     return false;
   }
 
@@ -178,19 +167,16 @@ bool DumpContext::GetInstructionPointer(uint64_t* ip) const {
     break;
   default:
     // This should never happen.
-    BPLOG(ERROR) << "Unknown CPU architecture in GetInstructionPointer";
     return false;
   }
   return true;
 }
 
 bool DumpContext::GetStackPointer(uint64_t* sp) const {
-  BPLOG_IF(ERROR, !sp) << "DumpContext::GetStackPointer requires |sp|";
   assert(sp);
   *sp = 0;
 
   if (!valid_) {
-    BPLOG(ERROR) << "Invalid DumpContext for GetStackPointer";
     return false;
   }
 
@@ -222,7 +208,6 @@ bool DumpContext::GetStackPointer(uint64_t* sp) const {
     break;
   default:
     // This should never happen.
-    BPLOG(ERROR) << "Unknown CPU architecture in GetStackPointer";
     return false;
   }
   return true;
@@ -312,7 +297,6 @@ void DumpContext::FreeContext() {
 
 void DumpContext::Print() {
   if (!valid_) {
-    BPLOG(ERROR) << "DumpContext cannot print invalid data";
     return;
   }
 

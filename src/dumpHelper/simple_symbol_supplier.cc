@@ -47,7 +47,6 @@
 #include "common/using_std_string.h"
 #include "common/processor/code_module.h"
 #include "common/processor/system_info.h"
-#include "common/logging.h"
 #include "common/path_helper.h"
 
 namespace dump_helper {
@@ -60,8 +59,7 @@ static bool file_exists(const string &file_name) {
 SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetSymbolFile(
     const CodeModule *module, const SystemInfo *system_info,
     string *symbol_file) {
-  BPLOG_IF(ERROR, !symbol_file) << "SimpleSymbolSupplier::GetSymbolFile "
-                                   "requires |symbol_file|";
+
   assert(symbol_file);
   symbol_file->clear();
 
@@ -112,8 +110,6 @@ SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetCStringSymbolData(
     *symbol_data_size = symbol_data_string.size() + 1;
     *symbol_data = new char[*symbol_data_size];
     if (*symbol_data == NULL) {
-      BPLOG(ERROR) << "Memory allocation for size " << *symbol_data_size
-                   << " failed";
       return INTERRUPT;
     }
     memcpy(*symbol_data, symbol_data_string.c_str(), symbol_data_string.size());
@@ -125,14 +121,11 @@ SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetCStringSymbolData(
 
 void SimpleSymbolSupplier::FreeSymbolData(const CodeModule *module) {
   if (!module) {
-    BPLOG(INFO) << "Cannot free symbol data buffer for NULL module";
     return;
   }
 
   map<string, char *>::iterator it = memory_buffers_.find(module->code_file());
   if (it == memory_buffers_.end()) {
-    BPLOG(INFO) << "Cannot find symbol data buffer for module "
-                << module->code_file();
     return;
   }
   delete [] it->second;
@@ -142,8 +135,6 @@ void SimpleSymbolSupplier::FreeSymbolData(const CodeModule *module) {
 SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetSymbolFileAtPathFromRoot(
     const CodeModule *module, const SystemInfo *system_info,
     const string &root_path, string *symbol_file) {
-  BPLOG_IF(ERROR, !symbol_file) << "SimpleSymbolSupplier::GetSymbolFileAtPath "
-                                   "requires |symbol_file|";
   assert(symbol_file);
   symbol_file->clear();
 
@@ -157,9 +148,6 @@ SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetSymbolFileAtPathFromRoot(
   path.append("/");
   string debug_file_name = (module->debug_file());
   if (debug_file_name.empty()) {
-    BPLOG(ERROR) << "Can't construct symbol file path without debug_file "
-                    "(code_file = " <<
-                    PathHelper::BaseName(module->code_file()) << ")";
     return NOT_FOUND;
   }
   path.append(debug_file_name);
@@ -168,10 +156,6 @@ SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetSymbolFileAtPathFromRoot(
   path.append("/");
   string identifier = module->debug_identifier();
   if (identifier.empty()) {
-    BPLOG(ERROR) << "Can't construct symbol file path without debug_identifier "
-                    "(code_file = " <<
-                    PathHelper::BaseName(module->code_file()) <<
-                    ", debug_file = " << debug_file_name << ")";
     return NOT_FOUND;
   }
   path.append(identifier);
@@ -193,7 +177,6 @@ SymbolSupplier::SymbolResult SimpleSymbolSupplier::GetSymbolFileAtPathFromRoot(
   path.append(".sym");
 
   if (!file_exists(path)) {
-    BPLOG(INFO) << "No symbol file at " << path;
     return NOT_FOUND;
   }
 

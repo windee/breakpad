@@ -42,7 +42,6 @@
 #include "common/processor/stack_frame_cpu.h"
 #include "common/processor/system_info.h"
 #include "cfi_frame_info.h"
-#include "common/logging.h"
 #include "stackwalker/stackwalker_amd64.h"
 
 namespace dump_helper {
@@ -109,7 +108,6 @@ uint64_t StackFrameAMD64::ReturnAddress() const {
 
 StackFrame* StackwalkerAMD64::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -269,7 +267,6 @@ StackFrameAMD64* StackwalkerAMD64::GetCallerByStackScan(
 StackFrame* StackwalkerAMD64::GetCallerFrame(const CallStack* stack,
                                              bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 

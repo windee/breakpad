@@ -38,8 +38,6 @@
 
 #include "static_address_map.h"
 
-#include "common/logging.h"
-
 namespace dump_helper {
 
 template<typename AddressType, typename EntryType>

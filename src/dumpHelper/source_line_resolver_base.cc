@@ -89,17 +89,12 @@ bool SourceLineResolverBase::ReadSymbolFile(const string &map_file,
                                             char **symbol_data,
                                             size_t *symbol_data_size) {
   if (symbol_data == NULL || symbol_data_size == NULL) {
-    BPLOG(ERROR) << "Could not Read file into Null memory pointer";
     return false;
   }
 
   struct stat buf;
   int error_code = stat(map_file.c_str(), &buf);
   if (error_code == -1) {
-    string error_string;
-    error_code = ErrnoString(&error_string);
-    BPLOG(ERROR) << "Could not open " << map_file <<
-        ", error " << error_code << ": " << error_string;
     return false;
   }
 
@@ -111,18 +106,12 @@ bool SourceLineResolverBase::ReadSymbolFile(const string &map_file,
   *symbol_data = new char[file_size + 1];
 
   if (*symbol_data == NULL) {
-    BPLOG(ERROR) << "Could not allocate memory for " << map_file;
     return false;
   }
 
-  BPLOG(INFO) << "Opening " << map_file;
 
   FILE *f = fopen(map_file.c_str(), "rt");
   if (!f) {
-    string error_string;
-    error_code = ErrnoString(&error_string);
-    BPLOG(ERROR) << "Could not open " << map_file <<
-        ", error " << error_code << ": " << error_string;
     delete [] (*symbol_data);
     *symbol_data = NULL;
     return false;
@@ -135,10 +124,6 @@ bool SourceLineResolverBase::ReadSymbolFile(const string &map_file,
   items_read = fread(*symbol_data, 1, file_size, f);
 
   if (items_read != file_size) {
-    string error_string;
-    error_code = ErrnoString(&error_string);
-    BPLOG(ERROR) << "Could not slurp " << map_file <<
-        ", error " << error_code << ": " << error_string;
     delete [] (*symbol_data);
     *symbol_data = NULL;
     return false;
@@ -155,20 +140,13 @@ bool SourceLineResolverBase::LoadModule(const CodeModule *module,
 
   // Make sure we don't already have a module with the given name.
   if (modules_->find(module->code_file()) != modules_->end()) {
-    BPLOG(INFO) << "Symbols for module " << module->code_file()
-                << " already loaded";
     return false;
   }
-
-  BPLOG(INFO) << "Loading symbols for module " << module->code_file()
-              << " from " << map_file;
 
   char *memory_buffer;
   size_t memory_buffer_size;
   if (!ReadSymbolFile(map_file, &memory_buffer, &memory_buffer_size))
     return false;
-
-  BPLOG(INFO) << "Read symbol file " << map_file << " succeeded";
 
   bool load_result = LoadModuleUsingMemoryBuffer(module, memory_buffer,
                                                  memory_buffer_size);
@@ -190,15 +168,12 @@ bool SourceLineResolverBase::LoadModuleUsingMapBuffer(
 
   // Make sure we don't already have a module with the given name.
   if (modules_->find(module->code_file()) != modules_->end()) {
-    BPLOG(INFO) << "Symbols for module " << module->code_file()
-                << " already loaded";
     return false;
   }
 
   size_t memory_buffer_size = map_buffer.size() + 1;
   char *memory_buffer = new char[memory_buffer_size];
   if (memory_buffer == NULL) {
-    BPLOG(ERROR) << "Could not allocate memory for " << module->code_file();
     return false;
   }
 
@@ -228,20 +203,13 @@ bool SourceLineResolverBase::LoadModuleUsingMemoryBuffer(
 
   // Make sure we don't already have a module with the given name.
   if (modules_->find(module->code_file()) != modules_->end()) {
-    BPLOG(INFO) << "Symbols for module " << module->code_file()
-                << " already loaded";
     return false;
   }
-
-  BPLOG(INFO) << "Loading symbols for module " << module->code_file()
-             << " from memory buffer";
 
   Module *basic_module = module_factory_->CreateModule(module->code_file());
 
   // Ownership of memory is NOT transfered to Module::LoadMapFromMemory().
   if (!basic_module->LoadMapFromMemory(memory_buffer, memory_buffer_size)) {
-    BPLOG(ERROR) << "Too many error while parsing symbol data for module "
-                 << module->code_file();
     // Returning false from here would be an indication that the symbols for
     // this module are missing which would be wrong.  Intentionally fall through
     // and add the module to both the modules_ and the corrupt_modules_ lists.

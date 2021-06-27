@@ -37,7 +37,6 @@
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
 #include "common/processor/stack_frame_cpu.h"
-#include "common/logging.h"
 #include "stackwalker/stackwalker_sparc.h"
 
 namespace dump_helper {
@@ -55,7 +54,6 @@ StackwalkerSPARC::StackwalkerSPARC(const SystemInfo* system_info,
 
 StackFrame* StackwalkerSPARC::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -75,7 +73,6 @@ StackFrame* StackwalkerSPARC::GetContextFrame() {
 StackFrame* StackwalkerSPARC::GetCallerFrame(const CallStack* stack,
                                              bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 

@@ -42,7 +42,6 @@
 
 #include "common/processor/code_module.h"
 #include "linked_ptr.h"
-#include "common/logging.h"
 #include "range_map-inl.h"
 
 namespace dump_helper {
@@ -52,8 +51,6 @@ using std::vector;
 BasicCodeModules::BasicCodeModules(const CodeModules* that,
                                    MergeRangeStrategy strategy)
     : main_address_(0), map_() {
-  BPLOG_IF(ERROR, !that) << "BasicCodeModules::BasicCodeModules requires "
-                            "|that|";
   assert(that);
 
   map_.SetMergeStrategy(strategy);
@@ -70,8 +67,6 @@ BasicCodeModules::BasicCodeModules(const CodeModules* that,
     // GetModuleAtSequence.
     linked_ptr<const CodeModule> module(that->GetModuleAtIndex(i)->Copy());
     if (!map_.StoreRange(module->base_address(), module->size(), module)) {
-      BPLOG(ERROR) << "Module " << module->code_file()
-                   << " could not be stored";
     }
   }
 
@@ -82,8 +77,6 @@ BasicCodeModules::BasicCodeModules(const CodeModules* that,
     if (map_.RetrieveRange(module->base_address() + module->size() - 1,
                            &module, NULL /* base */, &delta, NULL /* size */) &&
         delta > 0) {
-      BPLOG(INFO) << "The range for module " << module->code_file()
-                  << " was shrunk down by " << HexString(delta) << " bytes.";
       linked_ptr<CodeModule> shrunk_range_module(module->Copy());
       shrunk_range_module->SetShrinkDownDelta(delta);
       shrunk_range_modules_.push_back(shrunk_range_module);
@@ -124,7 +117,6 @@ const CodeModule* BasicCodeModules::GetModuleAtSequence(
   linked_ptr<const CodeModule> module;
   if (!map_.RetrieveRangeAtIndex(sequence, &module, NULL /* base */,
                                  NULL /* delta */, NULL /* size */)) {
-    BPLOG(ERROR) << "RetrieveRangeAtIndex failed for sequence " << sequence;
     return NULL;
   }
 

@@ -37,7 +37,6 @@
 #define PROCESSOR_STATIC_RANGE_MAP_INL_H__
 
 #include "static_range_map.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -107,7 +106,6 @@ bool StaticRangeMap<AddressType, EntryType>::RetrieveRangeAtIndex(
     AddressType *entry_base, AddressType *entry_size) const {
 
   if (index >= GetCount()) {
-    BPLOG(ERROR) << "Index out of range: " << index << "/" << GetCount();
     return false;
   }
 

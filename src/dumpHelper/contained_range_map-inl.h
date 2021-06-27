@@ -40,7 +40,6 @@
 
 #include <assert.h>
 
-#include "common/logging.h"
 
 
 namespace dump_helper {
@@ -150,8 +149,6 @@ bool ContainedRangeMap<AddressType, EntryType>::StoreRange(
 template<typename AddressType, typename EntryType>
 bool ContainedRangeMap<AddressType, EntryType>::RetrieveRange(
     const AddressType &address, EntryType *entry) const {
-  BPLOG_IF(ERROR, !entry) << "ContainedRangeMap::RetrieveRange requires "
-                             "|entry|";
   assert(entry);
 
   // If nothing was ever stored, then there's nothing to retrieve.

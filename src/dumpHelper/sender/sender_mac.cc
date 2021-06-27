@@ -22,7 +22,6 @@ int my_trace(CURL *handle, curl_infotype type,
              char *data, size_t size,
              void *userp)
 {
-  const char *text;
   (void)handle; /* prevent compiler warning */
   (void)userp;
  

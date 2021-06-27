@@ -42,7 +42,6 @@
 #include "common/processor/memory_region.h"
 #include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame_cpu.h"
-#include "common/logging.h"
 #include "postfix_evaluator-inl.h"
 #include "stackwalker/stackwalker_x86.h"
 #include "windows_frame_info.h"
@@ -96,9 +95,6 @@ StackwalkerX86::StackwalkerX86(const SystemInfo* system_info,
   if (memory_ && memory_->GetBase() + memory_->GetSize() - 1 > 0xffffffff) {
     // The x86 is a 32-bit CPU, the limits of the supplied stack are invalid.
     // Mark memory_ = NULL, which will cause stackwalking to fail.
-    BPLOG(ERROR) << "Memory out of range for stackwalking: " <<
-                    HexString(memory_->GetBase()) << "+" <<
-                    HexString(memory_->GetSize());
     memory_ = NULL;
   }
 }
@@ -119,7 +115,6 @@ uint64_t StackFrameX86::ReturnAddress() const {
 
 StackFrame* StackwalkerX86::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -628,7 +623,6 @@ StackFrameX86* StackwalkerX86::GetCallerByEBPAtBase(
 StackFrame* StackwalkerX86::GetCallerFrame(const CallStack* stack,
                                            bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 

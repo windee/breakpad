@@ -41,7 +41,6 @@
 
 #include "range_map.h"
 #include "linked_ptr.h"
-#include "common/logging.h"
 
 
 namespace dump_helper {
@@ -64,10 +63,6 @@ bool RangeMap<AddressType, EntryType>::StoreRangeInternal(
     // The processor will hit this case too frequently with common symbol
     // files in the size == 0 case, which is more suited to a DEBUG channel.
     // Filter those out since there's no DEBUG channel at the moment.
-    BPLOG_IF(INFO, size != 0) << "StoreRangeInternal failed, "
-                              << HexString(base) << "+" << HexString(size)
-                              << ", " << HexString(high)
-                              << ", delta: " << HexString(delta);
     return false;
   }
 
@@ -183,7 +178,6 @@ template<typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::RetrieveRange(
     const AddressType &address, EntryType *entry, AddressType *entry_base,
     AddressType *entry_delta, AddressType *entry_size) const {
-  BPLOG_IF(ERROR, !entry) << "RangeMap::RetrieveRange requires |entry|";
   assert(entry);
 
   MapConstIterator iterator = map_.lower_bound(address);
@@ -214,7 +208,6 @@ template<typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::RetrieveNearestRange(
     const AddressType &address, EntryType *entry, AddressType *entry_base,
     AddressType *entry_delta, AddressType *entry_size) const {
-  BPLOG_IF(ERROR, !entry) << "RangeMap::RetrieveNearestRange requires |entry|";
   assert(entry);
 
   // If address is within a range, RetrieveRange can handle it.
@@ -247,11 +240,9 @@ template<typename AddressType, typename EntryType>
 bool RangeMap<AddressType, EntryType>::RetrieveRangeAtIndex(
     int index, EntryType *entry, AddressType *entry_base,
     AddressType *entry_delta, AddressType *entry_size) const {
-  BPLOG_IF(ERROR, !entry) << "RangeMap::RetrieveRangeAtIndex requires |entry|";
   assert(entry);
 
   if (index >= GetCount()) {
-    BPLOG(ERROR) << "Index out of range: " << index << "/" << GetCount();
     return false;
   }
 

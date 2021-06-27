@@ -41,7 +41,6 @@
 #include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame_cpu.h"
 #include "cfi_frame_info.h"
-#include "common/logging.h"
 #include "stackwalker/stackwalker_arm64.h"
 
 namespace dump_helper {
@@ -80,7 +79,6 @@ uint64_t StackwalkerARM64::PtrauthStrip(uint64_t ptr) {
 
 StackFrame* StackwalkerARM64::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -216,15 +214,11 @@ StackFrameARM64* StackwalkerARM64::GetCallerByFramePointer(
 
   uint64_t caller_fp = 0;
   if (last_fp && !memory_->GetMemoryAtAddress(last_fp, &caller_fp)) {
-    BPLOG(ERROR) << "Unable to read caller_fp from last_fp: 0x"
-                 << std::hex << last_fp;
     return NULL;
   }
 
   uint64_t caller_lr = 0;
   if (last_fp && !memory_->GetMemoryAtAddress(last_fp + 8, &caller_lr)) {
-    BPLOG(ERROR) << "Unable to read caller_lr from last_fp + 8: 0x"
-                 << std::hex << (last_fp + 8);
     return NULL;
   }
 
@@ -268,8 +262,6 @@ void StackwalkerARM64::CorrectRegLRByFramePointer(
 
   uint64_t last_fp = 0;
   if (last_last_fp && !memory_->GetMemoryAtAddress(last_last_fp, &last_fp)) {
-    BPLOG(ERROR) << "Unable to read last_fp from last_last_fp: 0x"
-                 << std::hex << last_last_fp;
     return;
   }
   // Give up if STACK CFI doesn't agree with frame pointer.
@@ -278,8 +270,6 @@ void StackwalkerARM64::CorrectRegLRByFramePointer(
 
   uint64_t last_lr = 0;
   if (last_last_fp && !memory_->GetMemoryAtAddress(last_last_fp + 8, &last_lr)) {
-    BPLOG(ERROR) << "Unable to read last_lr from (last_last_fp + 8): 0x"
-                 << std::hex << (last_last_fp + 8);
     return;
   }
   last_lr = PtrauthStrip(last_lr);
@@ -290,7 +280,6 @@ void StackwalkerARM64::CorrectRegLRByFramePointer(
 StackFrame* StackwalkerARM64::GetCallerFrame(const CallStack* stack,
                                              bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 

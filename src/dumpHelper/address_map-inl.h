@@ -40,7 +40,6 @@
 
 #include <assert.h>
 
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -50,8 +49,6 @@ bool AddressMap<AddressType, EntryType>::Store(const AddressType &address,
   // Ensure that the specified address doesn't conflict with something already
   // in the map.
   if (map_.find(address) != map_.end()) {
-    BPLOG(INFO) << "Store failed, address " << HexString(address) <<
-                   " is already present";
     return false;
   }
 
@@ -63,7 +60,6 @@ template<typename AddressType, typename EntryType>
 bool AddressMap<AddressType, EntryType>::Retrieve(
     const AddressType &address,
     EntryType *entry, AddressType *entry_address) const {
-  BPLOG_IF(ERROR, !entry) << "AddressMap::Retrieve requires |entry|";
   assert(entry);
 
   // upper_bound gives the first element whose key is greater than address,

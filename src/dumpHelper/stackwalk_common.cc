@@ -49,7 +49,6 @@
 #include "common/processor/code_modules.h"
 #include "common/processor/process_state.h"
 #include "common/processor/stack_frame_cpu.h"
-#include "common/logging.h"
 #include "common/path_helper.h"
 #include "common/md5.h"
 

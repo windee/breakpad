@@ -44,7 +44,6 @@
 #include "common/processor/symbol_supplier.h"
 #include "common/processor/system_info.h"
 #include "linked_ptr.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -112,7 +111,6 @@ StackFrameSymbolizer::SymbolizerResult StackFrameSymbolizer::FillSourceLineInfo(
         return resolver_->IsModuleCorrupt(frame->module) ?
             kWarningCorruptSymbols : kNoError;
       } else {
-        BPLOG(ERROR) << "Failed to load symbol file in resolver.";
         no_symbol_modules_.insert(module->code_file());
         return kError;
       }
@@ -126,7 +124,6 @@ StackFrameSymbolizer::SymbolizerResult StackFrameSymbolizer::FillSourceLineInfo(
       return kInterrupt;
 
     default:
-      BPLOG(ERROR) << "Unknown SymbolResult enum: " << symbol_result;
       return kError;
   }
   return kError;

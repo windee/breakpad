@@ -46,7 +46,6 @@
 #include "common/processor/minidump.h"
 #include "common/processor/minidump_processor.h"
 #include "common/processor/process_state.h"
-#include "common/logging.h"
 #include "common/md5.h"
 #include "simple_symbol_supplier.h"
 #include "stackwalk_common.h"
@@ -101,7 +100,6 @@ bool GenerateDumpInfo(const string& minidump_file, Minidump_Info* dmpInfo) {
   ProcessState process_state;
   if (minidump_processor.Process(&dump, &process_state) !=
       dump_helper::PROCESS_OK) {
-    BPLOG(ERROR) << "MinidumpProcessor::Process failed";
     return false;
   }
 

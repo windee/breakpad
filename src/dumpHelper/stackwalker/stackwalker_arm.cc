@@ -42,7 +42,6 @@
 #include "common/processor/stack_frame_cpu.h"
 #include "common/processor/system_info.h"
 #include "cfi_frame_info.h"
-#include "common/logging.h"
 #include "stackwalker/stackwalker_arm.h"
 
 namespace dump_helper {
@@ -61,7 +60,6 @@ StackwalkerARM::StackwalkerARM(const SystemInfo* system_info,
 
 StackFrame* StackwalkerARM::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -205,15 +203,11 @@ StackFrameARM* StackwalkerARM::GetCallerByFramePointer(
 
   uint32_t caller_fp = 0;
   if (last_fp && !memory_->GetMemoryAtAddress(last_fp, &caller_fp)) {
-    BPLOG(ERROR) << "Unable to read caller_fp from last_fp: 0x"
-                 << std::hex << last_fp;
     return NULL;
   }
 
   uint32_t caller_lr = 0;
   if (last_fp && !memory_->GetMemoryAtAddress(last_fp + 4, &caller_lr)) {
-    BPLOG(ERROR) << "Unable to read caller_lr from last_fp + 4: 0x"
-                 << std::hex << (last_fp + 4);
     return NULL;
   }
 
@@ -241,7 +235,6 @@ StackFrameARM* StackwalkerARM::GetCallerByFramePointer(
 StackFrame* StackwalkerARM::GetCallerFrame(const CallStack* stack,
                                            bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 

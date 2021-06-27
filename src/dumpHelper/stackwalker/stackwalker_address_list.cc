@@ -41,7 +41,6 @@
 #include "common/processor/memory_region.h"
 #include "common/processor/source_line_resolver_interface.h"
 #include "common/processor/stack_frame.h"
-#include "common/logging.h"
 #include "stackwalker/stackwalker_address_list.h"
 
 namespace dump_helper {
@@ -71,7 +70,6 @@ StackFrame* StackwalkerAddressList::GetContextFrame() {
 StackFrame* StackwalkerAddressList::GetCallerFrame(const CallStack* stack,
                                                    bool stack_scan_allowed) {
   if (!stack) {
-    BPLOG(ERROR) << "Can't get caller frame without stack";
     return NULL;
   }
 

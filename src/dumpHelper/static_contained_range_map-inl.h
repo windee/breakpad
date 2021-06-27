@@ -38,7 +38,6 @@
 #define PROCESSOR_STATIC_CONTAINED_RANGE_MAP_INL_H__
 
 #include "static_contained_range_map.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 

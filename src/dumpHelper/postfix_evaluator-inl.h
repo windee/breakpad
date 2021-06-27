@@ -46,7 +46,6 @@
 #include <sstream>
 
 #include "common/processor/memory_region.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -103,8 +102,6 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
     ValueType operand1 = ValueType();
     ValueType operand2 = ValueType();
     if (!PopValues(&operand1, &operand2)) {
-      BPLOG(ERROR) << "Could not PopValues to get two values for binary "
-                      "operation " << token << ": " << expression;
       return false;
     }
 
@@ -133,7 +130,6 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
       case BINARY_OP_NONE:
         // This will not happen, but compilers will want a default or
         // BINARY_OP_NONE case.
-        BPLOG(ERROR) << "Not reached!";
         return false;
         break;
     }
@@ -143,22 +139,16 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
   } else if (token == "^") {
     // ^ for unary dereference.  Can't dereference without memory.
     if (!memory_) {
-      BPLOG(ERROR) << "Attempt to dereference without memory: " <<
-                      expression;
       return false;
     }
 
     ValueType address;
     if (!PopValue(&address)) {
-      BPLOG(ERROR) << "Could not PopValue to get value to derefence: " <<
-                      expression;
       return false;
     }
 
     ValueType value;
     if (!memory_->GetMemoryAtAddress(address, &value)) {
-      BPLOG(ERROR) << "Could not dereference memory at address " <<
-                      HexString(address) << ": " << expression;
       return false;
     }
 
@@ -167,8 +157,6 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
     // = for assignment.
     ValueType value;
     if (!PopValue(&value)) {
-      BPLOG(INFO) << "Could not PopValue to get value to assign: " <<
-                     expression;
       return false;
     }
 
@@ -177,14 +165,9 @@ bool PostfixEvaluator<ValueType>::EvaluateToken(
     // begin with '$'.
     string identifier;
     if (PopValueOrIdentifier(NULL, &identifier) != POP_RESULT_IDENTIFIER) {
-      BPLOG(ERROR) << "PopValueOrIdentifier returned a value, but an "
-                      "identifier is needed to assign " <<
-                      HexString(value) << ": " << expression;
       return false;
     }
     if (identifier.empty() || identifier[0] != '$') {
-      BPLOG(ERROR) << "Can't assign " << HexString(value) << " to " <<
-                      identifier << ": " << expression;
       return false;
     }
 
@@ -245,7 +228,6 @@ bool PostfixEvaluator<ValueType>::Evaluate(const string &expression,
   if (stack_.empty())
     return true;
 
-  BPLOG(ERROR) << "Incomplete execution: " << expression;
   return false;
 }
 
@@ -260,8 +242,6 @@ bool PostfixEvaluator<ValueType>::EvaluateForValue(const string &expression,
 
   // A successful execution should leave exactly one value on the stack.
   if (stack_.size() != 1) {
-    BPLOG(ERROR) << "Expression yielded bad number of results: "
-                 << "'" << expression << "'";
     return false;
   }
 
@@ -331,7 +311,6 @@ bool PostfixEvaluator<ValueType>::PopValue(ValueType *value) {
     if (iterator == dictionary_->end()) {
       // The identifier wasn't found in the dictionary.  Don't imply any
       // default value, just fail.
-      BPLOG(INFO) << "Identifier " << token << " not in dictionary";
       return false;
     }
 

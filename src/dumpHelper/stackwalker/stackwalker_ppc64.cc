@@ -36,7 +36,6 @@
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
 #include "common/processor/stack_frame_cpu.h"
-#include "common/logging.h"
 
 #include <stdio.h>
 
@@ -55,7 +54,6 @@ StackwalkerPPC64::StackwalkerPPC64(const SystemInfo* system_info,
 
 StackFrame* StackwalkerPPC64::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -75,7 +73,6 @@ StackFrame* StackwalkerPPC64::GetContextFrame() {
 StackFrame* StackwalkerPPC64::GetCallerFrame(const CallStack* stack,
                                              bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 

@@ -46,7 +46,6 @@
 #include "common/processor/stack_frame_symbolizer.h"
 #include "common/processor/system_info.h"
 #include "linked_ptr.h"
-#include "common/logging.h"
 #include "stackwalker/stackwalker_ppc.h"
 #include "stackwalker/stackwalker_ppc64.h"
 #include "stackwalker/stackwalker_sparc.h"
@@ -112,14 +111,9 @@ bool Stackwalker::Walk(
     CallStack* stack,
     vector<const CodeModule*>* modules_without_symbols,
     vector<const CodeModule*>* modules_with_corrupt_symbols) {
-  BPLOG_IF(ERROR, !stack) << "Stackwalker::Walk requires |stack|";
   assert(stack);
   stack->Clear();
 
-  BPLOG_IF(ERROR, !modules_without_symbols) << "Stackwalker::Walk requires "
-                                            << "|modules_without_symbols|";
-  BPLOG_IF(ERROR, !modules_without_symbols) << "Stackwalker::Walk requires "
-                                            << "|modules_with_corrupt_symbols|";
   assert(modules_without_symbols);
   assert(modules_with_corrupt_symbols);
 
@@ -145,7 +139,6 @@ bool Stackwalker::Walk(
                                               frame.get());
     switch (symbolizer_result) {
       case StackFrameSymbolizer::kInterrupt:
-        BPLOG(INFO) << "Stack walk is interrupted.";
         return false;
         break;
       case StackFrameSymbolizer::kError:
@@ -180,8 +173,6 @@ bool Stackwalker::Walk(
     if (stack->frames_.size() > max_frames_) {
       // Only emit an error message in the case where the limit
       // reached is the default limit, not set by the user.
-      if (!max_frames_set_)
-        BPLOG(ERROR) << "The stack is over " << max_frames_ << " frames.";
       break;
     }
 
@@ -202,7 +193,6 @@ Stackwalker* Stackwalker::StackwalkerForCPU(
     const CodeModules* unloaded_modules,
     StackFrameSymbolizer* frame_symbolizer) {
   if (!context) {
-    BPLOG(ERROR) << "Can't choose a stackwalker implementation without context";
     return NULL;
   }
 
@@ -267,9 +257,6 @@ Stackwalker* Stackwalker::StackwalkerForCPU(
       break;
   }
 
-  BPLOG_IF(ERROR, !cpu_stackwalker) << "Unknown CPU type " << HexString(cpu) <<
-                                       ", can't choose a stackwalker "
-                                       "implementation";
   if (cpu_stackwalker) {
     cpu_stackwalker->unloaded_modules_ = unloaded_modules;
   }

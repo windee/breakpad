@@ -37,8 +37,6 @@
 #define PROCESSOR_STATIC_MAP_INL_H__
 
 #include "static_map.h"
-#include "static_map_iterator-inl.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -126,7 +124,6 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
   if (!raw_data_) return false;
   int32_t num_nodes = *(reinterpret_cast<const int32_t*>(raw_data_));
   if (num_nodes < 0) {
-    BPLOG(INFO) << "StaticMap check failed: negative number of nodes";
     return false;
   }
 
@@ -136,11 +133,9 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
                            + sizeof(Key) * num_nodes_;
     // Num_nodes_ is too large.
     if (first_offset > 0xffffffffUL) {
-      BPLOG(INFO) << "StaticMap check failed: size exceeds limit";
       return false;
     }
     if (offsets_[node_index] != static_cast<uint32_t>(first_offset)) {
-      BPLOG(INFO) << "StaticMap check failed: first node offset is incorrect";
       return false;
     }
   }
@@ -148,13 +143,11 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
   for (node_index = 1; node_index < num_nodes_; ++node_index) {
     // Check offsets[i] is strictly increasing:
     if (offsets_[node_index] <= offsets_[node_index - 1]) {
-      BPLOG(INFO) << "StaticMap check failed: node offsets non-increasing";
       return false;
     }
     // Check Key[i] is strictly increasing as no duplicate keys are allowed.
     if (compare_(GetKeyAtIndex(node_index),
                  GetKeyAtIndex(node_index - 1)) <= 0) {
-      BPLOG(INFO) << "StaticMap check failed: node keys non-increasing";
       return false;
     }
   }
@@ -164,7 +157,6 @@ bool StaticMap<Key, Value, Compare>::ValidateInMemoryStructure() const {
 template<typename Key, typename Value, typename Compare>
 const Key StaticMap<Key, Value, Compare>::GetKeyAtIndex(int index) const {
   if (index < 0 || index >= num_nodes_) {
-    BPLOG(ERROR) << "Key index out of range error";
     // Key type is required to be primitive type.  Return 0 if index is invalid.
     return 0;
   }

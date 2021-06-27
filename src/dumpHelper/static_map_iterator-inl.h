@@ -37,7 +37,6 @@
 
 #include "static_map_iterator.h"
 
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -58,7 +57,6 @@ template<typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>&
 StaticMapIterator<Key, Value, Compare>::operator++() {
   if (!IsValid()) {
-    BPLOG(ERROR) << "operator++ on invalid iterator";
     return *this;
   }
   if (++index_ > num_nodes_) index_ = num_nodes_;
@@ -69,7 +67,6 @@ template<typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>
 StaticMapIterator<Key, Value, Compare>::operator++(int postfix_operator) {
   if (!IsValid()) {
-    BPLOG(ERROR) << "operator++ on invalid iterator";
     return *this;
   }
   StaticMapIterator<Key, Value, Compare> tmp = *this;
@@ -81,7 +78,6 @@ template<typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>&
 StaticMapIterator<Key, Value, Compare>::operator--() {
   if (!IsValid()) {
-    BPLOG(ERROR) << "operator++ on invalid iterator";
     return *this;
   }
 
@@ -93,7 +89,6 @@ template<typename Key, typename Value, typename Compare>
 StaticMapIterator<Key, Value, Compare>
 StaticMapIterator<Key, Value, Compare>::operator--(int postfix_operator) {
   if (!IsValid()) {
-    BPLOG(ERROR) << "operator++ on invalid iterator";
     return *this;
   }
   StaticMapIterator<Key, Value, Compare> tmp = *this;
@@ -105,7 +100,6 @@ StaticMapIterator<Key, Value, Compare>::operator--(int postfix_operator) {
 template<typename Key, typename Value, typename Compare>
 const Key* StaticMapIterator<Key, Value, Compare>::GetKeyPtr() const {
   if (!IsValid()) {
-    BPLOG(ERROR) << "call GetKeyPtr() on invalid iterator";
     return NULL;
   }
   return &(keys_[index_]);
@@ -114,7 +108,6 @@ const Key* StaticMapIterator<Key, Value, Compare>::GetKeyPtr() const {
 template<typename Key, typename Value, typename Compare>
 const char* StaticMapIterator<Key, Value, Compare>::GetValueRawPtr() const {
   if (!IsValid()) {
-    BPLOG(ERROR) << "call GetValuePtr() on invalid iterator";
     return NULL;
   }
   return base_ + offsets_[index_];

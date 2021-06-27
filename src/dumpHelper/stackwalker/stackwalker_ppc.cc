@@ -38,7 +38,6 @@
 #include "common/processor/call_stack.h"
 #include "common/processor/memory_region.h"
 #include "common/processor/stack_frame_cpu.h"
-#include "common/logging.h"
 
 namespace dump_helper {
 
@@ -54,9 +53,6 @@ StackwalkerPPC::StackwalkerPPC(const SystemInfo* system_info,
     // This implementation only covers 32-bit ppc CPUs.  The limits of the
     // supplied stack are invalid.  Mark memory_ = NULL, which will cause
     // stackwalking to fail.
-    BPLOG(ERROR) << "Memory out of range for stackwalking: " <<
-                    HexString(memory_->GetBase()) << "+" <<
-                    HexString(memory_->GetSize());
     memory_ = NULL;
   }
 }
@@ -64,7 +60,6 @@ StackwalkerPPC::StackwalkerPPC(const SystemInfo* system_info,
 
 StackFrame* StackwalkerPPC::GetContextFrame() {
   if (!context_) {
-    BPLOG(ERROR) << "Can't get context frame without context";
     return NULL;
   }
 
@@ -84,7 +79,6 @@ StackFrame* StackwalkerPPC::GetContextFrame() {
 StackFrame* StackwalkerPPC::GetCallerFrame(const CallStack* stack,
                                            bool stack_scan_allowed) {
   if (!memory_ || !stack) {
-    BPLOG(ERROR) << "Can't get caller frame without memory or stack";
     return NULL;
   }
 
