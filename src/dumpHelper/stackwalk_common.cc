@@ -255,6 +255,12 @@ void PrintProcessState(const ProcessState& process_state) {
                process_state.modules_with_corrupt_symbols());
 }
 
+#ifdef _WIN32
+std::set<string> g_SystemModules = { "kernelbase.dll", "ntdll.dll", "kernel32.dll" };
+#else
+std::set<string> g_SystemModules = { "libsystem_platform.dylib", "libsystem_kernel.dylib", "libsystem_c.dylib", "CoreFoundation", "Foundation", "libsystem_pthread.dylib" };
+#endif
+
 bool GetModuleInfo(const StackFrame* pFrame, Minidump_Info* dmpInfo, int index) {
 
 	uint64_t instruction_address = pFrame->ReturnAddress();
@@ -271,16 +277,13 @@ bool GetModuleInfo(const StackFrame* pFrame, Minidump_Info* dmpInfo, int index) 
 
 		dmpInfo->module_name = PathHelper::FileName(pFrame->module->code_file());
 		dmpInfo->module_version = pFrame->module->version();
-
 		dmpInfo->module_offset = module_offset;
-		return true;
+
+		return g_SystemModules.find(dmpInfo->module_name) == g_SystemModules.end();
 	}
 
 	return false;
 }
-
-
-std::set<string> g_SystemModules = { "kernelbase.dll", "ntdll.dll", "kernel32.dll" };
 
 void GetCallStack(const CallStack* stack, int max_count, Minidump_Info* dmpInfo) {
 	std::string strStack;
@@ -306,12 +309,13 @@ void GetCallStack(const CallStack* stack, int max_count, Minidump_Info* dmpInfo)
 		}
 		else {
 			char str[80];
-			sprintf(str, "0x%" PRIx64, instruction_address);
+			sprintf(str, "0x%" PRIx64, 0xffffffff);
 			strStack += str;
 		}
 	}
 
 	md5::MD5 md;
+    dmpInfo->stack_raw = strStack;
 	dmpInfo->stack_md5 = md.digestString((char*)strStack.c_str());
 }
 

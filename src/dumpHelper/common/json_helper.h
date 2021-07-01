@@ -1,4 +1,4 @@
-// Copyright (c) 2010 Google Inc.
+// Copyright 2017, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,33 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// stackwalk_common.cc: Module shared by the {micro,mini}dump_stackwalck
-// executables to print the content of dumps (w/ stack traces) on the console.
-
-
-#ifndef PROCESSOR_STACKWALK_COMMON_H__
-#define PROCESSOR_STACKWALK_COMMON_H__
+#ifndef DUMP_HELPER_COMMON_CONFIG_H
+#define DUMP_HELPER_COMMON_CONFIG_H
 
 #include <string>
+#include <vector>
+#include "json/json.h"
 
 namespace dump_helper {
 
-class ProcessState;
-struct Minidump_Info {
-	std::string dump_path;
-	std::string stack_md5;
-	std::string crash_reason;
-	std::string module_name;
-	std::string module_version;
-	std::string module_offset;
-	std::string crash_address;
-	std::string app_name;
-	std::string stack_raw;
-};
+	using std::string;
+	using std::vector;
 
-void PrintProcessState(const ProcessState& process_state);
-void GetUploadInfo(const ProcessState& process_state, Minidump_Info* dmpInfo);
-
+	class JsonHelper {
+	public:
+        static void init(const char* dir, const char* name);
+        static vector<string> getFiles();
+        static void addFile(string& file);
+        static void readRoot(Json::Value &root);
+        static void writeRoot(Json::Value &root);
+    private:
+        static string json_dir;
+        static string root_name;
+	};
 }  // namespace dump_helper
 
-#endif  // PROCESSOR_STACKWALK_COMMON_H__
+#endif  // DUMP_HELPER_COMMON_PATH_HELPER_H

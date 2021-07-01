@@ -32,6 +32,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include "common/json_helper.h"
 
 
 
@@ -104,6 +107,7 @@ string PathHelper::FileName(const string& path) {
 
 vector<string> PathHelper::DumpFiles(const string& dir) {
 	vector<string> vec;
+    vector<string> completed = JsonHelper::getFiles();
 #ifdef _WIN32
 	WIN32_FIND_DATAA findData;
 	memset(&findData, 0, sizeof(WIN32_FIND_DATAA));
@@ -120,7 +124,8 @@ vector<string> PathHelper::DumpFiles(const string& dir) {
 		{
 			const string filename = findData.cFileName;
 			string suffix = filename.substr(filename.find_last_of('.') + 1);
-			if (suffix == "dmp" || suffix == "DMP") {
+            auto ite = find(completed.begin(), completed.end(), filename);
+			if ((suffix == "dmp" || suffix == "DMP" ) && ite == completed.end()) {
 				vec.push_back(filename);
 			}
 		}
@@ -145,7 +150,8 @@ vector<string> PathHelper::DumpFiles(const string& dir) {
 		{
 			const string filename = entry->d_name;
 			string suffix = filename.substr(filename.find_last_of('.') + 1);
-			if (suffix == "dmp" || suffix == "DMP") {
+			auto ite = find(completed.begin(), completed.end(), filename);
+			if ((suffix == "dmp" || suffix == "DMP" ) && ite == completed.end()) {
 				vec.push_back(filename);
 			}
 		}

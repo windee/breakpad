@@ -198,10 +198,6 @@ inline void Swap(MDXStateConfigFeatureMscInfo* xstate_feature_info) {
   }
 }
 
-inline void Swap(MDRawSimpleStringDictionaryEntry* entry) {
-  Swap(&entry->key);
-  Swap(&entry->value);
-}
 
 inline void Swap(uint16_t* data, size_t size_in_bytes) {
   size_t data_length = size_in_bytes / sizeof(data[0]);

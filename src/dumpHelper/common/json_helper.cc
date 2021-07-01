@@ -1,4 +1,4 @@
-// Copyright (c) 2010 Google Inc.
+// Copyright 2017, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,33 +27,72 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// stackwalk_common.cc: Module shared by the {micro,mini}dump_stackwalck
-// executables to print the content of dumps (w/ stack traces) on the console.
-
-
-#ifndef PROCESSOR_STACKWALK_COMMON_H__
-#define PROCESSOR_STACKWALK_COMMON_H__
-
-#include <string>
+#include "json_helper.h"
+#include <algorithm>
+#include <iostream>
+#include <fstream>
 
 namespace dump_helper {
 
-class ProcessState;
-struct Minidump_Info {
-	std::string dump_path;
-	std::string stack_md5;
-	std::string crash_reason;
-	std::string module_name;
-	std::string module_version;
-	std::string module_offset;
-	std::string crash_address;
-	std::string app_name;
-	std::string stack_raw;
-};
 
-void PrintProcessState(const ProcessState& process_state);
-void GetUploadInfo(const ProcessState& process_state, Minidump_Info* dmpInfo);
+string JsonHelper::json_dir;
+string JsonHelper::root_name;
 
+
+void JsonHelper::init(const char* dir, const char* name) {
+    json_dir = dir;
+    root_name = name;
+}
+ 
+void JsonHelper::readRoot(Json::Value &root){
+  std::ifstream ifs(json_dir + "/" + root_name);
+    if(ifs && ifs.is_open()) {
+        Json::CharReaderBuilder reader;
+        string err;
+        bool ret;
+        ret = Json::parseFromStream(reader, ifs, &root, &err);
+        ifs.close();
+    }
+}
+
+void JsonHelper::writeRoot(Json::Value &root)
+{
+  std::ofstream fout(json_dir + "/" + root_name);
+    if (fout) {
+        fout << root.toStyledString();
+        fout.close();
+    }
+}
+
+void JsonHelper::addFile(string& file){
+    Json::Value root;
+    readRoot(root);
+    Json::Value& array = root[root_name];
+    array.append(file.c_str());
+    writeRoot(root);
+}
+
+vector<string> JsonHelper::getFiles() {
+    Json::Value root;
+    readRoot(root);
+    Json::Value& array = root[root_name];
+    
+    vector<string> files;
+
+    for(unsigned int i = 0; i < array.size() ; i++){
+        string file = array[i].asString();
+        if (remove((json_dir + "/" + file).c_str()) != 0) {
+            files.push_back(file);
+        }
+    }
+
+    array.clear();
+    for(unsigned int i = 0; i < files.size() ; i++){
+        array.append(files[i].c_str());
+    }
+
+    writeRoot(root);
+    
+    return files;
+}
 }  // namespace dump_helper
-
-#endif  // PROCESSOR_STACKWALK_COMMON_H__

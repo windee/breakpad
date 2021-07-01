@@ -52,7 +52,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "&quot;/Users/lichuanle/Downloads&quot; &quot;kwaiUserId=360383664071&quot; &quot;type=render&quot; &quot;appName=kim&quot;"
+            argument = "&quot;/Users/lichuanle/Downloads&quot; &quot;kwaiUserId=360383664071&quot; &quot;type=render&quot; &quot;appName=Kim&quot;"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = ""
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

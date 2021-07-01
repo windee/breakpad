@@ -46,6 +46,7 @@
 #include "common/processor/process_state.h"
 #include "common/md5.h"
 #include "stackwalk_common.h"
+#include "common/json_helper.h"
 
 
 #ifdef _WIN32
@@ -60,6 +61,7 @@
 
 namespace {
 using std::string;
+using std::map;
 using dump_helper::Minidump;
 using dump_helper::MinidumpMemoryList;
 using dump_helper::MinidumpThreadList;
@@ -115,11 +117,12 @@ static void SetupOptions(int argc, const char *argv[], Options* options) {
   }
 
   options->crash_directory = argv[optind];
+  dump_helper::JsonHelper::init(options->crash_directory.c_str(), "complete_file");
   options->dump_files = PathHelper::DumpFiles(options->crash_directory);
 
   for (int argi = optind + 1; argi < argc; ++argi) {
 	  string param = argv[argi];
-	  int nPos = param.find_first_of('=');
+	  size_t nPos = param.find_first_of('=');
 	  options->parameters[param.substr(0, nPos)] = param.substr(nPos + 1);
   }
 }
@@ -135,26 +138,37 @@ int main(int argc, const char* argv[]) {
 		if (GenerateDumpInfo(options.crash_directory + "/" + options.dump_files[i], &info)) {
 			vecInfo.push_back(info);
 		}
+
+    map<string, string> params = options.parameters;
+    params["crashReason"] = info.crash_reason;
+    params["crashAddress"] = info.crash_address;
+    params["moduleName"] = info.module_name;
+    params["moduleVersion"] = info.module_version;
+    params["moduleOffset"] = info.module_offset;
+    params["stackMd5"] = info.stack_md5;
+
+    std::map<string, string> files;
+    files["upload_file_minidump"] = info.dump_path;
+
+    std::wstring report_code;
+        int response = 0;
+
+//    #ifdef _WIN32
+//      dump_helper::SendCrashReport(server_url, params, files, &report_code);
+//    #else
+//      response = dump_helper::SendCrashReport(server_url, params, info.dump_path);
+//    #endif // _WIN32
+//
+   if (response == 200 && remove(info.dump_path.c_str()) != 0)
+     dump_helper::JsonHelper::addFile(options.dump_files[i]);
 	}
-	std::map<string, string> params = options.parameters;
-	params["crashReason"] = vecInfo[0].crash_reason;
-	params["crashAddress"] = vecInfo[0].crash_address;
-	params["moduleName"] = vecInfo[0].module_name;
-	params["moduleVersion"] = vecInfo[0].module_version;
-	params["moduleOffset"] = vecInfo[0].module_offset;
-	params["stackMd5"] = vecInfo[0].stack_md5;
+    
+    map<string, int> result;
+    
+    for(int i = 0; i < vecInfo.size(); i ++) {
+        result[vecInfo[i].stack_md5]++;
+    }
 
-	std::map<string, string> files;
-	files["upload_file_minidump"] = vecInfo[0].dump_path;
-
-	std::wstring report_code;
-
-#ifdef _WIN32
-	dump_helper::SendCrashReport(server_url, params, files, &report_code);
-#else
-    dump_helper::SendCrashReport(server_url, params, vecInfo[0].dump_path);
-
-#endif // _WIN32
-
-  return 1;
+  return 0;
 }
+
