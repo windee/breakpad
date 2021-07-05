@@ -45,7 +45,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stddef.h>
-#include <string.h>
+#include <string>
 #include <time.h>
 #include <algorithm>
 #include <fstream>
@@ -324,27 +324,6 @@ void ConvertUTF16BufferToUTF8String(const uint16_t* utf16_data,
   }
 }
 
-
-// For fields that may or may not be valid, PrintValueOrInvalid will print the
-// string "(invalid)" if the field is not valid, and will print the value if
-// the field is valid. The value is printed as hexadecimal or decimal.
-
-enum NumberFormat {
-  kNumberFormatDecimal,
-  kNumberFormatHexadecimal,
-};
-
-void PrintValueOrInvalid(bool valid,
-                         NumberFormat number_format,
-                         uint32_t value) {
-  if (!valid) {
-    printf("(invalid)\n");
-  } else if (number_format == kNumberFormatDecimal) {
-    printf("%d\n", value);
-  } else {
-    printf("0x%x\n", value);
-  }
-}
 
 // Converts a time_t to a string showing the time in UTC.
 string TimeTToUTCString(time_t tt) {
@@ -1027,71 +1006,6 @@ bool MinidumpMemoryRegion::GetMemoryAtAddress(uint64_t  address,
   return GetMemoryAtAddressInternal(address, value);
 }
 
-
-void MinidumpMemoryRegion::Print() const {
-  if (!valid_) {
-    return;
-  }
-
-  const uint8_t* memory = GetMemory();
-  if (memory) {
-    if (hexdump_) {
-      // Pretty hexdump view.
-      for (unsigned int byte_index = 0;
-           byte_index < descriptor_->memory.data_size;
-           byte_index += hexdump_width_) {
-        // In case the memory won't fill a whole line.
-        unsigned int num_bytes = std::min(
-            descriptor_->memory.data_size - byte_index, hexdump_width_);
-
-        // Display the leading address.
-        printf("%08x  ", byte_index);
-
-        // Show the bytes in hex.
-        for (unsigned int i = 0; i < hexdump_width_; ++i) {
-          if (i < num_bytes) {
-            // Show the single byte of memory in hex.
-            printf("%02x ", memory[byte_index + i]);
-          } else {
-            // If this line doesn't fill up, pad it out.
-            printf("   ");
-          }
-
-          // Insert a space every 8 bytes to make it more readable.
-          if (((i + 1) % 8) == 0) {
-            printf(" ");
-          }
-        }
-
-        // Decode the line as ASCII.
-        printf("|");
-        for (unsigned int i = 0; i < hexdump_width_; ++i) {
-          if (i < num_bytes) {
-            uint8_t byte = memory[byte_index + i];
-            printf("%c", isprint(byte) ? byte : '.');
-          } else {
-            // If this line doesn't fill up, pad it out.
-            printf(" ");
-          }
-        }
-        printf("|\n");
-      }
-    } else {
-      // Ugly raw string view.
-      printf("0x");
-      for (unsigned int i = 0;
-           i < descriptor_->memory.data_size;
-           i++) {
-        printf("%02x", memory[i]);
-      }
-      printf("\n");
-    }
-  } else {
-    printf("No memory\n");
-  }
-}
-
-
 void MinidumpMemoryRegion::SetPrintMode(bool hexdump,
                                         unsigned int hexdump_width) {
   // Require the width to be a multiple of 8 bytes.
@@ -1214,48 +1128,6 @@ bool MinidumpThread::GetThreadID(uint32_t *thread_id) const {
   return true;
 }
 
-
-void MinidumpThread::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawThread\n");
-  printf("  thread_id                   = 0x%x\n",   thread_.thread_id);
-  printf("  suspend_count               = %d\n",     thread_.suspend_count);
-  printf("  priority_class              = 0x%x\n",   thread_.priority_class);
-  printf("  priority                    = 0x%x\n",   thread_.priority);
-  printf("  teb                         = 0x%" PRIx64 "\n", thread_.teb);
-  printf("  stack.start_of_memory_range = 0x%" PRIx64 "\n",
-         thread_.stack.start_of_memory_range);
-  printf("  stack.memory.data_size      = 0x%x\n",
-         thread_.stack.memory.data_size);
-  printf("  stack.memory.rva            = 0x%x\n",   thread_.stack.memory.rva);
-  printf("  thread_context.data_size    = 0x%x\n",
-         thread_.thread_context.data_size);
-  printf("  thread_context.rva          = 0x%x\n",
-         thread_.thread_context.rva);
-
-  MinidumpContext* context = GetContext();
-  if (context) {
-    printf("\n");
-    context->Print();
-  } else {
-    printf("  (no context)\n");
-    printf("\n");
-  }
-
-  MinidumpMemoryRegion* memory = GetMemory();
-  if (memory) {
-    printf("Stack\n");
-    memory->Print();
-  } else {
-    printf("No stack\n");
-  }
-  printf("\n");
-}
-
-
 //
 // MinidumpThreadList
 //
@@ -1374,25 +1246,6 @@ MinidumpThread* MinidumpThreadList::GetThreadByID(uint32_t thread_id) {
   // Don't check valid_.  Read calls this method before everything is
   // validated.  It is safe to not check valid_ here.
   return id_to_thread_map_[thread_id];
-}
-
-
-void MinidumpThreadList::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MinidumpThreadList\n");
-  printf("  thread_count = %d\n", thread_count_);
-  printf("\n");
-
-  for (unsigned int thread_index = 0;
-       thread_index < thread_count_;
-       ++thread_index) {
-    printf("thread[%d]\n", thread_index);
-
-    (*threads_)[thread_index].Print();
-  }
 }
 
 
@@ -1997,151 +1850,6 @@ const MDImageDebugMisc* MinidumpModule::GetMiscRecord(uint32_t* size) {
 }
 
 
-void MinidumpModule::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawModule\n");
-  printf("  base_of_image                   = 0x%" PRIx64 "\n",
-         module_.base_of_image);
-  printf("  size_of_image                   = 0x%x\n",
-         module_.size_of_image);
-  printf("  checksum                        = 0x%x\n",
-         module_.checksum);
-  printf("  time_date_stamp                 = 0x%x %s\n",
-         module_.time_date_stamp,
-         TimeTToUTCString(module_.time_date_stamp).c_str());
-  printf("  module_name_rva                 = 0x%x\n",
-         module_.module_name_rva);
-  printf("  version_info.signature          = 0x%x\n",
-         module_.version_info.signature);
-  printf("  version_info.struct_version     = 0x%x\n",
-         module_.version_info.struct_version);
-  printf("  version_info.file_version       = 0x%x:0x%x\n",
-         module_.version_info.file_version_hi,
-         module_.version_info.file_version_lo);
-  printf("  version_info.product_version    = 0x%x:0x%x\n",
-         module_.version_info.product_version_hi,
-         module_.version_info.product_version_lo);
-  printf("  version_info.file_flags_mask    = 0x%x\n",
-         module_.version_info.file_flags_mask);
-  printf("  version_info.file_flags         = 0x%x\n",
-         module_.version_info.file_flags);
-  printf("  version_info.file_os            = 0x%x\n",
-         module_.version_info.file_os);
-  printf("  version_info.file_type          = 0x%x\n",
-         module_.version_info.file_type);
-  printf("  version_info.file_subtype       = 0x%x\n",
-         module_.version_info.file_subtype);
-  printf("  version_info.file_date          = 0x%x:0x%x\n",
-         module_.version_info.file_date_hi,
-         module_.version_info.file_date_lo);
-  printf("  cv_record.data_size             = %d\n",
-         module_.cv_record.data_size);
-  printf("  cv_record.rva                   = 0x%x\n",
-         module_.cv_record.rva);
-  printf("  misc_record.data_size           = %d\n",
-         module_.misc_record.data_size);
-  printf("  misc_record.rva                 = 0x%x\n",
-         module_.misc_record.rva);
-
-  printf("  (code_file)                     = \"%s\"\n", code_file().c_str());
-  printf("  (code_identifier)               = \"%s\"\n",
-         code_identifier().c_str());
-
-  uint32_t cv_record_size;
-  const uint8_t *cv_record = GetCVRecord(&cv_record_size);
-  if (cv_record) {
-    if (cv_record_signature_ == MD_CVINFOPDB70_SIGNATURE) {
-      const MDCVInfoPDB70* cv_record_70 =
-          reinterpret_cast<const MDCVInfoPDB70*>(cv_record);
-      assert(cv_record_70->cv_signature == MD_CVINFOPDB70_SIGNATURE);
-
-      printf("  (cv_record).cv_signature        = 0x%x\n",
-             cv_record_70->cv_signature);
-      printf("  (cv_record).signature           = %s\n",
-             MDGUIDToString(cv_record_70->signature).c_str());
-      printf("  (cv_record).age                 = %d\n",
-             cv_record_70->age);
-      printf("  (cv_record).pdb_file_name       = \"%s\"\n",
-             cv_record_70->pdb_file_name);
-    } else if (cv_record_signature_ == MD_CVINFOPDB20_SIGNATURE) {
-      const MDCVInfoPDB20* cv_record_20 =
-          reinterpret_cast<const MDCVInfoPDB20*>(cv_record);
-      assert(cv_record_20->cv_header.signature == MD_CVINFOPDB20_SIGNATURE);
-
-      printf("  (cv_record).cv_header.signature = 0x%x\n",
-             cv_record_20->cv_header.signature);
-      printf("  (cv_record).cv_header.offset    = 0x%x\n",
-             cv_record_20->cv_header.offset);
-      printf("  (cv_record).signature           = 0x%x %s\n",
-             cv_record_20->signature,
-             TimeTToUTCString(cv_record_20->signature).c_str());
-      printf("  (cv_record).age                 = %d\n",
-             cv_record_20->age);
-      printf("  (cv_record).pdb_file_name       = \"%s\"\n",
-             cv_record_20->pdb_file_name);
-    } else if (cv_record_signature_ == MD_CVINFOELF_SIGNATURE) {
-      const MDCVInfoELF* cv_record_elf =
-          reinterpret_cast<const MDCVInfoELF*>(cv_record);
-      assert(cv_record_elf->cv_signature == MD_CVINFOELF_SIGNATURE);
-
-      printf("  (cv_record).cv_signature        = 0x%x\n",
-             cv_record_elf->cv_signature);
-      printf("  (cv_record).build_id            = ");
-      for (unsigned int build_id_index = 0;
-           build_id_index < (cv_record_size - MDCVInfoELF_minsize);
-           ++build_id_index) {
-        printf("%02x", cv_record_elf->build_id[build_id_index]);
-      }
-      printf("\n");
-    } else {
-      printf("  (cv_record)                     = ");
-      for (unsigned int cv_byte_index = 0;
-           cv_byte_index < cv_record_size;
-           ++cv_byte_index) {
-        printf("%02x", cv_record[cv_byte_index]);
-      }
-      printf("\n");
-    }
-  } else {
-    printf("  (cv_record)                     = (null)\n");
-  }
-
-  const MDImageDebugMisc* misc_record = GetMiscRecord(NULL);
-  if (misc_record) {
-    printf("  (misc_record).data_type         = 0x%x\n",
-           misc_record->data_type);
-    printf("  (misc_record).length            = 0x%x\n",
-           misc_record->length);
-    printf("  (misc_record).unicode           = %d\n",
-           misc_record->unicode);
-    if (misc_record->unicode) {
-      string misc_record_data_utf8;
-      ConvertUTF16BufferToUTF8String(
-          reinterpret_cast<const uint16_t*>(misc_record->data),
-          misc_record->length - offsetof(MDImageDebugMisc, data),
-          &misc_record_data_utf8,
-          false);  // already swapped
-      printf("  (misc_record).data              = \"%s\"\n",
-             misc_record_data_utf8.c_str());
-    } else {
-      printf("  (misc_record).data              = \"%s\"\n",
-             misc_record->data);
-    }
-  } else {
-    printf("  (misc_record)                   = (null)\n");
-  }
-
-  printf("  (debug_file)                    = \"%s\"\n", debug_file().c_str());
-  printf("  (debug_identifier)              = \"%s\"\n",
-         debug_identifier().c_str());
-  printf("  (version)                       = \"%s\"\n", version().c_str());
-  printf("\n");
-}
-
-
 //
 // MinidumpModuleList
 //
@@ -2388,24 +2096,6 @@ MinidumpModuleList::GetShrunkRangeModules() const {
   return vector<linked_ptr<const CodeModule> >();
 }
 
-void MinidumpModuleList::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MinidumpModuleList\n");
-  printf("  module_count = %d\n", module_count_);
-  printf("\n");
-
-  for (unsigned int module_index = 0;
-       module_index < module_count_;
-       ++module_index) {
-    printf("module[%d]\n", module_index);
-
-    (*modules_)[module_index].Print();
-  }
-}
-
 
 //
 // MinidumpMemoryList
@@ -2555,37 +2245,6 @@ MinidumpMemoryRegion* MinidumpMemoryList::GetMemoryRegionForAddress(
 }
 
 
-void MinidumpMemoryList::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MinidumpMemoryList\n");
-  printf("  region_count = %d\n", region_count_);
-  printf("\n");
-
-  for (unsigned int region_index = 0;
-       region_index < region_count_;
-       ++region_index) {
-    MDMemoryDescriptor* descriptor = &(*descriptors_)[region_index];
-    printf("region[%d]\n", region_index);
-    printf("MDMemoryDescriptor\n");
-    printf("  start_of_memory_range = 0x%" PRIx64 "\n",
-           descriptor->start_of_memory_range);
-    printf("  memory.data_size      = 0x%x\n", descriptor->memory.data_size);
-    printf("  memory.rva            = 0x%x\n", descriptor->memory.rva);
-    MinidumpMemoryRegion* region = GetMemoryRegionAtIndex(region_index);
-    if (region) {
-      printf("Memory\n");
-      region->Print();
-    } else {
-      printf("No memory\n");
-    }
-    printf("\n");
-  }
-}
-
-
 //
 // MinidumpException
 //
@@ -2679,46 +2338,6 @@ MinidumpContext* MinidumpException::GetContext() {
   return context_;
 }
 
-
-void MinidumpException::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDException\n");
-  printf("  thread_id                                  = 0x%x\n",
-         exception_.thread_id);
-  printf("  exception_record.exception_code            = 0x%x\n",
-         exception_.exception_record.exception_code);
-  printf("  exception_record.exception_flags           = 0x%x\n",
-         exception_.exception_record.exception_flags);
-  printf("  exception_record.exception_record          = 0x%" PRIx64 "\n",
-         exception_.exception_record.exception_record);
-  printf("  exception_record.exception_address         = 0x%" PRIx64 "\n",
-         exception_.exception_record.exception_address);
-  printf("  exception_record.number_parameters         = %d\n",
-         exception_.exception_record.number_parameters);
-  for (unsigned int parameterIndex = 0;
-       parameterIndex < exception_.exception_record.number_parameters;
-       ++parameterIndex) {
-    printf("  exception_record.exception_information[%2d] = 0x%" PRIx64 "\n",
-           parameterIndex,
-           exception_.exception_record.exception_information[parameterIndex]);
-  }
-  printf("  thread_context.data_size                   = %d\n",
-         exception_.thread_context.data_size);
-  printf("  thread_context.rva                         = 0x%x\n",
-         exception_.thread_context.rva);
-  MinidumpContext* context = GetContext();
-  if (context) {
-    printf("\n");
-    context->Print();
-  } else {
-    printf("  (no context)\n");
-    printf("\n");
-  }
-}
-
 //
 // MinidumpAssertion
 //
@@ -2768,26 +2387,6 @@ bool MinidumpAssertion::Read(uint32_t expected_size) {
   valid_ = true;
   return true;
 }
-
-void MinidumpAssertion::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDAssertion\n");
-  printf("  expression                                 = %s\n",
-         expression_.c_str());
-  printf("  function                                   = %s\n",
-         function_.c_str());
-  printf("  file                                       = %s\n",
-         file_.c_str());
-  printf("  line                                       = %u\n",
-         assertion_.line);
-  printf("  type                                       = %u\n",
-         assertion_.type);
-  printf("\n");
-}
-
 //
 // MinidumpSystemInfo
 //
@@ -2997,78 +2596,6 @@ const string* MinidumpSystemInfo::GetCPUVendor() {
 
   return cpu_vendor_;
 }
-
-
-void MinidumpSystemInfo::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawSystemInfo\n");
-  printf("  processor_architecture                     = 0x%x\n",
-         system_info_.processor_architecture);
-  printf("  processor_level                            = %d\n",
-         system_info_.processor_level);
-  printf("  processor_revision                         = 0x%x\n",
-         system_info_.processor_revision);
-  printf("  number_of_processors                       = %d\n",
-         system_info_.number_of_processors);
-  printf("  product_type                               = %d\n",
-         system_info_.product_type);
-  printf("  major_version                              = %d\n",
-         system_info_.major_version);
-  printf("  minor_version                              = %d\n",
-         system_info_.minor_version);
-  printf("  build_number                               = %d\n",
-         system_info_.build_number);
-  printf("  platform_id                                = 0x%x\n",
-         system_info_.platform_id);
-  printf("  csd_version_rva                            = 0x%x\n",
-         system_info_.csd_version_rva);
-  printf("  suite_mask                                 = 0x%x\n",
-         system_info_.suite_mask);
-  if (system_info_.processor_architecture == MD_CPU_ARCHITECTURE_X86 ||
-      system_info_.processor_architecture == MD_CPU_ARCHITECTURE_X86_WIN64) {
-    printf("  cpu.x86_cpu_info (valid):\n");
-  } else {
-    printf("  cpu.x86_cpu_info (invalid):\n");
-  }
-  for (unsigned int i = 0; i < 3; ++i) {
-    printf("  cpu.x86_cpu_info.vendor_id[%d]              = 0x%x\n",
-           i, system_info_.cpu.x86_cpu_info.vendor_id[i]);
-  }
-  printf("  cpu.x86_cpu_info.version_information       = 0x%x\n",
-         system_info_.cpu.x86_cpu_info.version_information);
-  printf("  cpu.x86_cpu_info.feature_information       = 0x%x\n",
-         system_info_.cpu.x86_cpu_info.feature_information);
-  printf("  cpu.x86_cpu_info.amd_extended_cpu_features = 0x%x\n",
-         system_info_.cpu.x86_cpu_info.amd_extended_cpu_features);
-  if (system_info_.processor_architecture != MD_CPU_ARCHITECTURE_X86 &&
-      system_info_.processor_architecture != MD_CPU_ARCHITECTURE_X86_WIN64) {
-    printf("  cpu.other_cpu_info (valid):\n");
-    for (unsigned int i = 0; i < 2; ++i) {
-      printf("  cpu.other_cpu_info.processor_features[%d]   = 0x%" PRIx64 "\n",
-             i, system_info_.cpu.other_cpu_info.processor_features[i]);
-    }
-  }
-  const string* csd_version = GetCSDVersion();
-  if (csd_version) {
-    printf("  (csd_version)                              = \"%s\"\n",
-           csd_version->c_str());
-  } else {
-    printf("  (csd_version)                              = (null)\n");
-  }
-  const string* cpu_vendor = GetCPUVendor();
-  if (cpu_vendor) {
-    printf("  (cpu_vendor)                               = \"%s\"\n",
-           cpu_vendor->c_str());
-  } else {
-    printf("  (cpu_vendor)                               = (null)\n");
-  }
-  printf("\n");
-}
-
-
 //
 // MinidumpUnloadedModule
 //
@@ -3509,158 +3036,6 @@ bool MinidumpMiscInfo::Read(uint32_t expected_size) {
   return true;
 }
 
-
-void MinidumpMiscInfo::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawMiscInfo\n");
-  // Print version 1 fields
-  printf("  size_of_info                 = %d\n",   misc_info_.size_of_info);
-  printf("  flags1                       = 0x%x\n", misc_info_.flags1);
-  printf("  process_id                   = ");
-  PrintValueOrInvalid(misc_info_.flags1 & MD_MISCINFO_FLAGS1_PROCESS_ID,
-                      kNumberFormatDecimal, misc_info_.process_id);
-  if (misc_info_.flags1 & MD_MISCINFO_FLAGS1_PROCESS_TIMES) {
-    printf("  process_create_time          = 0x%x %s\n",
-           misc_info_.process_create_time,
-           TimeTToUTCString(misc_info_.process_create_time).c_str());
-  } else {
-    printf("  process_create_time          = (invalid)\n");
-  }
-  printf("  process_user_time            = ");
-  PrintValueOrInvalid(misc_info_.flags1 & MD_MISCINFO_FLAGS1_PROCESS_TIMES,
-                      kNumberFormatDecimal, misc_info_.process_user_time);
-  printf("  process_kernel_time          = ");
-  PrintValueOrInvalid(misc_info_.flags1 & MD_MISCINFO_FLAGS1_PROCESS_TIMES,
-                      kNumberFormatDecimal, misc_info_.process_kernel_time);
-  if (misc_info_.size_of_info > MD_MISCINFO_SIZE) {
-    // Print version 2 fields
-    printf("  processor_max_mhz            = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESSOR_POWER_INFO,
-                        kNumberFormatDecimal, misc_info_.processor_max_mhz);
-    printf("  processor_current_mhz        = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESSOR_POWER_INFO,
-                        kNumberFormatDecimal, misc_info_.processor_current_mhz);
-    printf("  processor_mhz_limit          = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESSOR_POWER_INFO,
-                        kNumberFormatDecimal, misc_info_.processor_mhz_limit);
-    printf("  processor_max_idle_state     = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESSOR_POWER_INFO,
-                        kNumberFormatDecimal,
-                        misc_info_.processor_max_idle_state);
-    printf("  processor_current_idle_state = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESSOR_POWER_INFO,
-                        kNumberFormatDecimal,
-                        misc_info_.processor_current_idle_state);
-  }
-  if (misc_info_.size_of_info > MD_MISCINFO2_SIZE) {
-    // Print version 3 fields
-    printf("  process_integrity_level      = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESS_INTEGRITY,
-                        kNumberFormatHexadecimal,
-                        misc_info_.process_integrity_level);
-    printf("  process_execute_flags        = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROCESS_EXECUTE_FLAGS,
-                        kNumberFormatHexadecimal,
-                        misc_info_.process_execute_flags);
-    printf("  protected_process            = ");
-    PrintValueOrInvalid(misc_info_.flags1 &
-                            MD_MISCINFO_FLAGS1_PROTECTED_PROCESS,
-                        kNumberFormatDecimal, misc_info_.protected_process);
-    printf("  time_zone_id                 = ");
-    PrintValueOrInvalid(misc_info_.flags1 & MD_MISCINFO_FLAGS1_TIMEZONE,
-                        kNumberFormatDecimal, misc_info_.time_zone_id);
-    if (misc_info_.flags1 & MD_MISCINFO_FLAGS1_TIMEZONE) {
-      printf("  time_zone.bias               = %d\n",
-             misc_info_.time_zone.bias);
-      printf("  time_zone.standard_name      = %s\n", standard_name_.c_str());
-      printf("  time_zone.standard_date      = "
-                 "%04d-%02d-%02d (%d) %02d:%02d:%02d.%03d\n",
-             misc_info_.time_zone.standard_date.year,
-             misc_info_.time_zone.standard_date.month,
-             misc_info_.time_zone.standard_date.day,
-             misc_info_.time_zone.standard_date.day_of_week,
-             misc_info_.time_zone.standard_date.hour,
-             misc_info_.time_zone.standard_date.minute,
-             misc_info_.time_zone.standard_date.second,
-             misc_info_.time_zone.standard_date.milliseconds);
-      printf("  time_zone.standard_bias      = %d\n",
-             misc_info_.time_zone.standard_bias);
-      printf("  time_zone.daylight_name      = %s\n", daylight_name_.c_str());
-      printf("  time_zone.daylight_date      = "
-                 "%04d-%02d-%02d (%d) %02d:%02d:%02d.%03d\n",
-             misc_info_.time_zone.daylight_date.year,
-             misc_info_.time_zone.daylight_date.month,
-             misc_info_.time_zone.daylight_date.day,
-             misc_info_.time_zone.daylight_date.day_of_week,
-             misc_info_.time_zone.daylight_date.hour,
-             misc_info_.time_zone.daylight_date.minute,
-             misc_info_.time_zone.daylight_date.second,
-             misc_info_.time_zone.daylight_date.milliseconds);
-      printf("  time_zone.daylight_bias      = %d\n",
-             misc_info_.time_zone.daylight_bias);
-    } else {
-      printf("  time_zone.bias               = (invalid)\n");
-      printf("  time_zone.standard_name      = (invalid)\n");
-      printf("  time_zone.standard_date      = (invalid)\n");
-      printf("  time_zone.standard_bias      = (invalid)\n");
-      printf("  time_zone.daylight_name      = (invalid)\n");
-      printf("  time_zone.daylight_date      = (invalid)\n");
-      printf("  time_zone.daylight_bias      = (invalid)\n");
-    }
-  }
-  if (misc_info_.size_of_info > MD_MISCINFO3_SIZE) {
-    // Print version 4 fields
-    if (misc_info_.flags1 & MD_MISCINFO_FLAGS1_BUILDSTRING) {
-      printf("  build_string                 = %s\n", build_string_.c_str());
-      printf("  dbg_bld_str                  = %s\n", dbg_bld_str_.c_str());
-    } else {
-      printf("  build_string                 = (invalid)\n");
-      printf("  dbg_bld_str                  = (invalid)\n");
-    }
-  }
-  if (misc_info_.size_of_info > MD_MISCINFO4_SIZE) {
-    // Print version 5 fields
-    if (misc_info_.flags1 & MD_MISCINFO_FLAGS1_PROCESS_COOKIE) {
-      printf("  xstate_data.size_of_info     = %d\n",
-             misc_info_.xstate_data.size_of_info);
-      printf("  xstate_data.context_size     = %d\n",
-             misc_info_.xstate_data.context_size);
-      printf("  xstate_data.enabled_features = 0x%" PRIx64 "\n",
-             misc_info_.xstate_data.enabled_features);
-      for (size_t i = 0; i < MD_MAXIMUM_XSTATE_FEATURES; i++) {
-        if ((misc_info_.xstate_data.enabled_features >> i) & 1) {
-          printf("  xstate_data.features[%02zu]     = { %d, %d }\n", i,
-                 misc_info_.xstate_data.features[i].offset,
-                 misc_info_.xstate_data.features[i].size);
-        }
-      }
-      if (misc_info_.xstate_data.enabled_features == 0) {
-        printf("  xstate_data.features[]       = (empty)\n");
-      }
-      printf("  process_cookie               = %d\n",
-             misc_info_.process_cookie);
-    } else {
-      printf("  xstate_data.size_of_info     = (invalid)\n");
-      printf("  xstate_data.context_size     = (invalid)\n");
-      printf("  xstate_data.enabled_features = (invalid)\n");
-      printf("  xstate_data.features[]       = (invalid)\n");
-      printf("  process_cookie               = (invalid)\n");
-    }
-  }
-  printf("\n");
-}
-
-
 //
 // MinidumpBreakpadInfo
 //
@@ -3730,27 +3105,6 @@ bool MinidumpBreakpadInfo::GetRequestingThreadID(uint32_t *thread_id)
 }
 
 
-void MinidumpBreakpadInfo::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawBreakpadInfo\n");
-  printf("  validity             = 0x%x\n", breakpad_info_.validity);
-  printf("  dump_thread_id       = ");
-  PrintValueOrInvalid(breakpad_info_.validity &
-                          MD_BREAKPAD_INFO_VALID_DUMP_THREAD_ID,
-                      kNumberFormatHexadecimal, breakpad_info_.dump_thread_id);
-  printf("  requesting_thread_id = ");
-  PrintValueOrInvalid(breakpad_info_.validity &
-                          MD_BREAKPAD_INFO_VALID_REQUESTING_THREAD_ID,
-                      kNumberFormatHexadecimal,
-                      breakpad_info_.requesting_thread_id);
-
-  printf("\n");
-}
-
-
 //
 // MinidumpMemoryInfo
 //
@@ -3807,25 +3161,6 @@ bool MinidumpMemoryInfo::Read() {
 
   valid_ = true;
   return true;
-}
-
-
-void MinidumpMemoryInfo::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawMemoryInfo\n");
-  printf("  base_address          = 0x%" PRIx64 "\n",
-         memory_info_.base_address);
-  printf("  allocation_base       = 0x%" PRIx64 "\n",
-         memory_info_.allocation_base);
-  printf("  allocation_protection = 0x%x\n",
-         memory_info_.allocation_protection);
-  printf("  region_size           = 0x%" PRIx64 "\n", memory_info_.region_size);
-  printf("  state                 = 0x%x\n", memory_info_.state);
-  printf("  protection            = 0x%x\n", memory_info_.protection);
-  printf("  type                  = 0x%x\n", memory_info_.type);
 }
 
 
@@ -3964,24 +3299,6 @@ const MinidumpMemoryInfo* MinidumpMemoryInfoList::GetMemoryInfoForAddress(
   return GetMemoryInfoAtIndex(info_index);
 }
 
-
-void MinidumpMemoryInfoList::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MinidumpMemoryInfoList\n");
-  printf("  info_count = %d\n", info_count_);
-  printf("\n");
-
-  for (unsigned int info_index = 0;
-       info_index < info_count_;
-       ++info_index) {
-    printf("info[%d]\n", info_index);
-    (*infos_)[info_index].Print();
-    printf("\n");
-  }
-}
 
 //
 // Minidump
@@ -4389,52 +3706,6 @@ static const char* get_stream_name(uint32_t stream_type) {
     return "unknown";
   }
 }
-
-void Minidump::Print() {
-  if (!valid_) {
-    return;
-  }
-
-  printf("MDRawHeader\n");
-  printf("  signature            = 0x%x\n",    header_.signature);
-  printf("  version              = 0x%x\n",    header_.version);
-  printf("  stream_count         = %d\n",      header_.stream_count);
-  printf("  stream_directory_rva = 0x%x\n",    header_.stream_directory_rva);
-  printf("  checksum             = 0x%x\n",    header_.checksum);
-  printf("  time_date_stamp      = 0x%x %s\n",
-         header_.time_date_stamp,
-         TimeTToUTCString(header_.time_date_stamp).c_str());
-  printf("  flags                = 0x%" PRIx64 "\n",  header_.flags);
-  printf("\n");
-
-  for (unsigned int stream_index = 0;
-       stream_index < header_.stream_count;
-       ++stream_index) {
-    MDRawDirectory* directory_entry = &(*directory_)[stream_index];
-
-    printf("mDirectory[%d]\n", stream_index);
-    printf("MDRawDirectory\n");
-    printf("  stream_type        = 0x%x (%s)\n", directory_entry->stream_type,
-           get_stream_name(directory_entry->stream_type));
-    printf("  location.data_size = %d\n",
-           directory_entry->location.data_size);
-    printf("  location.rva       = 0x%x\n", directory_entry->location.rva);
-    printf("\n");
-  }
-
-  printf("Streams:\n");
-  for (MinidumpStreamMap::const_iterator iterator = stream_map_->begin();
-       iterator != stream_map_->end();
-       ++iterator) {
-    uint32_t stream_type = iterator->first;
-    const MinidumpStreamInfo& info = iterator->second;
-    printf("  stream type 0x%x (%s) at index %d\n", stream_type,
-           get_stream_name(stream_type),
-           info.stream_index);
-  }
-  printf("\n");
-}
-
 
 const MDRawDirectory* Minidump::GetDirectoryEntryAtIndex(unsigned int index)
       const {

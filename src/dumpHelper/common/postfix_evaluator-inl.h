@@ -41,7 +41,7 @@
 
 #include "postfix_evaluator.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 #include <sstream>
 

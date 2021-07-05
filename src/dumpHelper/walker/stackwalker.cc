@@ -39,7 +39,6 @@
 
 #include "common/scoped_ptr.h"
 #include "common/system_info.h"
-#include "common/linked_ptr.h"
 
 #include "parser/call_stack.h"
 #include "parser/code_module.h"

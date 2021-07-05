@@ -36,7 +36,7 @@
 #ifndef PROCESSOR_CFI_FRAME_INFO_INL_H_
 #define PROCESSOR_CFI_FRAME_INFO_INL_H_
 
-#include <string.h>
+#include <string>
 
 namespace dump_helper {
 

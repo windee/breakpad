@@ -40,7 +40,6 @@
 #include <assert.h>
 
 #include "range_map.h"
-#include "linked_ptr.h"
 
 
 namespace dump_helper {

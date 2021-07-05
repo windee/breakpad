@@ -30,7 +30,7 @@
 #ifndef DUMP_HELPER_COMMON_STDIO_WRAPPER_H
 #define DUMP_HELPER_COMMON_STDIO_WRAPPER_H
 
-#include <stdio.h>
+#include <cstdio>
 
 #if defined(_MSC_VER) && MSC_VER < 1900
 #include <basetsd.h>

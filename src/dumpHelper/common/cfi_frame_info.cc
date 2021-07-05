@@ -34,7 +34,7 @@
 
 #include "cfi_frame_info.h"
 
-#include <string.h>
+#include <string>
 
 #include <sstream>
 

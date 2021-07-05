@@ -32,7 +32,7 @@
 //
 // Author: Mark Mentovai
 
-#include <stdio.h>
+#include <cstdio>
 #include <limits>
 #include <string>
 #include <vector>
@@ -95,8 +95,6 @@ bool ParseMinidump(const string& minidump_file, Minidump_Info* dmpInfo) {
 
   dmpInfo->dump_path = minidump_file;
   GetUploadInfo(process_state, dmpInfo);
-
-  //PrintProcessState(process_state);
 
   return true;
 }

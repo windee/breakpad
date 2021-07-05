@@ -30,7 +30,7 @@
 #include "path_helper.h"
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <algorithm>
 #include <iostream>
 #include <fstream>

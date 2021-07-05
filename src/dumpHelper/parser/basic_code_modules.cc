@@ -40,9 +40,9 @@
 
 #include <vector>
 
-#include "parser/code_module.h"
 #include "common/linked_ptr.h"
 #include "common/range_map-inl.h"
+#include "parser/code_module.h"
 
 namespace dump_helper {
 

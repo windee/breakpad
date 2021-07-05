@@ -1,9 +1,9 @@
 #include "singleton.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include <fcntl.h>
-#include <string.h>
+#include <string>
 
 
 #ifdef _WIN32
@@ -59,12 +59,10 @@ namespace dump_helper {
 
 		fd = open(filename, O_RDWR | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
 		if (fd < 0) {
-			printf("open file \"%s\" failed!!!\n", filename);
 			return 1;
 		}
 
 		if (lockfile(fd) == -1) {
-			printf("file \"%s\" locked. proc already exit!!!\n", filename);
 			close(fd);
 			return 1;
 		}

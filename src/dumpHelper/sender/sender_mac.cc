@@ -2,9 +2,6 @@
  * to do a multipart formpost without "blocking". */
 #include "sender/sender.h"
 #include "common/path_helper.h"
-#include <stdio.h>
-#include <sys/time.h>
-  
 #include <curl/curl.h>
 
 namespace dump_helper {

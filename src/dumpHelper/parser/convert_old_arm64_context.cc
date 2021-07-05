@@ -29,7 +29,7 @@
 
 #include "convert_old_arm64_context.h"
 
-#include <string.h>
+#include <string>
 
 namespace dump_helper {
 
