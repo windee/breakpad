@@ -1,4 +1,4 @@
-// Copyright (c) 2006, Google Inc.
+// Copyright (c) 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Disable exception handler warnings.
-#pragma warning( disable : 4530 )
+// stackwalker_address_list.h: a pseudo stackwalker.
+//
+// Doesn't actually walk a stack, rather initializes a CallStack given an
+// explicit list of already walked return addresses.
+//
+// Author: Chris Hamilton <chrisha@chromium.org>
 
-#include "sender/sender.h"
-#include "sender/http_upload.h"
+#ifndef PROCESSOR_STACKWALKER_ADDRESS_LIST_H_
+#define PROCESSOR_STACKWALKER_ADDRESS_LIST_H_
+
+#include "common/minidump/breakpad_types.h"
+#include "walker/stackwalker.h"
 
 namespace dump_helper {
 
-bool SendCrashReport(const string &url, string& file, map<string, string> &parameters
-) {
+class CodeModules;
 
-  int http_response = 0;
-  return HTTPUpload::SendMultipartPostRequest(
-    url, parameters, file, NULL,
-    &http_response);
-}
+class StackwalkerAddressList : public Stackwalker {
+ public:
+  // Initializes this stack walker with an explicit set of frame addresses.
+  // |modules| and |frame_symbolizer| are passed directly through to the base
+  // Stackwalker constructor.
+  StackwalkerAddressList(const uint64_t* frames,
+                         size_t frame_count,
+                         const CodeModules* modules);
+
+ private:
+  // Implementation of Stackwalker.
+  virtual StackFrame* GetContextFrame();
+  virtual StackFrame* GetCallerFrame(const CallStack* stack,
+                                     bool stack_scan_allowed);
+
+  const uint64_t* frames_;
+  size_t frame_count_;
+
+  DISALLOW_COPY_AND_ASSIGN(StackwalkerAddressList);
+};
+
 }  // namespace dump_helper
+
+#endif  // PROCESSOR_STACKWALKER_ADDRESS_LIST_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2006, Google Inc.
+// Copyright (c) 2010 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Disable exception handler warnings.
-#pragma warning( disable : 4530 )
+// stackwalk_common.cc: Module shared by the {micro,mini}dump_stackwalck
+// executables to print the content of dumps (w/ stack traces) on the console.
 
-#include "sender/sender.h"
-#include "sender/http_upload.h"
+
+#ifndef PROCESSOR_STACKWALK_COMMON_H__
+#define PROCESSOR_STACKWALK_COMMON_H__
+
+#include <string>
 
 namespace dump_helper {
 
-bool SendCrashReport(const string &url, string& file, map<string, string> &parameters
-) {
+class ProcessState;
+struct Minidump_Info {
+	std::string module_name;
+	std::string module_offset;
+	std::string crash_reason;
+	std::string dump_path;
+	std::string stack_md5;
+	std::string crash_address;
+	std::string app_name;
+	std::string module_version;
+	std::string stack_raw;
+};
 
-  int http_response = 0;
-  return HTTPUpload::SendMultipartPostRequest(
-    url, parameters, file, NULL,
-    &http_response);
-}
+void PrintProcessState(const ProcessState& process_state);
+void GetUploadInfo(const ProcessState& process_state, Minidump_Info* dmpInfo);
+
 }  // namespace dump_helper
+
+#endif  // PROCESSOR_STACKWALK_COMMON_H__

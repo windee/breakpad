@@ -62,7 +62,6 @@ class HTTPUpload {
       const wstring& url,
       const string& path,
       int* timeout_ms,
-      wstring* response_body,
       int* response_code);
 
   // Sends a GET request to the given URL.
@@ -74,7 +73,6 @@ class HTTPUpload {
   static bool SendGetRequest(
       const wstring& url,
       int* timeout_ms,
-      wstring* response_body,
       int* response_code);
 
   // Sends the given sets of parameters and files as a multipart POST
@@ -91,9 +89,8 @@ class HTTPUpload {
   static bool SendMultipartPostRequest(
       const string& url,
       const map<string, string>& parameters,
-      const map<string, string>& files,
+      string& files,
       int *timeout_ms,
-      wstring *response_body,
       int *response_code);
 
   // Sends a POST request, with the body set to |body|, to the given URL.

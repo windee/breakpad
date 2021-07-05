@@ -1,4 +1,4 @@
-// Copyright (c) 2006, Google Inc.
+// Copyright (c) 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,61 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Disable exception handler warnings.
-#pragma warning( disable : 4530 )
+// stackwalker_address_list.cc: a pseudo stack walker.
+//
+// See stackwalker_address_list.h for documentation.
+//
+// Author: Chris Hamilton <chrisha@chromium.org>
 
-#include "sender/sender.h"
-#include "sender/http_upload.h"
+#include <assert.h>
+
+#include <vector>
+
+#include "parser/call_stack.h"
+#include "common/memory_region.h"
+#include "parser/stack_frame.h"
+#include "walker/stackwalker_address_list.h"
 
 namespace dump_helper {
 
-bool SendCrashReport(const string &url, string& file, map<string, string> &parameters
-) {
-
-  int http_response = 0;
-  return HTTPUpload::SendMultipartPostRequest(
-    url, parameters, file, NULL,
-    &http_response);
+StackwalkerAddressList::StackwalkerAddressList(
+    const uint64_t* frames,
+    size_t frame_count,
+    const CodeModules* modules)
+    : Stackwalker(NULL, NULL, modules),
+      frames_(frames),
+      frame_count_(frame_count) {
+  assert(frames);
 }
+
+StackFrame* StackwalkerAddressList::GetContextFrame() {
+  if (frame_count_ == 0)
+    return NULL;
+
+  StackFrame* frame = new StackFrame();
+  frame->instruction = frames_[0];
+  frame->trust = StackFrame::FRAME_TRUST_PREWALKED;
+  return frame;
+}
+
+StackFrame* StackwalkerAddressList::GetCallerFrame(const CallStack* stack,
+                                                   bool stack_scan_allowed) {
+  if (!stack) {
+    return NULL;
+  }
+
+  size_t frame_index = stack->frames()->size();
+
+  // There are no more frames to fetch.
+  if (frame_index >= frame_count_)
+    return NULL;
+
+  // All frames have the highest level of trust because they were
+  // explicitly provided.
+  StackFrame* frame = new StackFrame();
+  frame->instruction = frames_[frame_index];
+  frame->trust = StackFrame::FRAME_TRUST_PREWALKED;
+  return frame;
+}
+
 }  // namespace dump_helper

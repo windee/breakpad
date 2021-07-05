@@ -1,4 +1,4 @@
-// Copyright (c) 2006, Google Inc.
+// Copyright 2017, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Disable exception handler warnings.
-#pragma warning( disable : 4530 )
+#ifndef DUMP_HELPER_COMMON_SINGLELETON_H
+#define DUMP_HELPER_COMMON_SINGLELETON_H
 
-#include "sender/sender.h"
-#include "sender/http_upload.h"
+#include <string>
+#include <vector>
 
 namespace dump_helper {
-
-bool SendCrashReport(const string &url, string& file, map<string, string> &parameters
-) {
-
-  int http_response = 0;
-  return HTTPUpload::SendMultipartPostRequest(
-    url, parameters, file, NULL,
-    &http_response);
-}
+	int proc_is_exist();
 }  // namespace dump_helper
+
+#endif  // DUMP_HELPER_COMMON_SINGLELETON_H

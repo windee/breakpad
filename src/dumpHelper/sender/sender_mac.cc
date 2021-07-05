@@ -1,6 +1,6 @@
 /* This is an example application source code using the multi interface
  * to do a multipart formpost without "blocking". */
-#include "sender/sender_mac.h"
+#include "sender/sender.h"
 #include "common/path_helper.h"
 #include <stdio.h>
 #include <sys/time.h>
@@ -29,7 +29,7 @@ int my_trace(CURL *handle, curl_infotype type,
   return 0;
 }
 
-int SendCrashReport(string url, const map<string, string> &parameters, string file)
+bool SendCrashReport(const string& url, string& file, map<string, string> &parameters)
 {
   CURL *curl;
   
@@ -142,6 +142,6 @@ int SendCrashReport(string url, const map<string, string> &parameters, string fi
     /* free slist */
     curl_slist_free_all (headerlist);
   }
-  return responseCode;
+  return responseCode == 200;
 }
 }

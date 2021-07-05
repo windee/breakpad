@@ -27,20 +27,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Disable exception handler warnings.
-#pragma warning( disable : 4530 )
+// process_state.cc: A snapshot of a process, in a fully-digested state.
+//
+// See process_state.h for documentation.
+//
+// Author: Mark Mentovai
 
-#include "sender/sender.h"
-#include "sender/http_upload.h"
+#include "parser/process_state.h"
+#include "parser/call_stack.h"
+#include "parser/code_modules.h"
 
 namespace dump_helper {
 
-bool SendCrashReport(const string &url, string& file, map<string, string> &parameters
-) {
-
-  int http_response = 0;
-  return HTTPUpload::SendMultipartPostRequest(
-    url, parameters, file, NULL,
-    &http_response);
+ProcessState::~ProcessState() {
+  Clear();
 }
+
+void ProcessState::Clear() {
+  time_date_stamp_ = 0;
+  process_create_time_ = 0;
+  crashed_ = false;
+  crash_reason_.clear();
+  crash_address_ = 0;
+  assertion_.clear();
+  requesting_thread_ = -1;
+  for (vector<CallStack *>::const_iterator iterator = threads_.begin();
+       iterator != threads_.end();
+       ++iterator) {
+    delete *iterator;
+  }
+  threads_.clear();
+  system_info_.Clear();
+  // modules_without_symbols_ and modules_with_corrupt_symbols_ DO NOT own
+  // the underlying CodeModule pointers.  Just clear the vectors.
+  modules_without_symbols_.clear();
+  modules_with_corrupt_symbols_.clear();
+  delete modules_;
+  modules_ = NULL;
+  delete unloaded_modules_;
+  unloaded_modules_ = NULL;
+}
+
 }  // namespace dump_helper

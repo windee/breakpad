@@ -33,27 +33,22 @@
 // Author: Mark Mentovai
 
 #include <stdio.h>
-#include <string.h>
-
 #include <limits>
 #include <string>
 #include <vector>
 
 #include "common/path_helper.h"
 #include "common/scoped_ptr.h"
-#include "common/processor/minidump.h"
-#include "common/processor/minidump_processor.h"
-#include "common/processor/process_state.h"
 #include "common/md5.h"
-#include "stackwalk_common.h"
-#include "common/json_helper.h"
-
+#include "parser/minidump.h"
+#include "parser/minidump_processor.h"
+#include "parser/process_state.h"
+#include "parser/stackwalk_common.h"
+#include "json/json_helper.h"
+#include "sender/sender.h"
 
 #ifdef _WIN32
 #include "common/getopt.h"
-#include "sender/sender_win.h"
-#else
-#include "sender/sender_mac.h"
 #endif // _WIN32
 
 
@@ -80,7 +75,7 @@ struct Options {
 
 const std::string server_url = "https://kim-api1.kwaitalk.com/clientlog/log/crash";
 
-bool GenerateDumpInfo(const string& minidump_file, Minidump_Info* dmpInfo) {
+bool ParseMinidump(const string& minidump_file, Minidump_Info* dmpInfo) {
   MinidumpProcessor minidump_processor;
   // Increase the maximum number of threads and regions.
   MinidumpThreadList::set_max_threads(std::numeric_limits<uint32_t>::max());
@@ -132,43 +127,31 @@ int main(int argc, const char* argv[]) {
 	SetupOptions(argc, argv, &options);
 
 	std::vector<Minidump_Info> vecInfo;
+	int count = 0;
 
 	for (int i = 0; i < options.dump_files.size(); ++i) {
 		Minidump_Info info;
-		if (GenerateDumpInfo(options.crash_directory + "/" + options.dump_files[i], &info)) {
+		if (ParseMinidump(options.crash_directory + "/" + options.dump_files[i], &info)) {
 			vecInfo.push_back(info);
 		}
 
-    map<string, string> params = options.parameters;
-    params["crashReason"] = info.crash_reason;
-    params["crashAddress"] = info.crash_address;
-    params["moduleName"] = info.module_name;
-    params["moduleVersion"] = info.module_version;
-    params["moduleOffset"] = info.module_offset;
-    params["stackMd5"] = info.stack_md5;
+		map<string, string> params = options.parameters;
+		params["crashReason"] = info.crash_reason;
+		params["crashAddress"] = info.crash_address;
+		params["moduleName"] = info.module_name;
+		params["moduleVersion"] = info.module_version;
+		params["moduleOffset"] = info.module_offset;
+		params["stackMd5"] = info.stack_md5;
 
-    std::map<string, string> files;
-    files["upload_file_minidump"] = info.dump_path;
-
-    std::wstring report_code;
-        int response = 0;
-
-//    #ifdef _WIN32
-//      dump_helper::SendCrashReport(server_url, params, files, &report_code);
-//    #else
-//      response = dump_helper::SendCrashReport(server_url, params, info.dump_path);
-//    #endif // _WIN32
-//
-   if (response == 200 && remove(info.dump_path.c_str()) != 0)
-     dump_helper::JsonHelper::addFile(options.dump_files[i]);
+		if (dump_helper::SendCrashReport(server_url, info.dump_path, params)) {
+			count++;
+			if (remove(info.dump_path.c_str()))
+				dump_helper::JsonHelper::addFile(options.dump_files[i]);
+		}
 	}
-    
-    map<string, int> result;
-    
-    for(int i = 0; i < vecInfo.size(); i ++) {
-        result[vecInfo[i].stack_md5]++;
-    }
 
-  return 0;
+	printf("%d", count);
+
+	return 0;
 }
 

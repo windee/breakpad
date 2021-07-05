@@ -217,7 +217,6 @@ namespace {
       const wstring& content_type_header,
       const string& request_body,
       int* timeout_ms,
-      wstring* response_body,
       int* response_code) {
     if (response_code) {
       *response_code = 0;
@@ -326,13 +325,7 @@ namespace {
       *response_code = http_response;
     }
 
-    bool result = (http_response == 200);
-
-    if (result) {
-      result = ReadResponse(request.get(), response_body);
-    }
-
-    return result;
+    return http_response == 200;
   }
 
   wstring GenerateMultipartBoundary() {
@@ -384,7 +377,7 @@ namespace {
   }
 
   bool GenerateRequestBody(const map<string, string> &parameters,
-      const map<string, string> &files,
+      string& file,
       const wstring &boundary,
       string *request_body) {
     string boundary_str = WideToUTF8(boundary);
@@ -404,14 +397,13 @@ namespace {
     }
 
     // Now append each upload file as a binary (octet-stream) part
-    for (map<string, string>::const_iterator pos = files.begin();
-        pos != files.end(); ++pos) {
-      request_body->append("--" + boundary_str + "\r\n");
 
-      if (!AppendFileToRequestBody(pos->first, pos->second, request_body)) {
-        return false;
-      }
+    request_body->append("--" + boundary_str + "\r\n");
+
+    if (!AppendFileToRequestBody("upload_file_minidump", file, request_body)) {
+       return false;
     }
+
     request_body->append("--" + boundary_str + "--\r\n");
     return true;
   }
@@ -422,7 +414,6 @@ namespace dump_helper {
       const wstring& url,
       const string& path,
       int* timeout_ms,
-      wstring* response_body,
       int* response_code) {
     string request_body;
     if (!AppendFileToRequestBody("symbol_file", path, &request_body)) {
@@ -435,14 +426,12 @@ namespace dump_helper {
         L"",
         request_body,
         timeout_ms,
-        response_body,
         response_code);
   }
 
   bool HTTPUpload::SendGetRequest(
       const wstring& url,
       int* timeout_ms,
-      wstring* response_body,
       int* response_code) {
     return SendRequestInner(
         url,
@@ -450,16 +439,14 @@ namespace dump_helper {
         L"",
         "",
         timeout_ms,
-        response_body,
         response_code);
   }
 
   bool HTTPUpload::SendMultipartPostRequest(
       const string& url,
       const map<string, string>& parameters,
-      const map<string, string>& files,
+      string& file,
       int* timeout_ms,
-      wstring* response_body,
       int* response_code) {
     // TODO(bryner): support non-ASCII parameter names
     if (!CheckParameters(parameters)) {
@@ -470,7 +457,7 @@ namespace dump_helper {
     wstring content_type_header = GenerateMultipartPostRequestHeader(boundary);
 
     string request_body;
-    if (!GenerateRequestBody(parameters, files, boundary, &request_body)) {
+    if (!GenerateRequestBody(parameters, file, boundary, &request_body)) {
       return false;
     }
 
@@ -480,7 +467,6 @@ namespace dump_helper {
         content_type_header,
         request_body,
         timeout_ms,
-        response_body,
         response_code);
   }
 
@@ -497,7 +483,6 @@ namespace dump_helper {
         content_type,
         WideToUTF8(body),
         timeout_ms,
-        response_body,
         response_code);
   }
 }  // namespace dump_helper

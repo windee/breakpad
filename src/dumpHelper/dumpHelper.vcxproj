@@ -276,7 +276,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..;..\third_party\platformsdk_win7\files\Include;$(VSInstallDir)\VC\atlmfc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\third_party\platformsdk_win7\files\Include;$(VSInstallDir)\VC\atlmfc\include;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -284,19 +284,19 @@
       <DisableSpecificWarnings>4091;4100;4127;4366;4396;4503;4512;4819;4995;4702;4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <ExceptionHandling>false</ExceptionHandling>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
-      <OmitFramePointers>true</OmitFramePointers>
-      <Optimization>Full</Optimization>
+      <OmitFramePointers>false</OmitFramePointers>
+      <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0600;WINVER=0x0600;WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NOMINMAX;_CRT_RAND_S;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;WIN32_LEAN_AND_MEAN;_SECURE_ATL;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_USING_V110_SDK71_;NDEBUG;NVALGRIND;OFFICIAL_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <WarningLevel>Level4</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -348,7 +348,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0600;WINVER=0x0600;WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NOMINMAX;_CRT_RAND_S;CERT_CHAIN_PARA_HAS_EXTRA_FIELDS;WIN32_LEAN_AND_MEAN;_SECURE_ATL;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_USING_V110_SDK71_;NO_TCMALLOC;NDEBUG;NVALGRIND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -390,9 +390,13 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="common\cfi_frame_info-inl.h" />
+    <ClInclude Include="common\cfi_frame_info.h" />
     <ClInclude Include="common\getopt.h" />
+    <ClInclude Include="common\linked_ptr.h" />
     <ClInclude Include="common\macros.h" />
     <ClInclude Include="common\md5.h" />
+    <ClInclude Include="common\memory_region.h" />
     <ClInclude Include="common\minidump\breakpad_types.h" />
     <ClInclude Include="common\minidump\minidump_cpu_amd64.h" />
     <ClInclude Include="common\minidump\minidump_cpu_arm.h" />
@@ -401,74 +405,77 @@
     <ClInclude Include="common\minidump\minidump_exception_mac.h" />
     <ClInclude Include="common\minidump\minidump_exception_win32.h" />
     <ClInclude Include="common\minidump\minidump_format.h" />
-    <ClInclude Include="common\minidump\minidump_size.h" />
     <ClInclude Include="common\path_helper.h" />
-    <ClInclude Include="common\processor\call_stack.h" />
-    <ClInclude Include="common\processor\code_module.h" />
-    <ClInclude Include="common\processor\code_modules.h" />
-    <ClInclude Include="common\processor\dump_context.h" />
-    <ClInclude Include="common\processor\dump_object.h" />
-    <ClInclude Include="common\processor\exception_record.h" />
-    <ClInclude Include="common\processor\fast_source_line_resolver.h" />
-    <ClInclude Include="common\processor\memory_region.h" />
-    <ClInclude Include="common\processor\minidump.h" />
-    <ClInclude Include="common\processor\minidump_processor.h" />
-    <ClInclude Include="common\processor\process_result.h" />
-    <ClInclude Include="common\processor\process_state.h" />
-    <ClInclude Include="common\processor\stackwalker.h" />
-    <ClInclude Include="common\processor\stack_frame.h" />
-    <ClInclude Include="common\processor\stack_frame_cpu.h" />
-    <ClInclude Include="common\processor\system_info.h" />
+    <ClInclude Include="common\postfix_evaluator-inl.h" />
+    <ClInclude Include="common\postfix_evaluator.h" />
+    <ClInclude Include="common\range_map-inl.h" />
+    <ClInclude Include="common\range_map.h" />
+    <ClInclude Include="common\singleton.h" />
     <ClInclude Include="common\stdio_wrapper.h" />
-    <ClInclude Include="basic_code_module.h" />
-    <ClInclude Include="basic_code_modules.h" />
-    <ClInclude Include="address_map-inl.h" />
-    <ClInclude Include="address_map.h" />
-    <ClInclude Include="cfi_frame_info-inl.h" />
-    <ClInclude Include="cfi_frame_info.h" />
-    <ClInclude Include="convert_old_arm64_context.h" />
-    <ClInclude Include="linked_ptr.h" />
-    <ClInclude Include="postfix_evaluator-inl.h" />
-    <ClInclude Include="postfix_evaluator.h" />
-    <ClInclude Include="range_map-inl.h" />
-    <ClInclude Include="range_map.h" />
+    <ClInclude Include="common\system_info.h" />
+    <ClInclude Include="json\allocator.h" />
+    <ClInclude Include="json\assertions.h" />
+    <ClInclude Include="json\config.h" />
+    <ClInclude Include="json\forwards.h" />
+    <ClInclude Include="json\json.h" />
+    <ClInclude Include="json\json_features.h" />
+    <ClInclude Include="json\json_helper.h" />
+    <ClInclude Include="json\json_tool.h" />
+    <ClInclude Include="json\reader.h" />
+    <ClInclude Include="json\value.h" />
+    <ClInclude Include="json\version.h" />
+    <ClInclude Include="json\writer.h" />
+    <ClInclude Include="parser\basic_code_module.h" />
+    <ClInclude Include="parser\basic_code_modules.h" />
+    <ClInclude Include="parser\convert_old_arm64_context.h" />
+    <ClInclude Include="parser\exception_record.h" />
+    <ClInclude Include="parser\process_result.h" />
+    <ClInclude Include="parser\stackwalk_common.h" />
+    <ClInclude Include="parser\symbolic_constants_win.h" />
     <ClInclude Include="sender\guid_string.h" />
     <ClInclude Include="sender\http_upload.h" />
     <ClInclude Include="sender\module_info.h" />
-    <ClInclude Include="sender\sender_win.h" />
-    <ClInclude Include="stackwalker\stackwalker_address_list.h" />
-    <ClInclude Include="stackwalker\stackwalker_amd64.h" />
-    <ClInclude Include="stackwalker\stackwalker_arm.h" />
-    <ClInclude Include="stackwalker\stackwalker_arm64.h" />
-    <ClInclude Include="stackwalker\stackwalker_x86.h" />
-    <ClInclude Include="stackwalk_common.h" />
-    <ClInclude Include="symbolic_constants_win.h" />
+    <ClInclude Include="sender\sender.h" />
+    <ClInclude Include="walker\stackwalker.h" />
+    <ClInclude Include="walker\stackwalker_address_list.h" />
+    <ClInclude Include="walker\stackwalker_amd64.h" />
+    <ClInclude Include="walker\stackwalker_arm.h" />
+    <ClInclude Include="walker\stackwalker_arm64.h" />
+    <ClInclude Include="walker\stackwalker_x86.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="common\cfi_frame_info.cc" />
     <ClCompile Include="common\getopt.cc" />
     <ClCompile Include="common\path_helper.cc" />
-    <ClCompile Include="dump_object.cc" />
+    <ClCompile Include="common\singleton.cc" />
     <ClCompile Include="dump_helper.cc" />
-    <ClCompile Include="basic_code_modules.cc" />
-    <ClCompile Include="call_stack.cc" />
-    <ClCompile Include="cfi_frame_info.cc" />
-    <ClCompile Include="convert_old_arm64_context.cc" />
-    <ClCompile Include="dump_context.cc" />
-    <ClCompile Include="minidump.cc" />
-    <ClCompile Include="minidump_processor.cc" />
-    <ClCompile Include="process_state.cc" />
+    <ClCompile Include="json\json_helper.cc" />
+    <ClCompile Include="json\json_reader.cpp" />
+    <ClCompile Include="json\json_value.cpp" />
+    <ClCompile Include="json\json_writer.cpp" />
+    <ClCompile Include="parser\basic_code_modules.cc" />
+    <ClCompile Include="parser\call_stack.cc" />
+    <ClCompile Include="parser\convert_old_arm64_context.cc" />
+    <ClCompile Include="parser\dump_context.cc" />
+    <ClCompile Include="parser\dump_object.cc" />
+    <ClCompile Include="parser\minidump.cc" />
+    <ClCompile Include="parser\minidump_processor.cc" />
+    <ClCompile Include="parser\process_state.cc" />
+    <ClCompile Include="parser\stackwalk_common.cc" />
+    <ClCompile Include="parser\stack_frame_cpu.cc" />
+    <ClCompile Include="parser\symbolic_constants_win.cc" />
     <ClCompile Include="sender\guid_string.cc" />
     <ClCompile Include="sender\http_upload.cc" />
     <ClCompile Include="sender\sender_win.cc" />
-    <ClCompile Include="stackwalker\stackwalker.cc" />
-    <ClCompile Include="stackwalker\stackwalker_address_list.cc" />
-    <ClCompile Include="stackwalker\stackwalker_amd64.cc" />
-    <ClCompile Include="stackwalker\stackwalker_arm.cc" />
-    <ClCompile Include="stackwalker\stackwalker_arm64.cc" />
-    <ClCompile Include="stackwalker\stackwalker_x86.cc" />
-    <ClCompile Include="stack_frame_cpu.cc" />
-    <ClCompile Include="stackwalk_common.cc" />
-    <ClCompile Include="symbolic_constants_win.cc" />
+    <ClCompile Include="walker\stackwalker.cc" />
+    <ClCompile Include="walker\stackwalker_address_list.cc" />
+    <ClCompile Include="walker\stackwalker_amd64.cc" />
+    <ClCompile Include="walker\stackwalker_arm.cc" />
+    <ClCompile Include="walker\stackwalker_arm64.cc" />
+    <ClCompile Include="walker\stackwalker_x86.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="json\json_valueiterator.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

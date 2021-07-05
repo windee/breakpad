@@ -27,20 +27,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Disable exception handler warnings.
-#pragma warning( disable : 4530 )
+// call_stack.cc: A call stack comprised of stack frames.
+//
+// See call_stack.h for documentation.
+//
+// Author: Mark Mentovai
 
-#include "sender/sender.h"
-#include "sender/http_upload.h"
+#include "parser/call_stack.h"
+#include "parser/stack_frame.h"
 
 namespace dump_helper {
 
-bool SendCrashReport(const string &url, string& file, map<string, string> &parameters
-) {
-
-  int http_response = 0;
-  return HTTPUpload::SendMultipartPostRequest(
-    url, parameters, file, NULL,
-    &http_response);
+CallStack::~CallStack() {
+  Clear();
 }
+
+void CallStack::Clear() {
+  for (vector<StackFrame *>::const_iterator iterator = frames_.begin();
+       iterator != frames_.end();
+       ++iterator) {
+    delete *iterator;
+  }
+  tid_ = 0;
+}
+
 }  // namespace dump_helper

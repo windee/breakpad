@@ -1,17 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="basic_code_modules.cc" />
-    <ClCompile Include="call_stack.cc" />
-    <ClCompile Include="cfi_frame_info.cc" />
-    <ClCompile Include="convert_old_arm64_context.cc" />
-    <ClCompile Include="dump_context.cc" />
-    <ClCompile Include="minidump.cc" />
-    <ClCompile Include="minidump_processor.cc" />
-    <ClCompile Include="process_state.cc" />
-    <ClCompile Include="stack_frame_cpu.cc" />
-    <ClCompile Include="stackwalk_common.cc" />
-    <ClCompile Include="symbolic_constants_win.cc" />
     <ClCompile Include="sender\guid_string.cc">
       <Filter>sender</Filter>
     </ClCompile>
@@ -24,45 +13,81 @@
     <ClCompile Include="common\getopt.cc">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="dump_object.cc" />
     <ClCompile Include="dump_helper.cc" />
-    <ClCompile Include="stackwalker\stackwalker.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_address_list.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_amd64.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_arm.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_arm64.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
-    <ClCompile Include="stackwalker\stackwalker_x86.cc">
-      <Filter>stackwalker</Filter>
-    </ClCompile>
     <ClCompile Include="sender\sender_win.cc">
       <Filter>sender</Filter>
     </ClCompile>
+    <ClCompile Include="common\singleton.cc">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="walker\stackwalker.cc">
+      <Filter>walker</Filter>
+    </ClCompile>
+    <ClCompile Include="walker\stackwalker_address_list.cc">
+      <Filter>walker</Filter>
+    </ClCompile>
+    <ClCompile Include="walker\stackwalker_amd64.cc">
+      <Filter>walker</Filter>
+    </ClCompile>
+    <ClCompile Include="walker\stackwalker_arm.cc">
+      <Filter>walker</Filter>
+    </ClCompile>
+    <ClCompile Include="walker\stackwalker_arm64.cc">
+      <Filter>walker</Filter>
+    </ClCompile>
+    <ClCompile Include="walker\stackwalker_x86.cc">
+      <Filter>walker</Filter>
+    </ClCompile>
+    <ClCompile Include="common\cfi_frame_info.cc">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\basic_code_modules.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\call_stack.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\convert_old_arm64_context.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\dump_context.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\dump_object.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\minidump.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\minidump_processor.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\process_state.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\stack_frame_cpu.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\stackwalk_common.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="parser\symbolic_constants_win.cc">
+      <Filter>parser</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_helper.cc">
+      <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_reader.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_value.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_writer.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="basic_code_module.h" />
-    <ClInclude Include="basic_code_modules.h" />
-    <ClInclude Include="address_map-inl.h" />
-    <ClInclude Include="address_map.h" />
-    <ClInclude Include="cfi_frame_info-inl.h" />
-    <ClInclude Include="cfi_frame_info.h" />
-    <ClInclude Include="convert_old_arm64_context.h" />
-    <ClInclude Include="linked_ptr.h" />
-    <ClInclude Include="postfix_evaluator-inl.h" />
-    <ClInclude Include="postfix_evaluator.h" />
-    <ClInclude Include="range_map-inl.h" />
-    <ClInclude Include="range_map.h" />
-    <ClInclude Include="stackwalk_common.h" />
-    <ClInclude Include="symbolic_constants_win.h" />
     <ClInclude Include="sender\guid_string.h">
       <Filter>sender</Filter>
     </ClInclude>
@@ -86,21 +111,6 @@
     </ClInclude>
     <ClInclude Include="common\md5.h">
       <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_address_list.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_amd64.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_arm.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_arm64.h">
-      <Filter>stackwalker</Filter>
-    </ClInclude>
-    <ClInclude Include="stackwalker\stackwalker_x86.h">
-      <Filter>stackwalker</Filter>
     </ClInclude>
     <ClInclude Include="common\minidump\breakpad_types.h">
       <Filter>common\minidump</Filter>
@@ -126,59 +136,113 @@
     <ClInclude Include="common\minidump\minidump_format.h">
       <Filter>common\minidump</Filter>
     </ClInclude>
-    <ClInclude Include="common\minidump\minidump_size.h">
-      <Filter>common\minidump</Filter>
+    <ClInclude Include="common\singleton.h">
+      <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="common\processor\call_stack.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\code_module.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\code_modules.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\dump_context.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\dump_object.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\exception_record.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\fast_source_line_resolver.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\memory_region.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\minidump.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\minidump_processor.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\process_result.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\process_state.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\stack_frame.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\stack_frame_cpu.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\stackwalker.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="common\processor\system_info.h">
-      <Filter>common\processor</Filter>
-    </ClInclude>
-    <ClInclude Include="sender\sender_win.h">
+    <ClInclude Include="sender\sender.h">
       <Filter>sender</Filter>
+    </ClInclude>
+    <ClInclude Include="common\range_map.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\range_map-inl.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\linked_ptr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="walker\stackwalker_address_list.h">
+      <Filter>walker</Filter>
+    </ClInclude>
+    <ClInclude Include="walker\stackwalker_amd64.h">
+      <Filter>walker</Filter>
+    </ClInclude>
+    <ClInclude Include="walker\stackwalker_arm.h">
+      <Filter>walker</Filter>
+    </ClInclude>
+    <ClInclude Include="walker\stackwalker_arm64.h">
+      <Filter>walker</Filter>
+    </ClInclude>
+    <ClInclude Include="walker\stackwalker_x86.h">
+      <Filter>walker</Filter>
+    </ClInclude>
+    <ClInclude Include="common\cfi_frame_info.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\cfi_frame_info-inl.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\postfix_evaluator.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\postfix_evaluator-inl.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\basic_code_module.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\basic_code_modules.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\convert_old_arm64_context.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\stackwalk_common.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\symbolic_constants_win.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\process_result.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="parser\exception_record.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="walker\stackwalker.h">
+      <Filter>walker</Filter>
+    </ClInclude>
+    <ClInclude Include="common\memory_region.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\system_info.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="json\allocator.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\assertions.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\config.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\forwards.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json_features.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json_helper.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json_tool.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\reader.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\value.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\version.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\writer.h">
+      <Filter>json</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -188,14 +252,22 @@
     <Filter Include="sender">
       <UniqueIdentifier>{ef7eb03c-ea62-4171-9ba3-8ee2a2590848}</UniqueIdentifier>
     </Filter>
-    <Filter Include="stackwalker">
-      <UniqueIdentifier>{4b6b51d8-8e8e-4d69-88cb-f80003a75e71}</UniqueIdentifier>
-    </Filter>
     <Filter Include="common\minidump">
       <UniqueIdentifier>{6b0061bc-b975-48e4-a6fd-09b1ab54ed5f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="common\processor">
-      <UniqueIdentifier>{975ba943-10c1-45d3-95ba-0d5849e210a5}</UniqueIdentifier>
+    <Filter Include="walker">
+      <UniqueIdentifier>{4b6b51d8-8e8e-4d69-88cb-f80003a75e71}</UniqueIdentifier>
     </Filter>
+    <Filter Include="parser">
+      <UniqueIdentifier>{c454cee0-d58d-4621-95d1-29eff24b6bc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="json">
+      <UniqueIdentifier>{99ddcbed-bfc2-4244-9b47-459580008a84}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="json\json_valueiterator.inl">
+      <Filter>json</Filter>
+    </None>
   </ItemGroup>
 </Project>
