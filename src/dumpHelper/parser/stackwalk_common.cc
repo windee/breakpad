@@ -54,29 +54,6 @@
 
 namespace dump_helper {
 
-namespace {
-
-using std::vector;
-using std::string;
-
-// ContainsModule checks whether a given |module| is in the vector
-// |modules_without_symbols|.
-static bool ContainsModule(
-    const vector<const CodeModule*> *modules,
-    const CodeModule *module) {
-  assert(modules);
-  assert(module);
-  vector<const CodeModule*>::const_iterator iter;
-  for (iter = modules->begin(); iter != modules->end(); ++iter) {
-    if (module->debug_file().compare((*iter)->debug_file()) == 0 &&
-        module->debug_identifier().compare((*iter)->debug_identifier()) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-}  // namespace
-
 #ifdef _WIN32
 std::set<string> g_SystemModules = { "kernelbase.dll", "ntdll.dll", "kernel32.dll" };
 #else
@@ -137,7 +114,6 @@ void GetCallStack(const CallStack* stack, int max_count, Minidump_Info* dmpInfo)
 	}
 
 	md5::MD5 md;
-    dmpInfo->stack_raw = strStack;
 	dmpInfo->stack_md5 = md.digestString((char*)strStack.c_str());
 }
 

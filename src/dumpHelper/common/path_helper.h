@@ -32,6 +32,7 @@
 
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 namespace dump_helper {
 
@@ -44,7 +45,7 @@ namespace dump_helper {
 		static string DirName(const string& path);
 		static string ToLower(const string& name);
 		static string FileName(const string& path);
-		static vector<string> DumpFiles(const string& dir);
+		static vector<string> DumpFiles(const string& dir, uint32_t timeDays = 7);
 	};
 }  // namespace dump_helper
 

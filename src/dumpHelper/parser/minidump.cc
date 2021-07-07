@@ -325,41 +325,6 @@ void ConvertUTF16BufferToUTF8String(const uint16_t* utf16_data,
 }
 
 
-// Converts a time_t to a string showing the time in UTC.
-string TimeTToUTCString(time_t tt) {
-  struct tm timestruct;
-#ifdef _WIN32
-  gmtime_s(&timestruct, &tt);
-#else
-  gmtime_r(&tt, &timestruct);
-#endif
-
-  char timestr[20];
-  size_t rv = strftime(timestr, 20, "%Y-%m-%d %H:%M:%S", &timestruct);
-  if (rv == 0) {
-    return string();
-  }
-
-  return string(timestr);
-}
-
-string MDGUIDToString(const MDGUID& uuid) {
-  char buf[37];
-  snprintf(buf, sizeof(buf), "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-           uuid.data1,
-           uuid.data2,
-           uuid.data3,
-           uuid.data4[0],
-           uuid.data4[1],
-           uuid.data4[2],
-           uuid.data4[3],
-           uuid.data4[4],
-           uuid.data4[5],
-           uuid.data4[6],
-           uuid.data4[7]);
-  return std::string(buf);
-}
-
 bool IsDevAshmem(const string& filename) {
   const string kDevAshmem("/dev/ashmem/");
   return filename.compare(0, kDevAshmem.length(), kDevAshmem) == 0;
@@ -2006,6 +1971,12 @@ bool MinidumpModuleList::Read(uint32_t expected_size) {
   return true;
 }
 
+void MinidumpModuleList::Print(){
+    for(int i = 0; i < modules_->size(); i ++) {
+        printf("%s \n", modules_->at(i).code_file().c_str());
+    }
+}
+
 bool MinidumpModuleList::StoreRange(const MinidumpModule& module,
                                     uint64_t base_address,
                                     uint32_t module_index,
@@ -3628,83 +3599,6 @@ bool Minidump::GetPlatform(MDOSPlatform* platform) {
   }
   *platform = static_cast<MDOSPlatform>(system_info->platform_id);
   return true;
-}
-
-static const char* get_stream_name(uint32_t stream_type) {
-  switch (stream_type) {
-  case MD_UNUSED_STREAM:
-    return "MD_UNUSED_STREAM";
-  case MD_RESERVED_STREAM_0:
-    return "MD_RESERVED_STREAM_0";
-  case MD_RESERVED_STREAM_1:
-    return "MD_RESERVED_STREAM_1";
-  case MD_THREAD_LIST_STREAM:
-    return "MD_THREAD_LIST_STREAM";
-  case MD_MODULE_LIST_STREAM:
-    return "MD_MODULE_LIST_STREAM";
-  case MD_MEMORY_LIST_STREAM:
-    return "MD_MEMORY_LIST_STREAM";
-  case MD_EXCEPTION_STREAM:
-    return "MD_EXCEPTION_STREAM";
-  case MD_SYSTEM_INFO_STREAM:
-    return "MD_SYSTEM_INFO_STREAM";
-  case MD_THREAD_EX_LIST_STREAM:
-    return "MD_THREAD_EX_LIST_STREAM";
-  case MD_MEMORY_64_LIST_STREAM:
-    return "MD_MEMORY_64_LIST_STREAM";
-  case MD_COMMENT_STREAM_A:
-    return "MD_COMMENT_STREAM_A";
-  case MD_COMMENT_STREAM_W:
-    return "MD_COMMENT_STREAM_W";
-  case MD_HANDLE_DATA_STREAM:
-    return "MD_HANDLE_DATA_STREAM";
-  case MD_FUNCTION_TABLE_STREAM:
-    return "MD_FUNCTION_TABLE_STREAM";
-  case MD_UNLOADED_MODULE_LIST_STREAM:
-    return "MD_UNLOADED_MODULE_LIST_STREAM";
-  case MD_MISC_INFO_STREAM:
-    return "MD_MISC_INFO_STREAM";
-  case MD_MEMORY_INFO_LIST_STREAM:
-    return "MD_MEMORY_INFO_LIST_STREAM";
-  case MD_THREAD_INFO_LIST_STREAM:
-    return "MD_THREAD_INFO_LIST_STREAM";
-  case MD_HANDLE_OPERATION_LIST_STREAM:
-    return "MD_HANDLE_OPERATION_LIST_STREAM";
-  case MD_TOKEN_STREAM:
-    return "MD_TOKEN_STREAM";
-  case MD_JAVASCRIPT_DATA_STREAM:
-    return "MD_JAVASCRIPT_DATA_STREAM";
-  case MD_SYSTEM_MEMORY_INFO_STREAM:
-    return "MD_SYSTEM_MEMORY_INFO_STREAM";
-  case MD_PROCESS_VM_COUNTERS_STREAM:
-    return "MD_PROCESS_VM_COUNTERS_STREAM";
-  case MD_LAST_RESERVED_STREAM:
-    return "MD_LAST_RESERVED_STREAM";
-  case MD_BREAKPAD_INFO_STREAM:
-    return "MD_BREAKPAD_INFO_STREAM";
-  case MD_ASSERTION_INFO_STREAM:
-    return "MD_ASSERTION_INFO_STREAM";
-  case MD_LINUX_CPU_INFO:
-    return "MD_LINUX_CPU_INFO";
-  case MD_LINUX_PROC_STATUS:
-    return "MD_LINUX_PROC_STATUS";
-  case MD_LINUX_LSB_RELEASE:
-    return "MD_LINUX_LSB_RELEASE";
-  case MD_LINUX_CMD_LINE:
-    return "MD_LINUX_CMD_LINE";
-  case MD_LINUX_ENVIRON:
-    return "MD_LINUX_ENVIRON";
-  case MD_LINUX_AUXV:
-    return "MD_LINUX_AUXV";
-  case MD_LINUX_MAPS:
-    return "MD_LINUX_MAPS";
-  case MD_LINUX_DSO_DEBUG:
-    return "MD_LINUX_DSO_DEBUG";
-  case MD_CRASHPAD_INFO_STREAM:
-    return "MD_CRASHPAD_INFO_STREAM";
-  default:
-    return "unknown";
-  }
 }
 
 const MDRawDirectory* Minidump::GetDirectoryEntryAtIndex(unsigned int index)

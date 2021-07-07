@@ -37,18 +37,18 @@
 #include <string>
 
 namespace dump_helper {
+using std::string;
 
 class ProcessState;
 struct Minidump_Info {
-	std::string module_name;
-	std::string module_offset;
-	std::string crash_reason;
-	std::string dump_path;
-	std::string stack_md5;
-	std::string crash_address;
-	std::string app_name;
-	std::string module_version;
-	std::string stack_raw;
+    string dump_path;
+	string crash_reason;
+	string crash_address;
+    string module_name;
+    string module_offset;
+	string module_version;
+    string stack_md5;
+    string process_type;
 };
 
 void PrintProcessState(const ProcessState& process_state);

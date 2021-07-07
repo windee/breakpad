@@ -73,12 +73,16 @@ void JsonHelper::addFile(string& file){
 }
 
 vector<string> JsonHelper::getFiles() {
+	vector<string> files;
+
     Json::Value root;
     readRoot(root);
     Json::Value& array = root[root_name];
-    
-    vector<string> files;
 
+	if (array.size() == 0) {
+		return files;
+	}
+    
     for(unsigned int i = 0; i < array.size() ; i++){
         string file = array[i].asString();
         if (remove((json_dir + "/" + file).c_str()) != 0) {
@@ -94,5 +98,21 @@ vector<string> JsonHelper::getFiles() {
     writeRoot(root);
     
     return files;
+}
+
+string JsonHelper::stringfy(vector<Minidump_Info>& infos) {
+    Json::Value root;
+    Json::Value array;
+        
+    for(unsigned int i = 0; i < infos.size() ; i++){
+        Json::Value item;
+        item["module_name"] = infos[i].module_name;
+        item["module_offset"] = infos[i].module_offset;
+        item["crash_reason"] = infos[i].crash_reason;
+        array.append(item);
+    }
+
+    root["completed_files"] = array;
+    return root.toStyledString();
 }
 }  // namespace dump_helper

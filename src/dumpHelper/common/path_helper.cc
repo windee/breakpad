@@ -39,6 +39,7 @@
 
 
 #ifdef _WIN32
+#include <time.h>
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
 #else
@@ -104,8 +105,20 @@ string PathHelper::FileName(const string& path) {
 	return ToLower(path.substr(file_start));
 }
 
+#ifdef _WIN32
+void  FileTimeToTime_t(FILETIME ft, time_t* t)
+{
+	ULARGE_INTEGER            ui;
+	ui.LowPart = ft.dwLowDateTime;
+	ui.HighPart = ft.dwHighDateTime;
 
-vector<string> PathHelper::DumpFiles(const string& dir) {
+	*t = ((LONGLONG)(ui.QuadPart - 116444736000000000) / 10000000);
+}
+#endif
+
+
+
+vector<string> PathHelper::DumpFiles(const string& dir, uint32_t timeDays) {
 	vector<string> vec;
     vector<string> completed = JsonHelper::getFiles();
 #ifdef _WIN32
@@ -120,7 +133,12 @@ vector<string> PathHelper::DumpFiles(const string& dir) {
 
 	while (FindNextFileA(hFind, &findData) == TRUE)
 	{
-		if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		time_t createTime;
+		FileTimeToTime_t(findData.ftCreationTime, &createTime);
+		uint32_t days = (uint32_t)(time(NULL) - createTime) / 3600 / 24;
+
+
+		if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && days < timeDays)
 		{
 			const string filename = findData.cFileName;
 			string suffix = filename.substr(filename.find_last_of('.') + 1);
@@ -145,8 +163,9 @@ vector<string> PathHelper::DumpFiles(const string& dir) {
 		std::string subdir = dir + "/";
 		subdir += entry->d_name;
 		lstat(subdir.c_str(), &statbuf);
+		uint32_t days = (uint32_t)(time(NULL) - statbuf.st_ctime)/3600/24;
 
-		if (!S_ISDIR(statbuf.st_mode))
+		if (!S_ISDIR(statbuf.st_mode) && days < timeDays)
 		{
 			const string filename = entry->d_name;
 			string suffix = filename.substr(filename.find_last_of('.') + 1);

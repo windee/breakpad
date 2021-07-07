@@ -52,28 +52,90 @@
 #endif // _WIN32
 
 
-
-
-namespace {
 using std::string;
 using std::map;
-using dump_helper::Minidump;
-using dump_helper::MinidumpMemoryList;
-using dump_helper::MinidumpThreadList;
-using dump_helper::MinidumpProcessor;
-using dump_helper::ProcessState;
-using dump_helper::scoped_ptr;
-using dump_helper::Minidump_Info;
-using dump_helper::PathHelper;
+using namespace dump_helper;
+
 
 struct Options {
+    string server_url;
 	string crash_directory;
-	std::vector<string> dump_files;
-	std::map<string, string> parameters;
+	vector<string> dump_files;
+	map<string, string> parameters;
 };
 
 
-const std::string server_url = "https://kim-api1.kwaitalk.com/clientlog/log/crash";
+bool getMacProcessType(ProcessState& state, Minidump_Info* pInfo) {
+    auto module = state.modules()->GetMainModule();
+    string filename = PathHelper::FileName(module->code_file());
+    
+    size_t start = filename.find('(');
+    size_t end = filename.find(')');
+    
+    if (filename.find("electron") == -1 && filename.find("kim") == -1) {
+        return false;
+    }
+    
+    if (start == -1 || end == -1){
+        pInfo->process_type = "browser";
+    } else {
+        pInfo->process_type = filename.substr(start + 1, end - start - 1);
+    }
+    
+    return true;
+}
+
+bool getWinProcessType(ProcessState& state, Minidump_Info* pInfo) {
+    const CodeModules*  modules = state.modules();
+    for (unsigned int i = 0; i < modules->module_count(); i ++) {
+        auto module = modules->GetModuleAtIndex(i);
+        if (module == NULL)
+        {
+            continue;
+        }
+        
+        string filename = PathHelper::FileName(module->code_file());
+        
+        if (filename == "kimcastcontroller.dll") {
+            pInfo->process_type = "browser";
+            return true;
+        }
+    }
+    
+    pInfo->process_type = "renderer";
+    return true;
+}
+
+bool isValidState(ProcessState& state) {
+    auto module = state.modules()->GetMainModule();
+    string filename = PathHelper::FileName(module->code_file());
+    
+    if (filename == "kim.exe") {
+        string version = module->version();
+        size_t pos = version.find_last_of('.');
+        if (pos != -1) {
+            string mainVersion = version.substr(0, pos);
+            int v1 = 0, v2 = 0, v3 = 0;
+            sscanf(mainVersion.c_str(), "%d.%d.%d", &v1, &v2, &v3);
+            //拿不到版本，直接放过
+            if (v1 == 0 && v2 == 0 && v3 == 0) {
+                return true;
+            }
+            //拿到版本，最低版本应该是1.0.91
+            if (v1 < 1 || (v1 == 1 && v2 == 0 && v3 < 91)) {
+                return false;
+            }
+
+            return true;
+        }
+    }
+      
+    if (filename.find("electron") == -1 && filename.find("kim") == -1) {
+        return false;
+    }
+    
+    return true;
+}
 
 bool ParseMinidump(const string& minidump_file, Minidump_Info* dmpInfo) {
   MinidumpProcessor minidump_processor;
@@ -83,7 +145,6 @@ bool ParseMinidump(const string& minidump_file, Minidump_Info* dmpInfo) {
   // Process the minidump.
   Minidump dump(minidump_file);
   if (!dump.Read()) {
-     //BPLOG(ERROR) << "Minidump " << dump.path() << " could not be read";
      return false;
   }
   ProcessState process_state;
@@ -92,6 +153,15 @@ bool ParseMinidump(const string& minidump_file, Minidump_Info* dmpInfo) {
     return false;
   }
 
+  if (!isValidState(process_state)) {
+    return false;
+  }
+    
+#ifdef _WIN32
+    getWinProcessType(process_state, dmpInfo);
+#else
+    getMacProcessType(process_state, dmpInfo);
+#endif // _WIN32
 
   dmpInfo->dump_path = minidump_file;
   GetUploadInfo(process_state, dmpInfo);
@@ -99,21 +169,21 @@ bool ParseMinidump(const string& minidump_file, Minidump_Info* dmpInfo) {
   return true;
 }
 
-}  // namespace
-
-
+const uint32_t max_days = 7;
+const size_t max_counts = 5;
 
 static void SetupOptions(int argc, const char *argv[], Options* options) {
 
-  if ((argc - optind) == 0) {
+  if ((argc - optind) < 1) {
     exit(1);
   }
 
-  options->crash_directory = argv[optind];
+  options->server_url = argv[optind];
+  options->crash_directory = argv[optind + 1];
   dump_helper::JsonHelper::init(options->crash_directory.c_str(), "complete_file");
-  options->dump_files = PathHelper::DumpFiles(options->crash_directory);
+  options->dump_files = PathHelper::DumpFiles(options->crash_directory, max_days);
 
-  for (int argi = optind + 1; argi < argc; ++argi) {
+  for (int argi = optind + 2; argi < argc; ++argi) {
 	  string param = argv[argi];
 	  size_t nPos = param.find_first_of('=');
 	  options->parameters[param.substr(0, nPos)] = param.substr(nPos + 1);
@@ -121,17 +191,17 @@ static void SetupOptions(int argc, const char *argv[], Options* options) {
 }
 
 int main(int argc, const char* argv[]) {
-	Options options;
+    Options options;
 	SetupOptions(argc, argv, &options);
 
-	std::vector<Minidump_Info> vecInfo;
+	vector<Minidump_Info> vecInfo;
 	int count = 0;
 
-	for (int i = 0; i < options.dump_files.size(); ++i) {
+	for (int i = 0; i < options.dump_files.size() && count < max_counts; ++i) {
 		Minidump_Info info;
-		if (ParseMinidump(options.crash_directory + "/" + options.dump_files[i], &info)) {
-			vecInfo.push_back(info);
-		}
+        if (!ParseMinidump(options.crash_directory + "/" + options.dump_files[i], &info)) {
+            continue;
+        }
 
 		map<string, string> params = options.parameters;
 		params["crashReason"] = info.crash_reason;
@@ -140,15 +210,26 @@ int main(int argc, const char* argv[]) {
 		params["moduleVersion"] = info.module_version;
 		params["moduleOffset"] = info.module_offset;
 		params["stackMd5"] = info.stack_md5;
+        
+        auto ite = params.find("process_type");
+        if (ite == params.end() || ite->second != info.process_type) {
+			params["process_type"] = info.process_type;
+			params["processTitle"] = info.process_type == "renderer" ? "IM" : "Main";
+        }
 
-		if (dump_helper::SendCrashReport(server_url, info.dump_path, params)) {
-			count++;
-			if (remove(info.dump_path.c_str()))
-				dump_helper::JsonHelper::addFile(options.dump_files[i]);
-		}
+        if (!SendCrashReport(options.server_url, info.dump_path, params)) {
+            continue;
+        } else {
+            vecInfo.push_back(info);
+        }
+
+        count++;
+        if (remove(info.dump_path.c_str())) {
+            JsonHelper::addFile(options.dump_files[i]);
+        }
 	}
 
-	printf("%d", count);
+	printf("%s", JsonHelper::stringfy(vecInfo).c_str());
 
 	return 0;
 }

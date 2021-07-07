@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 #include "json/json.h"
+#include "parser/stackwalk_common.h"
 
 namespace dump_helper {
 
@@ -46,6 +47,7 @@ namespace dump_helper {
         static void addFile(string& file);
         static void readRoot(Json::Value &root);
         static void writeRoot(Json::Value &root);
+        static string stringfy(vector<Minidump_Info>& infos);
     private:
         static string json_dir;
         static string root_name;
