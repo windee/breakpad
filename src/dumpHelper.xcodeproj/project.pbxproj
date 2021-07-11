@@ -7,12 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DF02722426833CB500676E9A /* sender_mac.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF02719926833CB500676E9A /* sender_mac.cc */; };
-		DF02722A26833CB500676E9A /* dump_helper.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271AA26833CB500676E9A /* dump_helper.cc */; };
 		DF02722D26833CB500676E9A /* path_helper.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF0271CE26833CB500676E9A /* path_helper.cc */; };
-		DF027C6C268C6EA400676E9A /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DF027C6B268C6EA400676E9A /* libcurl.a */; };
-		DF027C6E268C6EBE00676E9A /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DF027C6D268C6EBE00676E9A /* libcrypto.a */; };
-		DF027C70268C6EDD00676E9A /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DF027C6F268C6EDD00676E9A /* libssl.a */; };
 		DF027CA42693204A00676E9A /* dump_object.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF027C942693204A00676E9A /* dump_object.cc */; };
 		DF027CA52693204A00676E9A /* minidump.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF027C952693204A00676E9A /* minidump.cc */; };
 		DF027CA62693204A00676E9A /* dump_context.cc in Sources */ = {isa = PBXBuildFile; fileRef = DF027C972693204A00676E9A /* dump_context.cc */; };
@@ -36,6 +31,10 @@
 		DF027CE926933F5600676E9A /* json_writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF027CD826933F5600676E9A /* json_writer.cpp */; };
 		DF027CEA26933F5600676E9A /* json_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF027CDD26933F5600676E9A /* json_reader.cpp */; };
 		DF027CEB26933F5600676E9A /* json_value.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF027CE426933F5600676E9A /* json_value.cpp */; };
+		DFE45CE7269A921700E81CF0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFE45CE6269A921700E81CF0 /* Foundation.framework */; };
+		DFE45CF0269A93AA00E81CF0 /* HTTPMultipartUpload.mm in Sources */ = {isa = PBXBuildFile; fileRef = DFE45CEF269A93AA00E81CF0 /* HTTPMultipartUpload.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		DFE45D03269A99E200E81CF0 /* sender_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = DFE45D02269A99E200E81CF0 /* sender_mac.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		DFE45D08269AC88100E81CF0 /* dump_helper.cc in Sources */ = {isa = PBXBuildFile; fileRef = DFE45D07269AC88100E81CF0 /* dump_helper.cc */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -51,8 +50,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		DF02719926833CB500676E9A /* sender_mac.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sender_mac.cc; sourceTree = "<group>"; };
-		DF0271AA26833CB500676E9A /* dump_helper.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dump_helper.cc; sourceTree = "<group>"; };
 		DF0271AD26833CB500676E9A /* scoped_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scoped_ptr.h; sourceTree = "<group>"; };
 		DF0271AF26833CB500676E9A /* stdio_wrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stdio_wrapper.h; sourceTree = "<group>"; };
 		DF0271B026833CB500676E9A /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
@@ -67,9 +64,6 @@
 		DF0271DD26833CB500676E9A /* minidump_cpu_amd64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minidump_cpu_amd64.h; sourceTree = "<group>"; };
 		DF0271DE26833CB500676E9A /* minidump_cpu_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minidump_cpu_arm.h; sourceTree = "<group>"; };
 		DF0271E226833CB500676E9A /* breakpad_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = breakpad_types.h; sourceTree = "<group>"; };
-		DF027C6B268C6EA400676E9A /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = ../../../../../../usr/local/curl/lib/libcurl.a; sourceTree = "<group>"; };
-		DF027C6D268C6EBE00676E9A /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = ../../../../../../usr/local/ssl/lib/libcrypto.a; sourceTree = "<group>"; };
-		DF027C6F268C6EDD00676E9A /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = ../../../../../../usr/local/ssl/lib/libssl.a; sourceTree = "<group>"; };
 		DF027C942693204A00676E9A /* dump_object.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dump_object.cc; sourceTree = "<group>"; };
 		DF027C952693204A00676E9A /* minidump.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = minidump.cc; sourceTree = "<group>"; };
 		DF027C962693204A00676E9A /* convert_old_arm64_context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = convert_old_arm64_context.h; sourceTree = "<group>"; };
@@ -128,6 +122,12 @@
 		DF027CE626933F5600676E9A /* json_valueiterator.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json_valueiterator.inl; sourceTree = "<group>"; };
 		DF027CE726933F5600676E9A /* forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = forwards.h; sourceTree = "<group>"; };
 		DF53AB21268098150087A86B /* dumpHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dumpHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFE45CE2269A910200E81CF0 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDefines.h; sourceTree = "<group>"; };
+		DFE45CE6269A921700E81CF0 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		DFE45CEE269A93AA00E81CF0 /* HTTPMultipartUpload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HTTPMultipartUpload.h; sourceTree = "<group>"; };
+		DFE45CEF269A93AA00E81CF0 /* HTTPMultipartUpload.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HTTPMultipartUpload.mm; sourceTree = "<group>"; };
+		DFE45D02269A99E200E81CF0 /* sender_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = sender_mac.mm; sourceTree = "<group>"; };
+		DFE45D07269AC88100E81CF0 /* dump_helper.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dump_helper.cc; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,9 +135,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DF027C70268C6EDD00676E9A /* libssl.a in Frameworks */,
-				DF027C6E268C6EBE00676E9A /* libcrypto.a in Frameworks */,
-				DF027C6C268C6EA400676E9A /* libcurl.a in Frameworks */,
+				DFE45CE7269A921700E81CF0 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,11 +145,11 @@
 		DF02715A26833CB500676E9A /* dumpHelper */ = {
 			isa = PBXGroup;
 			children = (
+				DFE45D07269AC88100E81CF0 /* dump_helper.cc */,
 				DF027CD626933F5600676E9A /* json */,
 				DF027CBD2693207700676E9A /* walker */,
 				DF027C932693204A00676E9A /* parser */,
 				DF0271AC26833CB500676E9A /* common */,
-				DF0271AA26833CB500676E9A /* dump_helper.cc */,
 				DF02719026833CB500676E9A /* sender */,
 			);
 			path = dumpHelper;
@@ -160,8 +158,11 @@
 		DF02719026833CB500676E9A /* sender */ = {
 			isa = PBXGroup;
 			children = (
+				DFE45D02269A99E200E81CF0 /* sender_mac.mm */,
+				DFE45CEE269A93AA00E81CF0 /* HTTPMultipartUpload.h */,
+				DFE45CEF269A93AA00E81CF0 /* HTTPMultipartUpload.mm */,
+				DFE45CE2269A910200E81CF0 /* GTMDefines.h */,
 				DF027CD0269320AF00676E9A /* sender.h */,
-				DF02719926833CB500676E9A /* sender_mac.cc */,
 			);
 			path = sender;
 			sourceTree = "<group>";
@@ -292,9 +293,7 @@
 		DF53B06E26833A100087A86B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DF027C6F268C6EDD00676E9A /* libssl.a */,
-				DF027C6D268C6EBE00676E9A /* libcrypto.a */,
-				DF027C6B268C6EA400676E9A /* libcurl.a */,
+				DFE45CE6269A921700E81CF0 /* Foundation.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -371,14 +370,15 @@
 				DF027CAC2693204A00676E9A /* symbolic_constants_win.cc in Sources */,
 				DF027CAA2693204A00676E9A /* minidump_processor.cc in Sources */,
 				DF027CCE2693207700676E9A /* stackwalker_x86.cc in Sources */,
-				DF02722426833CB500676E9A /* sender_mac.cc in Sources */,
 				DF027CA82693204A00676E9A /* convert_old_arm64_context.cc in Sources */,
 				DF027CCC2693207700676E9A /* stackwalker_arm.cc in Sources */,
+				DFE45D08269AC88100E81CF0 /* dump_helper.cc in Sources */,
 				DF027CA42693204A00676E9A /* dump_object.cc in Sources */,
 				DF027CCA2693207700676E9A /* stackwalker_amd64.cc in Sources */,
 				DF027CAD2693204A00676E9A /* basic_code_modules.cc in Sources */,
+				DFE45CF0269A93AA00E81CF0 /* HTTPMultipartUpload.mm in Sources */,
+				DFE45D03269A99E200E81CF0 /* sender_mac.mm in Sources */,
 				DF027CC92693207700676E9A /* stackwalker_arm64.cc in Sources */,
-				DF02722A26833CB500676E9A /* dump_helper.cc in Sources */,
 				DF027CE926933F5600676E9A /* json_writer.cpp in Sources */,
 				DF027CA72693204A00676E9A /* process_state.cc in Sources */,
 			);
@@ -506,12 +506,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEPLOYMENT_POSTPROCESSING = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/usr/local/ssl/lib,
-					/usr/local/curl/lib,
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -521,12 +519,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEPLOYMENT_POSTPROCESSING = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/usr/local/ssl/lib,
-					/usr/local/curl/lib,
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
