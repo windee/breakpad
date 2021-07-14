@@ -228,12 +228,7 @@ static NSData *SendSynchronousNSURLRequest(NSURLRequest *req,
     id fileOrData = [files_ objectForKey:name];
     NSData *fileData;
 
-    // The object can be either the path to a file (NSString) or the contents
-    // of the file (NSData).
-    if ([fileOrData isKindOfClass:[NSData class]])
-      fileData = [self formDataForFileContents:fileOrData name:name];
-    else
-      fileData = [self formDataForFile:fileOrData name:name];
+    fileData = [self formDataForFile:fileOrData name:name];
 
     [postBody appendData:fileData];
   }

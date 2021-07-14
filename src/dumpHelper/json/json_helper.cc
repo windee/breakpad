@@ -31,7 +31,6 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include "common/path_helper.h"
 
 namespace dump_helper {
 
@@ -101,20 +100,21 @@ vector<string> JsonHelper::getFiles() {
     return files;
 }
 
-string JsonHelper::stringfy(vector<Minidump_Info>& infos) {
+string JsonHelper::stringfy(vector<map<string, string>>& infos) {
     Json::Value root;
     Json::Value array;
         
     for(unsigned int i = 0; i < infos.size() ; i++){
         Json::Value item;
-        item["dump_file"] = PathHelper::BaseName(infos[i].dump_path);
-        item["module_name"] = infos[i].module_name;
-        item["module_offset"] = infos[i].module_offset;
-        item["crash_reason"] = infos[i].crash_reason;
+        
+        for (auto ite = infos[i].begin(); ite != infos[i].end(); ++ite) {
+            item[ite->first.c_str()] = ite->second.c_str();
+        }
+
         array.append(item);
     }
 
-    root["completed_files"] = array;
+    root["crash_reporters"] = array;
     return root.toStyledString();
 }
 }  // namespace dump_helper

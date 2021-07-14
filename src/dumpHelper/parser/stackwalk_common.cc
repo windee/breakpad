@@ -57,7 +57,9 @@ namespace dump_helper {
 #ifdef _WIN32
 std::set<string> g_SystemModules = { "kernelbase.dll", "ntdll.dll", "kernel32.dll" };
 #else
-std::set<string> g_SystemModules = { "libsystem_platform.dylib", "libsystem_kernel.dylib", "libsystem_c.dylib", "CoreFoundation", "Foundation", "libsystem_pthread.dylib" };
+std::set<string> g_SystemModules = { "libsystem_platform.dylib", "libsystem_kernel.dylib", "libsystem_c.dylib", "CoreFoundation", "Foundation", "libsystem_pthread.dylib",
+    "libc++.1.dylib", "libc++abi.dylib"
+};
 #endif
 
 bool GetModuleInfo(const StackFrame* pFrame, Minidump_Info* dmpInfo, int index) {

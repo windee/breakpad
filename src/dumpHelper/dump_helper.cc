@@ -194,7 +194,7 @@ int main(int argc, const char* argv[]) {
     Options options;
 	SetupOptions(argc, argv, &options);
 
-	vector<Minidump_Info> vecInfo;
+	vector<map<string, string>> vecInfo;
 	int count = 0;
 
 	for (int i = 0; i < options.dump_files.size() && count < max_counts; ++i) {
@@ -220,7 +220,8 @@ int main(int argc, const char* argv[]) {
         if (!SendCrashReport(options.server_url, info.dump_path, params)) {
             continue;
         } else {
-            vecInfo.push_back(info);
+            params["fileName"] = options.dump_files[i];
+            vecInfo.push_back(params);
         }
 
         count++;
@@ -229,7 +230,9 @@ int main(int argc, const char* argv[]) {
         }
 	}
 
-	printf("%s", JsonHelper::stringfy(vecInfo).c_str());
+    if (!vecInfo.empty()) {
+        printf("%s", JsonHelper::stringfy(vecInfo).c_str());
+    }
 
 	return 0;
 }
